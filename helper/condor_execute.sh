@@ -33,7 +33,9 @@ export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
 export SCRAM_ARCH=slc7_amd64_gcc820
 #source $VO_CMS_SW_DIR/cmsset_default.sh
 # bring in the tarball you created before with caches and large files excluded:
+echo '&&& About to copying over tarball &&&'
 xrdcp -s root://cmseos.fnal.gov//store/user/bchiari1/tarballs/CMSSW_10_6_20.tgz .
+echo '&&& Finished copying over tarball &&&'
 source $VO_CMS_SW_DIR/cmsset_default.sh
 tar -xf CMSSW_10_6_20.tgz
 rm CMSSW_10_6_20.tgz
