@@ -312,7 +312,8 @@ if output_not_set and site == "hexcms": args.output_local = True
 if output_not_set and site == "cmslpc": args.output_cmslpc = True
 
 # check proxy
-if site == 'hexcms' and args.input_dataset:
+#if site == 'hexcms' and args.input_dataset:
+if site == 'hexcms':
   if args.proxy == '':
     subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)
     proxy_path = ((subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)).strip()).decode('utf-8')
@@ -460,7 +461,8 @@ for i in range(len(infile_tranches)):
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
   if site == 'cmslpc': sub['use_x509userproxy'] = 'true'
-  if site == 'hexcms' and args.input_dataset: sub['x509userproxy'] = os.path.basename(proxy_path)
+  #if site == 'hexcms' and args.input_dataset: sub['x509userproxy'] = os.path.basename(proxy_path)
+  if site == 'hexcms': sub['x509userproxy'] = os.path.basename(proxy_path)
   sub['transfer_input_files'] = \
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
@@ -566,7 +568,8 @@ print("Output Directory    :", output_path)
 if not args.lumiMask is None:
   print("Lumi Mask           : " + os.path.basename(args.lumiMask))
 print("Schedd              :", schedd_ad["Name"])
-if args.input_dataset: print("Grid Proxy          :", time_left + ' left')
+#if args.input_dataset: print("Grid Proxy          :", time_left + ' left')
+print("Grid Proxy          :", time_left + ' left')
 
 # prompt user to double-check job summary
 if args.test:
