@@ -28,6 +28,7 @@ parser.add_argument('dest', default='/uscms/home/bchiari1/nobackup/', help='loca
 args = parser.parse_args()
 
 destination = args.dest
+os.system('mkdir -p '+destination)
 
 loc = "."
 dirs = []

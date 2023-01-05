@@ -13,6 +13,7 @@ def parse(filename):
   i = False
   for line in fi:
     line = line.strip()
+    #print(line)
     if line == in_key:
       d = {}
       i = True
@@ -23,7 +24,13 @@ def parse(filename):
       line = line.split()
       #print(line)
       if len(line) == 1: d['name'] = line[0]
-      if len(line) == 2: d[line[0]] = int(line[1])
+      if len(line) == 2:
+        num = line[1]
+        try: num = int(num)
+        except ValueError:
+          num = 0
+          print("got a ValueError! on line", line)
+        d[line[0]] = num
   return collection
 
 loc = sys.argv[1]
@@ -34,7 +41,7 @@ if loc.startswith('/store/'):
   #print(list_of_files, '\n')
   for fi in list_of_files:
     if not fi.endswith(".txt"): continue
-    #print(fi)
+    print(fi)
     os.system('xrdcp --nopbar root://cmseos.fnal.gov/'+fi+' .')
     temp = os.path.basename(fi)
     #print(temp)
@@ -44,7 +51,7 @@ if loc.startswith('/store/'):
 else:
   for fi in os.listdir(loc):
     if fi.endswith(".txt"):
-      #print("on", fi)
+      print("on", fi)
       collection = parse(os.path.join(sys.argv[1], fi))
       #for d in collection:
       #  for key in d:
