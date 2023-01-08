@@ -93,6 +93,7 @@ for line in output.decode('utf-8').split('\n'):
   try:
     l = line.split()
     fi = l[len(l)-1]
+    if not '.root' in fi: continue
     if output_eos: size = l[4]+' '+l[5]
     else:
       temp = l[4]

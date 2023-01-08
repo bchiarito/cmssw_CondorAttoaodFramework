@@ -136,6 +136,10 @@ run_args.add_argument("--scheddLimit", type=int, metavar='INT', default=-1,
 help="maximum total idle + running on schedd")
 run_args.add_argument("--useLFN", default=False, action="store_true",
 help="do not use xrdcp, supply LFN directly to cmssw cfg")
+run_args.add_argument("--datasetname", default='MyDatasetName',
+help="dataset name for metadata tree")
+run_args.add_argument("--xs", default=1.0, type=float,
+help="cross section for metadata tree")
 
 # convenience
 other_args = parser.add_argument_group('misc options')
@@ -456,7 +460,7 @@ for i in range(len(infile_tranches)):
     sub['arguments'] += " None"
   else:
     sub['arguments'] += " "+os.path.basename(args.lumiMask)
-  sub['arguments'] += " "+constructor+" "+phoconstructor+" "+args.sel
+  sub['arguments'] += " "+constructor+" "+phoconstructor+" "+args.sel+" "+args.datasetname+" "+str(args.xs)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -467,7 +471,7 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
-    'nano_postproc.py, my_ana_drop.txt'
+    'nano_postproc.py, my_ana_drop.txt, metadata_create.py'
   if not args.lumiMask is None:
     sub['transfer_input_files'] += ", "+args.lumiMask
   sub['transfer_output_files'] = '""'

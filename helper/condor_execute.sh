@@ -67,7 +67,8 @@ pwd
 ls -ldh *
 echo ''
 echo '&&& Begin Job Main Payload &&&'
-python nano_postproc.py infiles_$3.dat . --drop my_ana_drop.txt --filter="$9" --add_recophi HPID -n=-1 --$4 > report.txt
+python nano_postproc.py infiles_$3.dat . --drop my_ana_drop.txt --filter="$9" --add_recophi HPID -n=-1 --$4 --dataset=${10} --proc=$3 --report=report_$3.txt --outfile=out.root
+python metadata_create.py report_$3.txt out.root ${10} $3 --xs=${11}
 #ls $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/
 #python $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py out.root *_Skim.root
 echo ''

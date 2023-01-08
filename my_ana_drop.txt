@@ -18,6 +18,8 @@ keep genWeight
 keep event
 keep luminosityBlock
 keep run
+keep dataset_id
+keep flag
 keep nPhoton
 keep Photon_pt
 keep Photon_phi
