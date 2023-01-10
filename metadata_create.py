@@ -21,7 +21,7 @@ report_filename = args.report
 tree_filename = args.rootfile
 arg_flag = int(args.proc)
 datasetname = args.dataset
-datasetname_id = int(hashlib.sha256(datasetname.encode('utf-8')).hexdigest(), 16) % 10**10
+datasetname_id = int(hashlib.sha256(datasetname.encode('utf-8')).hexdigest(), 16) % 10**8
 
 in_key =  "---#---#---"
 out_key = "===#===#==="
