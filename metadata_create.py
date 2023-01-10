@@ -63,28 +63,32 @@ for i, d in enumerate(reports):
 for report in reports:
   if report['name'] == 'TotalEventsWritten':
     report_evtWritten = report['count']
+  if report['name'] == 'TotalEventsProcessed':
+    report_evtProcessed = report['count']
 
 print("adding metadata")
 fi = ROOT.TFile(tree_filename, "update")
-#fi = ROOT.TFile("test.root", "recreate")
 metadata = ROOT.TTree('Metadata', 'Metadata')
 
 dataset = ROOT.string('')
 dataset_id = array('i', [ 0 ])
 flag = array('i', [ 0 ])
 evtWritten = array('i', [ 0 ])
+evtProcessed = array('i', [ 0 ])
 xs = array('f', [ 0.0 ])
 
 metadata.Branch('dataset', dataset)
 metadata.Branch('dataset_id', dataset_id, 'dataset_id/I')
 metadata.Branch('flag', flag, 'flag/I')
 metadata.Branch('evtWritten', evtWritten, 'evtWritten/I')
+metadata.Branch('evtProcessed', evtProcessed, 'evtProcessed/I')
 metadata.Branch('xs', xs, 'xs/F')
 
 dataset.assign(datasetname)
 dataset_id[0] = datasetname_id
 flag[0] = arg_flag
 evtWritten[0] = report_evtWritten
+evtProcessed[0] = report_evtProcessed
 xs[0] = args.xs
 
 metadata.Fill()
