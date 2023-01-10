@@ -561,6 +561,8 @@ if not args.photonSB=='None':
   print("Photon Sideband     : " + photon_sideband)
 if not args.selection=='None':
   print("Preselection        : " + selection_text)
+print("Branch DatasetName  :", str(args.datasetname))
+if not datamc == 'data': print("Cross Section       :", str(args.xs))
 print("Total Jobs          :", str(TOTAL_JOBS))
 print("Total Files         :", str(num_total_files))
 print("Files/Job (approx)  :", str(N))
