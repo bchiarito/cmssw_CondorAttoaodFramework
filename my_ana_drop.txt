@@ -29,6 +29,7 @@ keep Photon_cutBased
 keep HT
 keep NJets
 keep PV_npvs
+keep htHat*
 
 #notably dropping:
 #jet

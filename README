@@ -1,0 +1,11 @@
+### running
+use condor_submit.py
+
+### after changing backend, to make new tarball
+```
+scram b
+cd ../..
+tar -zcf CMSSW_10_6_20.tgz CMSSW_10_6_20
+xrdfs root://cmseos.fnal.gov/ rm /store/user/bchiari1/tarballs/CMSSW_10_6_20.tgz
+xrdcp CMSSW_10_6_20.tgz root://cmseos.fnal.gov//store/user/bchiari1/tarballs/CMSSW_10_6_20.tgz
+```

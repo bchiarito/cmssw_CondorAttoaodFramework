@@ -20,7 +20,7 @@ if hasattr(__builtins__, 'raw_input'):
 helper_dir = 'helper'
 executable = 'condor_execute.sh'
 executable_fast = 'condor_execute_fast.sh'
-src_setup_script = 'prebuild_setup.sh' # also in unit test scripts
+##src_setup_script = 'prebuild_setup.sh' # also in unit test scripts
 submit_file_filename = 'submit_file.jdl'
 input_file_filename_base = 'infiles' # also in executable
 finalfile_filename = 'out.root'
@@ -32,7 +32,7 @@ dataset_cache = 'datasets'
 fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
-cmssw_prebuild_area = 'prebuild'
+##cmssw_prebuild_area = 'prebuild'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -67,7 +67,7 @@ except ImportError as err:
     raise err
 
 # command line options
-parser = argparse.ArgumentParser(description="", usage="./%(prog)s INPUT OUTPUT [--data/mc/sigRes/sigNonRes] -y ULYY -l JSON -d DIR")
+parser = argparse.ArgumentParser(description="", usage="./%(prog)s INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
 
 # input/output
 io_args = parser.add_argument_group('input/output options')
@@ -100,22 +100,20 @@ datamc_options.add_argument("--sigRes", action="store_true", default=False,
 help="running on resonant signal mc")
 datamc_options.add_argument("--sigNonRes", action="store_true", default=False,
 help="running on nonresonant signal mc")
-exec_args.add_argument("-y", "--year", default="UL18", choices=['UL16','UL17','UL18'], metavar='ULYY',
-help="prescription to follow: UL18 (default), UL17, UL16")
-exec_args.add_argument("-l", "--lumiMask", default=None, metavar='', dest='lumiMask',
-help="path to lumi mask json file")
-exec_args.add_argument("--twoprongSB", default="None", choices=['None','full'], metavar='CHOICE',
-help="include twoprong sideband: None (default), full")
-exec_args.add_argument("--twoprongExtra", action="store_true", default=False,
-help="modify twoprong object: allow optional extra track")
-exec_args.add_argument("--photonSB", default="None", choices=['None'], metavar='CHOICE',
-help="include photon sideband (default None)")
-exec_args.add_argument("--selection", default="None", choices=['None', 'muon', 'photon', 'trigger'], metavar='CHOICE',
-help="apply event preselection None (default), muon, photon, trigger")
+#exec_args.add_argument("-y", "--year", default="UL18", choices=['UL16','UL17','UL18'], metavar='ULYY',
+#help="prescription to follow: UL18 (default), UL17, UL16")
+#exec_args.add_argument("-l", "--lumiMask", default=None, metavar='', dest='lumiMask',
+#help="path to lumi mask json file")
+#exec_args.add_argument("--twoprongSB", default="None", choices=['None','full'], metavar='CHOICE',
+#help="include twoprong sideband: None (default), full")
+#exec_args.add_argument("--twoprongExtra", action="store_true", default=False,
+#help="modify twoprong object: allow optional extra track")
+#exec_args.add_argument("--photonSB", default="None", choices=['None'], metavar='CHOICE',
+#help="include photon sideband (default None)")
+exec_args.add_argument("--filter", default="None", choices=['None', 'one_hpid_photon'], metavar='CHOICE',
+help="apply event filtering: None (default), one_hpid_photon")
 exec_args.add_argument("--noPayload", default=False, action="store_true",
 help="for testing purposes")
-exec_args.add_argument("--sel", default="None", metavar='CHOICE',
-help="")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -145,8 +143,8 @@ help="cross section for metadata tree")
 other_args = parser.add_argument_group('misc options')
 other_args.add_argument("-f", "--force", action="store_true",
 help="overwrite job directory if it already exists")
-other_args.add_argument("--rebuild", default=False, action="store_true",
-help="remake cmssw prebuild area needed to ship with job")
+##other_args.add_argument("--rebuild", default=False, action="store_true",
+##help="remake cmssw prebuild area needed to ship with job")
 other_args.add_argument("-t", "--test", default=False, action="store_true",
 help="don't submit condor jobs but do all other steps")
 other_args.add_argument("-v", "--verbose", default=False, action="store_true",
@@ -169,12 +167,17 @@ elif args.sigNonRes: datamc = "sigNonRes"
 else: raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
 
 # check year
-if not (args.year == 'UL18' or
-        args.year == 'UL17' or
-        args.year == 'UL16'):
-  raise SystemExit('ERROR: --year must be one of: UL18, UL17, UL16')
+args.year = 'UL18'
+args.lumiMask = None
+##if not (args.year == 'UL18' or
+##        args.year == 'UL17' or
+##        args.year == 'UL16'):
+##  raise SystemExit('ERROR: --year must be one of: UL18, UL17, UL16')
 
 # process choice of modules
+constructor = 'blank'
+phoconstructor = 'blank'
+'''
 if not args.twoprongExtra:
   if args.twoprongSB == 'None':
     constructor = 'default'
@@ -192,17 +195,18 @@ if args.photonSB == 'None':
 if args.photonSB == 'full':
   phoconstructor = 'addLoose'
   photon_sideband = 'Full'
-if args.selection == 'None':
-  selection = 'default'
-if args.selection == 'muon':
-  selection = 'muon'
-  selection_text = 'slimmedMuons >= 1'
-if args.selection == 'photon':
-  selection = 'photon'
-  selection_text = 'slimmedPhotons >= 1'
-if args.selection == 'trigger':
-  selection = 'muonelectronphoton'
-  selection_text = 'slimmedMuons or slimmedElectrons or slimmedPhotons >= 1, and pT>15'
+'''
+#if args.selection == 'None':
+#  selection = 'default'
+#if args.selection == 'muon':
+#  selection = 'muon'
+#  selection_text = 'slimmedMuons >= 1'
+#if args.selection == 'photon':
+#  selection = 'photon'
+#  selection_text = 'slimmedPhotons >= 1'
+#if args.selection == 'trigger':
+#  selection = 'muonelectronphoton'
+#  selection_text = 'slimmedMuons or slimmedElectrons or slimmedPhotons >= 1, and pT>15'
 
 # define max files
 maxfiles = args.files
@@ -215,13 +219,12 @@ if args.scheddLimit == -1:
   if site == 'cmslpc': args.scheddLimit = 1000
 
 # prepare prebuild area to send with job
-if args.rebuild:
-  print("Setting up src directory (inside ./"+cmssw_prebuild_area+") to ship with job")
-  os.system('./' + helper_dir +'/'+ src_setup_script)
-  print("\nFinished setting up directory to ship with job.\n")
-if not args.rebuild and not os.path.isdir(cmssw_prebuild_area):
-  raise SystemExit("ERROR: Prebuild area not prepared, use option --rebuild to create")
-
+#if args.rebuild:
+#  print("Setting up src directory (inside ./"+cmssw_prebuild_area+") to ship with job")
+#  os.system('./' + helper_dir +'/'+ src_setup_script)
+#  print("\nFinished setting up directory to ship with job.\n")
+#if not args.rebuild and not os.path.isdir(cmssw_prebuild_area):
+#  raise SystemExit("ERROR: Prebuild area not prepared, use option --rebuild to create")
 
 # check input
 input_not_set = False
@@ -460,7 +463,7 @@ for i in range(len(infile_tranches)):
     sub['arguments'] += " None"
   else:
     sub['arguments'] += " "+os.path.basename(args.lumiMask)
-  sub['arguments'] += " "+constructor+" "+phoconstructor+" "+args.sel+" "+args.datasetname+" "+str(args.xs)
+  sub['arguments'] += " "+constructor+" "+phoconstructor+" "+args.filter+" "+args.datasetname+" "+str(args.xs)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -552,17 +555,17 @@ for i in range(len(infile_tranches)):
   else: job_dir = 'Job_' + args.dir + suffix
   print("Job Directory       :", job_dir)
 print("Job Batch Name      :", args.dir if args.batch is None else args.batch)
-print("Job Specification   :", args.year +" "+datamc.upper())
-if not args.twoprongSB=='None':
-  print("Twoprong Sideband   : " + twoprong_sideband)
-if args.twoprongExtra:
-  print("Object Modification : " + "TwoProng Optional Extra Track")
-if not args.photonSB=='None':
-  print("Photon Sideband     : " + photon_sideband)
-if not args.selection=='None':
-  print("Preselection        : " + selection_text)
-print("Branch DatasetName  :", str(args.datasetname))
 if not datamc == 'data': print("Cross Section       :", str(args.xs))
+print("Branch DatasetName  :", str(args.datasetname))
+##print("Job Specification   :", args.year +" "+datamc.upper())
+##if not args.twoprongSB=='None':
+##  print("Twoprong Sideband   : " + twoprong_sideband)
+##if args.twoprongExtra:
+##  print("Object Modification : " + "TwoProng Optional Extra Track")
+##if not args.photonSB=='None':
+##  print("Photon Sideband     : " + photon_sideband)
+if not args.filter=='None':
+  print("Filter              : " + args.filter)
 print("Total Jobs          :", str(TOTAL_JOBS))
 print("Total Files         :", str(num_total_files))
 print("Files/Job (approx)  :", str(N))
