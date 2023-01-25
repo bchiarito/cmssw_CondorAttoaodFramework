@@ -286,7 +286,7 @@ else:
 
 # finish checking input
 if len(input_files)==0:
-  raise SystemExit('ERROR: No input files found! Check input argument.')
+  raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --indput_dataset, etc.')
 example_inputfile = str(input_files[0].strip())
 ex_in = example_inputfile
 if args.verbose:
