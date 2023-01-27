@@ -18,12 +18,12 @@ if hasattr(__builtins__, 'raw_input'):
 
 # constants
 helper_dir = 'helper'
-executable = 'condor_execute.sh'
+executable = 'condor_execute_main.sh'
 executable_fast = 'condor_execute_fast.sh'
 ##src_setup_script = 'prebuild_setup.sh' # also in unit test scripts
 submit_file_filename = 'submit_file.jdl'
 input_file_filename_base = 'infiles' # also in executable
-finalfile_filename = 'out.root'
+finalfile_filename = 'plots.root'
 stdout_filename = 'report.txt'
 unpacker_filename = 'unpacker.py'
 stageout_filename = 'stageout.py'
@@ -33,6 +33,7 @@ fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 ##cmssw_prebuild_area = 'prebuild'
+payload_script = "payload_plotter.sh"
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -87,6 +88,8 @@ output_options = io_args.add_mutually_exclusive_group()
 output_options.add_argument("--output_local", action="store_true",
 help=argparse.SUPPRESS)
 output_options.add_argument("--output_cmslpc", action="store_true",
+help=argparse.SUPPRESS)
+output_options.add_argument("--extra_input", nargs='+',
 help=argparse.SUPPRESS)
 
 # execution specification
@@ -273,7 +276,16 @@ elif args.input_cmslpc:
     for line in list_of_files:
       input_files.append(line)
       if len(input_files) == maxfiles: break
-
+    if args.extra_input:
+      for extra in args.extra_input:
+        list_of_files = subprocess.getoutput("xrdfs root://cmseos.fnal.gov ls " + extra)
+        list_of_files = list_of_files.split('\n')
+        totalfiles = len(list_of_files) 
+        if percentmax: maxfiles = int(args.files * totalfiles)
+        for line in list_of_files:
+          input_files.append(line)
+          if len(input_files) == maxfiles: break
+        
 '''
 # input is dataset name
 elif args.input_dataset:
@@ -449,6 +461,7 @@ if args.output_cmslpc:
   to_replace['__copycommand__'] = 'xrdcp --nopbar'
 use_template_to_replace(template_filename, new_stageout_filename, to_replace)
 
+
 # define submit file
 subs = []
 for i in range(len(infile_tranches)):
@@ -458,12 +471,7 @@ for i in range(len(infile_tranches)):
   else: job_dir = 'Job_' + args.dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = unpacker_filename+" "+stageout_filename+" $(GLOBAL_PROC) "+datamc+" "+args.year
-  if args.lumiMask is None:
-    sub['arguments'] += " None"
-  else:
-    sub['arguments'] += " "+os.path.basename(args.lumiMask)
-  sub['arguments'] += " "+constructor+" "+phoconstructor+" "+args.filter+" "+args.datasetname+" "+str(args.xs)
+  sub['arguments'] = payload_script+" "+finalfile_filename+" $(GLOBAL_PROC) "+datamc+" "+args.year
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -471,6 +479,8 @@ for i in range(len(infile_tranches)):
   #if site == 'hexcms' and args.input_dataset: sub['x509userproxy'] = os.path.basename(proxy_path)
   if site == 'hexcms': sub['x509userproxy'] = os.path.basename(proxy_path)
   sub['transfer_input_files'] = \
+    'helper/'+payload_script + ", " + \
+    'nanoaodtools_looper.py' + ", " + \
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
