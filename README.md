@@ -6,7 +6,7 @@ use condor_submit.py
 ```
 backend_plotting_get.sh
 ```
-2. change code and run interactively, under /fmk_plotting directory
+2. change code and run interactively, under CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_plotting directory
 ```
 ```
 3. git push
