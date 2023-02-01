@@ -17,6 +17,7 @@ if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
 # constants
+mode = 'plotting' #####################
 helper_dir = 'helper'
 executable = 'condor_execute_main.sh'
 executable_fast = 'condor_execute_fast.sh'
@@ -24,7 +25,7 @@ executable_fast = 'condor_execute_fast.sh'
 submit_file_filename = 'submit_file.jdl'
 input_file_filename_base = 'infiles' # also in executable
 finalfile_filename = 'plots.root'
-stdout_filename = 'report.txt'
+stdout_filename = 'plots_cutflow.txt'
 unpacker_filename = 'unpacker.py'
 stageout_filename = 'stageout.py'
 jobinfo_filename = 'job_info.py'
@@ -33,7 +34,9 @@ fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 ##cmssw_prebuild_area = 'prebuild'
-payload_script = "payload_plotter.sh"
+payload_script = 'payload_mode.sh'
+script_backend_plotting_pull = 'backend_plotting_pull.sh'
+script_backend_plotting_push = 'backend_plotting_push.sh' 
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -103,6 +106,8 @@ datamc_options.add_argument("--sigRes", action="store_true", default=False,
 help="running on resonant signal mc")
 datamc_options.add_argument("--sigNonRes", action="store_true", default=False,
 help="running on nonresonant signal mc")
+exec_args.add_argument("--lumi", default=1.0,
+help="integrated luminosity")
 #exec_args.add_argument("-y", "--year", default="UL18", choices=['UL16','UL17','UL18'], metavar='ULYY',
 #help="prescription to follow: UL18 (default), UL17, UL16")
 #exec_args.add_argument("-l", "--lumiMask", default=None, metavar='', dest='lumiMask',
@@ -130,14 +135,14 @@ help="total number of subjobs in the job")
 num_options.add_argument("--filesPerJob", type=int, metavar='INT', default=None,
 help="number of files per subjob (default is 1)")
 run_args.add_argument("--files", default=-1, type=float, metavar='maxFiles',
-help="total files, <1 treated as a fraction e.g. 0.1 means 10%% (default is all)")
+help="total files to process, 0.1 means 10%% etc")
 run_args.add_argument("--trancheMax", type=int, metavar='INT', default=50000,
 help=argparse.SUPPRESS)
 run_args.add_argument("--scheddLimit", type=int, metavar='INT', default=-1,
 help="maximum total idle + running on schedd")
 run_args.add_argument("--useLFN", default=False, action="store_true",
 help="do not use xrdcp, supply LFN directly to cmssw cfg")
-run_args.add_argument("--datasetname", default='MyDatasetName',
+run_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
 help="dataset name for metadata tree")
 run_args.add_argument("--xs", default=1.0, type=float,
 help="cross section for metadata tree")
@@ -146,8 +151,8 @@ help="cross section for metadata tree")
 other_args = parser.add_argument_group('misc options')
 other_args.add_argument("-f", "--force", action="store_true",
 help="overwrite job directory if it already exists")
-##other_args.add_argument("--rebuild", default=False, action="store_true",
-##help="remake cmssw prebuild area needed to ship with job")
+other_args.add_argument("--rebuild", action='store_true', default=False,
+help="update tarball in cmslpc eos")
 other_args.add_argument("-t", "--test", default=False, action="store_true",
 help="don't submit condor jobs but do all other steps")
 other_args.add_argument("-v", "--verbose", default=False, action="store_true",
@@ -161,6 +166,16 @@ help="do not prompt user to check job")
 
 # end command line options
 args = parser.parse_args()
+
+# get grid id
+grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
+
+# update tarball if asked for
+if args.rebuild:
+  print("Updating tarball.\n")
+  os.system('./'+script_backend_plotting_pull)
+  os.system('./'+script_backend_plotting_push+' '+grid_id)
+  print("\nFinished updating tarball.\n")
 
 # check data/mc
 if args.mc: datamc = "mc"
@@ -220,14 +235,6 @@ else: percentmax = False
 if args.scheddLimit == -1:
   if site == 'hexcms': args.scheddLimit = 350
   if site == 'cmslpc': args.scheddLimit = 1000
-
-# prepare prebuild area to send with job
-#if args.rebuild:
-#  print("Setting up src directory (inside ./"+cmssw_prebuild_area+") to ship with job")
-#  os.system('./' + helper_dir +'/'+ src_setup_script)
-#  print("\nFinished setting up directory to ship with job.\n")
-#if not args.rebuild and not os.path.isdir(cmssw_prebuild_area):
-#  raise SystemExit("ERROR: Prebuild area not prepared, use option --rebuild to create")
 
 # check input
 input_not_set = False
@@ -461,7 +468,6 @@ if args.output_cmslpc:
   to_replace['__copycommand__'] = 'xrdcp --nopbar'
 use_template_to_replace(template_filename, new_stageout_filename, to_replace)
 
-
 # define submit file
 subs = []
 for i in range(len(infile_tranches)):
@@ -471,7 +477,7 @@ for i in range(len(infile_tranches)):
   else: job_dir = 'Job_' + args.dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = payload_script+" "+finalfile_filename+" $(GLOBAL_PROC) "+datamc+" "+args.year
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -479,8 +485,7 @@ for i in range(len(infile_tranches)):
   #if site == 'hexcms' and args.input_dataset: sub['x509userproxy'] = os.path.basename(proxy_path)
   if site == 'hexcms': sub['x509userproxy'] = os.path.basename(proxy_path)
   sub['transfer_input_files'] = \
-    'helper/'+payload_script + ", " + \
-    'nanoaodtools_looper.py' + ", " + \
+    'helper/'+payload_script.replace('mode', mode) + ", " + \
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
@@ -526,6 +531,7 @@ for i in range(len(infile_tranches)):
   os.system('cp ' + new_stageout_filename + ' ' + job_dir)
   if not args.noPayload: os.system('cp ' + helper_dir +'/'+ executable + ' ' + job_dir)
   else: os.system('cp ' + helper_dir +'/'+ executable_fast + ' ' + job_dir)
+  os.system('cp ' + helper_dir +'/'+ payload_script.replace('mode', mode) + ' ' + job_dir)
   command = ''
   for a in sys.argv:
     command += a + ' '

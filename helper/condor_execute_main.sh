@@ -20,8 +20,7 @@ if [ -f /osg/current/setup.sh ]; then
 fi
 
 echo '&&& Running input unpacker script with command: &&&'
-echo 'python' $1 $3
-python $1 $3
+python unpacker.py $3
 echo ''
 echo '&&& New contents: &&&'
 ls -ldh *
@@ -31,10 +30,8 @@ echo '&&& Setup CMSSW area &&&'
 export HOME=$INITIAL_DIR
 export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
 export SCRAM_ARCH=slc7_amd64_gcc820
-#source $VO_CMS_SW_DIR/cmsset_default.sh
-# bring in the tarball you created before with caches and large files excluded:
 echo '&&& About to copying over tarball &&&'
-xrdcp -s root://cmseos.fnal.gov//store/user/bchiari1/tarballs/CMSSW_10_6_20.tgz .
+xrdcp -s root://cmseos.fnal.gov//store/user/$4/tarballs/$1/CMSSW_10_6_20.tgz .
 echo '&&& Finished copying over tarball &&&'
 source $VO_CMS_SW_DIR/cmsset_default.sh
 tar -xf CMSSW_10_6_20.tgz
@@ -66,17 +63,16 @@ cd $INITIAL_DIR
 pwd
 ls -ldh *
 echo ''
-echo '&&& Begin Job Main Payload &&&'
-python nano_postproc.py infiles_$3.dat . --drop my_ana_drop.txt --filter="$9" --add_recophi HPID -n=-1 --$4 --dataset=${10} --proc=$3 --report=report_$3.txt --outfile=out.root
-python metadata_create.py report_$3.txt out.root ${10} $3 --xs=${11}
-#ls $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/
-#python $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py out.root *_Skim.root
+echo '&&& Begin Main Payload, Call Subscript &&&'
+
+. ./payload_$1.sh
+
 echo ''
-echo '&&& Current Directory and Contents: &&&'
+echo '&&& Finished Main Payload, Current Directory and Contents: &&&'
 pwd
 ls -ldh *
 echo ''
-FINALFILE=out.root
+FINALFILE=$2
 if [ -f "$FINALFILE" ]; then
     :
 else 
@@ -87,9 +83,8 @@ fi
 echo ''
 echo '&&& Finished Main Job Payload &&&'
 echo ''
-echo '&&& Running Stageout Script with command: &&&'
-echo 'python' $2 $3
-python $2 $3
+echo '&&& Running Stageout Script &&&'
+python stageout.py $3
 exitcode=$?
 if [[ exitcode -eq 0 ]] ; then
     :
