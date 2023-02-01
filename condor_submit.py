@@ -20,7 +20,6 @@ if hasattr(__builtins__, 'raw_input'):
 helper_dir = 'helper'
 executable = 'condor_execute_main.sh'
 executable_fast = 'condor_execute_fast.sh'
-##src_setup_script = 'prebuild_setup.sh' # also in unit test scripts
 submit_file_filename = 'submit_file.jdl'
 input_file_filename_base = 'infiles' # also in executable
 stdout_filename = 'plots_cutflow.txt'
@@ -31,7 +30,6 @@ dataset_cache = 'datasets'
 fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
-##cmssw_prebuild_area = 'prebuild'
 payload_script = 'payload_mode.sh'
 script_backend_plotting_pull = 'backend_plotting_pull.sh'
 script_backend_plotting_push = 'backend_plotting_push.sh' 
@@ -70,25 +68,24 @@ except ImportError as err:
     raise err
 
 # command line options
-parser = argparse.ArgumentParser(description="", usage="./%(prog)s MODE INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
+parser = argparse.ArgumentParser(usage="./%(prog)s MODE INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
 
-parser.add_argument("mode", choices=['atto','plotting'], help="")
+parser.add_argument("mode", choices=['atto','plotting'], metavar='MODE', help="choose 'atto' or 'plotting'")
 
 # input/output
-io_args = parser.add_argument_group('input/output options')
-io_args.add_argument("input", metavar='INPUT',
+parser.add_argument("input", metavar='INPUT',
 help="Absolute path to local directory/file, cmslpc eos storage (/store/user/...), \
 text file (end in .txt) with one file location per line, or dataset name (/*/*/MINIAOD(SIM)).")
-input_options = io_args.add_mutually_exclusive_group()
+input_options = parser.add_mutually_exclusive_group()
 input_options.add_argument("--input_local", action="store_true",
 help=argparse.SUPPRESS)
 input_options.add_argument("--input_cmslpc", action="store_true",
 help=argparse.SUPPRESS)
 input_options.add_argument("--input_dataset", action="store_true",
 help=argparse.SUPPRESS)
-io_args.add_argument("output", metavar='OUTPUT',
+parser.add_argument("output", metavar='OUTPUT',
 help="Absoulte path to local directory, or cmslpc eos storage (/store/user/...).")
-output_options = io_args.add_mutually_exclusive_group()
+output_options = parser.add_mutually_exclusive_group()
 output_options.add_argument("--output_local", action="store_true",
 help=argparse.SUPPRESS)
 output_options.add_argument("--output_cmslpc", action="store_true",
@@ -96,33 +93,30 @@ help=argparse.SUPPRESS)
 output_options.add_argument("--extra_input", nargs='+',
 help=argparse.SUPPRESS)
 
-# execution specification
-exec_args = parser.add_argument_group('execution options')
-datamc_options = exec_args.add_mutually_exclusive_group()
+# data/mc specification
+datamc_options = parser.add_mutually_exclusive_group()
 datamc_options.add_argument("--data", action="store_true", default=False,
-help="running on data")
+help=argparse.SUPPRESS)
 datamc_options.add_argument("--mc", action="store_true", default=False, 
-help="running on bkg mc")
+help=argparse.SUPPRESS)
 datamc_options.add_argument("--sigRes", action="store_true", default=False, 
-help="running on resonant signal mc")
+help=argparse.SUPPRESS)
 datamc_options.add_argument("--sigNonRes", action="store_true", default=False,
-help="running on nonresonant signal mc")
-exec_args.add_argument("--lumi", default=1.0,
-help="integrated luminosity")
-#exec_args.add_argument("-y", "--year", default="UL18", choices=['UL16','UL17','UL18'], metavar='ULYY',
-#help="prescription to follow: UL18 (default), UL17, UL16")
-#exec_args.add_argument("-l", "--lumiMask", default=None, metavar='', dest='lumiMask',
-#help="path to lumi mask json file")
-#exec_args.add_argument("--twoprongSB", default="None", choices=['None','full'], metavar='CHOICE',
-#help="include twoprong sideband: None (default), full")
-#exec_args.add_argument("--twoprongExtra", action="store_true", default=False,
-#help="modify twoprong object: allow optional extra track")
-#exec_args.add_argument("--photonSB", default="None", choices=['None'], metavar='CHOICE',
-#help="include photon sideband (default None)")
-exec_args.add_argument("--filter", default="None", choices=['None', 'one_hpid_photon'], metavar='CHOICE',
+help=argparse.SUPPRESS)
+
+# atto execution specification
+atto_args = parser.add_argument_group('atto mode execution')
+atto_args.add_argument("--filter", default="None", choices=['None', 'one_hpid_photon'], metavar='CHOICE',
 help="apply event filtering: None (default), one_hpid_photon")
-exec_args.add_argument("--noPayload", default=False, action="store_true",
-help="for testing purposes")
+atto_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
+help="dataset name for metadata tree")
+atto_args.add_argument("--xs", default=1.0, type=float,
+help="cross section for metadata tree")
+
+# plotting execution specification
+plotting_args = parser.add_argument_group('plotting mode execution')
+plotting_args.add_argument("--lumi", default=1.0,
+help="integrated luminosity")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -143,17 +137,11 @@ run_args.add_argument("--scheddLimit", type=int, metavar='INT', default=-1,
 help="maximum total idle + running on schedd")
 run_args.add_argument("--useLFN", default=False, action="store_true",
 help="do not use xrdcp, supply LFN directly to cmssw cfg")
-run_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
-help="dataset name for metadata tree")
-run_args.add_argument("--xs", default=1.0, type=float,
-help="cross section for metadata tree")
 
 # convenience
 other_args = parser.add_argument_group('misc options')
 other_args.add_argument("-f", "--force", action="store_true",
 help="overwrite job directory if it already exists")
-other_args.add_argument("--rebuild", action='store_true', default=False,
-help="update tarball in cmslpc eos")
 other_args.add_argument("-t", "--test", default=False, action="store_true",
 help="don't submit condor jobs but do all other steps")
 other_args.add_argument("-v", "--verbose", default=False, action="store_true",
@@ -164,6 +152,8 @@ other_args.add_argument("--noErr", default=False, action="store_true",
 help="do not save stderr in log files")
 other_args.add_argument("--auto", default=False, action="store_true",
 help="do not prompt user to check job")
+other_args.add_argument("--noPayload", default=False, action="store_true",
+help="for testing purposes")
 
 # end command line options
 args = parser.parse_args()
@@ -176,13 +166,6 @@ elif mode == 'plotting': finalfile_filename = 'plots.root'
 # get grid id
 grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
 
-# update tarball if asked for
-if args.rebuild:
-  print("Updating tarball.\n")
-  os.system('./'+script_backend_plotting_pull)
-  os.system('./'+script_backend_plotting_push+' '+grid_id)
-  print("\nFinished updating tarball.\n")
-
 # check data/mc
 if args.mc: datamc = "mc"
 elif args.data: datamc = "data"
@@ -192,11 +175,6 @@ else: raise SystemExit("Missing Option: Specification of --data / --mc / --sigRe
 
 # check year
 args.year = 'UL18'
-args.lumiMask = None
-##if not (args.year == 'UL18' or
-##        args.year == 'UL17' or
-##        args.year == 'UL16'):
-##  raise SystemExit('ERROR: --year must be one of: UL18, UL17, UL16')
 
 # process choice of modules
 constructor = 'blank'
@@ -496,8 +474,6 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
     branch_selection_filename
-  if not args.lumiMask is None:
-    sub['transfer_input_files'] += ", "+args.lumiMask
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
   sub['JobBatchName'] = args.dir if args.batch is None else args.batch
@@ -581,11 +557,6 @@ if not datamc == 'data': print("Cross Section       :", str(args.xs))
 print("Branch DatasetName  :", str(args.datasetname))
 ##print("Job Specification   :", args.year +" "+datamc.upper())
 ##if not args.twoprongSB=='None':
-##  print("Twoprong Sideband   : " + twoprong_sideband)
-##if args.twoprongExtra:
-##  print("Object Modification : " + "TwoProng Optional Extra Track")
-##if not args.photonSB=='None':
-##  print("Photon Sideband     : " + photon_sideband)
 if not args.filter=='None':
   print("Filter              : " + args.filter)
 print("Total Jobs          :", str(TOTAL_JOBS))
@@ -596,8 +567,6 @@ if len(input_files)>1: print("Example Input File  : " + ((ex_in[:88] + '..') if 
 else : print("Input File          : " + ((ex_in[:88] + '..') if len(ex_in) > 90 else ex_in))
 print("Output              : " + o_assume)
 print("Output Directory    :", output_path)
-if not args.lumiMask is None:
-  print("Lumi Mask           : " + os.path.basename(args.lumiMask))
 print("Schedd              :", schedd_ad["Name"])
 #if args.input_dataset: print("Grid Proxy          :", time_left + ' left')
 print("Grid Proxy          :", time_left + ' left')
