@@ -17,14 +17,12 @@ if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
 # constants
-mode = 'plotting' #####################
 helper_dir = 'helper'
 executable = 'condor_execute_main.sh'
 executable_fast = 'condor_execute_fast.sh'
 ##src_setup_script = 'prebuild_setup.sh' # also in unit test scripts
 submit_file_filename = 'submit_file.jdl'
 input_file_filename_base = 'infiles' # also in executable
-finalfile_filename = 'plots.root'
 stdout_filename = 'plots_cutflow.txt'
 unpacker_filename = 'unpacker.py'
 stageout_filename = 'stageout.py'
@@ -37,6 +35,7 @@ hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
 script_backend_plotting_pull = 'backend_plotting_pull.sh'
 script_backend_plotting_push = 'backend_plotting_push.sh' 
+branch_selection_filename = 'atto_branch_selection.txt'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -71,7 +70,9 @@ except ImportError as err:
     raise err
 
 # command line options
-parser = argparse.ArgumentParser(description="", usage="./%(prog)s INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
+parser = argparse.ArgumentParser(description="", usage="./%(prog)s MODE INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
+
+parser.add_argument("mode", choices=['atto','plotting'], help="")
 
 # input/output
 io_args = parser.add_argument_group('input/output options')
@@ -166,6 +167,11 @@ help="do not prompt user to check job")
 
 # end command line options
 args = parser.parse_args()
+
+# get mode
+mode = args.mode
+if mode == 'atto': finalfile_filename = 'attoaod.root'
+elif mode == 'plotting': finalfile_filename = 'plots.root'
 
 # get grid id
 grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
@@ -477,7 +483,7 @@ for i in range(len(infile_tranches)):
   else: job_dir = 'Job_' + args.dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -489,7 +495,7 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
-    'nano_postproc.py, my_ana_drop.txt, metadata_create.py'
+    branch_selection_filename
   if not args.lumiMask is None:
     sub['transfer_input_files'] += ", "+args.lumiMask
   sub['transfer_output_files'] = '""'

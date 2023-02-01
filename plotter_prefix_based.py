@@ -86,7 +86,7 @@ for hist in mc_histos:
 # add mcs into big collection
 all_mc_histos = [mc_histos]
 
-# add all mc processes into big list
+# main sanity plots
 for hists in zip(data_histos, *all_mc_histos):
   if (hists[0].GetName()).startswith('MC_'): continue
   if (hists[0].GetName()).startswith('cutflow'):
@@ -98,6 +98,7 @@ for hists in zip(data_histos, *all_mc_histos):
     c.SetLogy(0)
   else:
     print("plotting "+hists[0].GetName())
+    leg = TLegend(0.6, 0.7, 1.0, 1.0)
     hist_data = hists[0]
     hist_mcs = []
     for hist in hists[1:]:
@@ -116,5 +117,8 @@ for hists in zip(data_histos, *all_mc_histos):
       stack.Add(hist)
     stack.Draw('hist same')
     hist_data.Draw("same")
+    leg.AddEntry(hist_data, 'Data', 'l')
+    leg.AddEntry(stack, 'MC', 'f')
+    leg.Draw('same')
     c.Print(args.out)
 c.Print(args.out+']')

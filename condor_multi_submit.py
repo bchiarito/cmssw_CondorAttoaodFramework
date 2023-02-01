@@ -6,7 +6,7 @@ def add_job(tag, options, loc):
 ##############################################################################
 
 output_dir       = 'dev_testing'
-job_tag          = 'fullrun_2'
+job_tag          = 'fullrun_3'
 common_options   = [
 '--lumi=59830'
 ]
@@ -42,7 +42,7 @@ parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 for job in jobs:
-  command = './condor_submit.py'
+  command = './condor_submit.py plotting'
   command = command + ' ' + job['input'] + ' ' + full_output_path+job['tag']
   for option in job['options']:
     command = command + ' ' + option
