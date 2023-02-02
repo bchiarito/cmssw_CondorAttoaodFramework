@@ -12,7 +12,6 @@ import socket
 from datetime import datetime, timedelta, date
 from itertools import zip_longest
 sys.path.append(os.path.join(sys.path[0],'include'))
-#import dataset_management as dm
 if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
@@ -21,18 +20,14 @@ helper_dir = 'helper'
 executable = 'condor_execute_main.sh'
 executable_fast = 'condor_execute_fast.sh'
 submit_file_filename = 'submit_file.jdl'
-input_file_filename_base = 'infiles' # also in executable
-stdout_filename = 'plots_cutflow.txt'
+input_file_filename_base = 'infiles'
 unpacker_filename = 'unpacker.py'
 stageout_filename = 'stageout.py'
 jobinfo_filename = 'job_info.py'
-dataset_cache = 'datasets'
 fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
-script_backend_plotting_pull = 'backend_plotting_pull.sh'
-script_backend_plotting_push = 'backend_plotting_push.sh' 
 branch_selection_filename = 'atto_branch_selection.txt'
 
 # subroutines
@@ -176,40 +171,6 @@ else: raise SystemExit("Missing Option: Specification of --data / --mc / --sigRe
 # check year
 args.year = 'UL18'
 
-# process choice of modules
-constructor = 'blank'
-phoconstructor = 'blank'
-'''
-if not args.twoprongExtra:
-  if args.twoprongSB == 'None':
-    constructor = 'default'
-  if args.twoprongSB == 'full':
-    constructor = 'addLoose'
-    twoprong_sideband = 'Isolation and Symmetry'
-else:
-  if args.twoprongSB == 'None':
-    constructor = 'optionalTrack'
-  if args.twoprongSB == 'full':
-    constructor = 'optionalTrack_addLoose'
-    twoprong_sideband = 'Isolation and Symmetry'
-if args.photonSB == 'None':
-  phoconstructor = 'default'
-if args.photonSB == 'full':
-  phoconstructor = 'addLoose'
-  photon_sideband = 'Full'
-'''
-#if args.selection == 'None':
-#  selection = 'default'
-#if args.selection == 'muon':
-#  selection = 'muon'
-#  selection_text = 'slimmedMuons >= 1'
-#if args.selection == 'photon':
-#  selection = 'photon'
-#  selection_text = 'slimmedPhotons >= 1'
-#if args.selection == 'trigger':
-#  selection = 'muonelectronphoton'
-#  selection_text = 'slimmedMuons or slimmedElectrons or slimmedPhotons >= 1, and pT>15'
-
 # define max files
 maxfiles = args.files
 if args.files < 1: percentmax = True
@@ -277,16 +238,6 @@ elif args.input_cmslpc:
           input_files.append(line)
           if len(input_files) == maxfiles: break
         
-'''
-# input is dataset name
-elif args.input_dataset:
-  dataset_name = args.input
-  if not dm.isCached(dataset_name, dataset_cache): dm.process(dataset_name, dataset_cache)
-  input_files = dm.getFiles(dataset_name, dataset_cache, args.files)
-else:
-  raise SystemExit('ERROR: Checking input failed! Could not determine input type.')
-'''
-
 # finish checking input
 if len(input_files)==0:
   raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --indput_dataset, etc.')
@@ -322,7 +273,6 @@ if output_not_set and site == "hexcms": args.output_local = True
 if output_not_set and site == "cmslpc": args.output_cmslpc = True
 
 # check proxy
-#if site == 'hexcms' and args.input_dataset:
 if site == 'hexcms':
   if args.proxy == '':
     subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)
@@ -340,32 +290,19 @@ if site == 'cmslpc':
   if time_left == '0:00:00': raise SystemExit("ERROR: No time left on grid proxy! Renew with voms-proxy-init -voms cms")
 
 # get git hash/tag
-'''
 tag_info_frontend = subprocess.getoutput("git describe --tags --long")
-tag_info_backend = subprocess.getoutput("cd {}/*/src/; git describe --tags --long".format(cmssw_prebuild_area))
 tag_info_frontend = tag_info_frontend.split('-')
-tag_info_backend = tag_info_backend.split('-')
 f_tag = tag_info_frontend[0]
 f_commits = tag_info_frontend[1]
 f_hash = tag_info_frontend[2]
-b_tag = tag_info_backend[0]
-b_commits = tag_info_backend[1]
-b_hash = tag_info_backend[2]
 f_ver_string = f_tag+" +"+f_commits+" "+f_hash
-b_ver_string = b_tag+" +"+b_commits+" "+b_hash
 f_dir_string = 'f'+f_tag.replace('.','p')+"-"+f_commits+"-"+f_hash[-4:]
-b_dir_string = 'b'+b_tag.replace('.','p')+"-"+b_commits+"-"+b_hash[-4:]
-'''
-f_ver_string = "fv"
-b_ver_string = "bv"
-f_dir_string = "fd"
-b_dir_string = "bd"
 
 # create output area
 base = args.output
 if base[-1] == '/': base = base[:-1]
 timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-output_path = base+'/'+timestamp+'/'+f_dir_string+"_"+b_dir_string
+output_path = base+'/'+timestamp+'/'+f_dir_string
 if args.output_local:
   if site == "cmslpc": raise SystemExit('ERROR: Cannot write output to local filesystem when running on cmslpc: functionality not implemented!')
   if not os.path.isdir(output_path):
@@ -442,7 +379,7 @@ template_filename = helper_dir+"/template_"+stageout_filename
 new_stageout_filename = stageout_filename
 to_replace = {}
 to_replace['__finalfile__'] = finalfile_filename
-to_replace['__stdfilename__'] = stdout_filename
+#to_replace['__stdfilename__'] = stdout_filename
 to_replace['__outputlocation__'] = output_path
 if args.output_local:
   to_replace['__redirector__'] = ''
@@ -466,7 +403,6 @@ for i in range(len(infile_tranches)):
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
   if site == 'cmslpc': sub['use_x509userproxy'] = 'true'
-  #if site == 'hexcms' and args.input_dataset: sub['x509userproxy'] = os.path.basename(proxy_path)
   if site == 'hexcms': sub['x509userproxy'] = os.path.basename(proxy_path)
   sub['transfer_input_files'] = \
     'helper/'+payload_script.replace('mode', mode) + ", " + \
@@ -546,19 +482,21 @@ if args.input_cmslpc: i_assume = 'cmslpc eos'
 if args.input_dataset: i_assume = 'official dataset'
 print("Summary")
 print("-------")
+print("MODE                :", mode)
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
   if args.test: job_dir = 'TestJob_' + args.dir + suffix
   else: job_dir = 'Job_' + args.dir + suffix
   print("Job Directory       :", job_dir)
-print("Job Batch Name      :", args.dir if args.batch is None else args.batch)
-if not datamc == 'data': print("Cross Section       :", str(args.xs))
-print("Branch DatasetName  :", str(args.datasetname))
-##print("Job Specification   :", args.year +" "+datamc.upper())
-##if not args.twoprongSB=='None':
-if not args.filter=='None':
-  print("Filter              : " + args.filter)
+if mode=='atto':
+  if not datamc == 'data': print("Cross Section       :", str(args.xs))
+  print("Branch DatasetName  :", str(args.datasetname))
+  if not args.filter=='None':
+    print("Filter              : " + args.filter)
+if mode=='plotting':
+  if not args.lumi==1.0:
+    print("Lumi                : " + str(args.lumi))
 print("Total Jobs          :", str(TOTAL_JOBS))
 print("Total Files         :", str(num_total_files))
 print("Files/Job (approx)  :", str(N))
@@ -568,7 +506,6 @@ else : print("Input File          : " + ((ex_in[:88] + '..') if len(ex_in) > 90 
 print("Output              : " + o_assume)
 print("Output Directory    :", output_path)
 print("Schedd              :", schedd_ad["Name"])
-#if args.input_dataset: print("Grid Proxy          :", time_left + ' left')
 print("Grid Proxy          :", time_left + ' left')
 
 # prompt user to double-check job summary
