@@ -98,12 +98,15 @@ for hists in zip(data_histos, *all_mc_histos):
     c.SetLogy(0)
   else:
     print("plotting "+hists[0].GetName())
-    leg = TLegend(0.6, 0.7, 1.0, 1.0)
+    leg = ROOT.TLegend(0.8, 0.8, 1.0, 1.0)
     hist_data = hists[0]
     hist_mcs = []
     for hist in hists[1:]:
       hist_mcs.append(hist)
     if args.scale and not hist_data.Integral()==0: hist_data.Scale(1.0/hist_data.Integral())
+    data_integral = hist_data.Integral()
+    data_underflow = hist_data.GetBinContent(0)
+    data_overflow = hist_data.GetBinContent(hist_data.GetNbinsX()+1)
     hist_data.SetLineColor(ROOT.kBlack)
     hist_data.Sumw2()
     hist_data.Draw()
@@ -112,13 +115,27 @@ for hists in zip(data_histos, *all_mc_histos):
     if args.scale:
       integrals = [hist.Integral() for hist in hist_mcs]
       scale = reduce(lambda a,b: a+b, integrals)
+    mc_integral = 0
+    mc_underflow = 0
+    mc_overflow = 0
     for hist in hist_mcs:
       if args.scale and not scale == 0: hist.Scale(1.0/scale)
       stack.Add(hist)
+      mc_integral += hist.Integral()
+      mc_underflow += hist.GetBinContent(0)
+      mc_overflow += hist.GetBinContent(hist.GetNbinsX()+1)
     stack.Draw('hist same')
     hist_data.Draw("same")
     leg.AddEntry(hist_data, 'Data', 'l')
-    leg.AddEntry(stack, 'MC', 'f')
+    leg.AddEntry(hist_mcs[0], 'GJets', 'f')
+    if data_underflow==0 and data_overflow==0:
+      leg.AddEntry('', "Data {:,.0f}".format(data_integral), '')
+    else:
+      leg.AddEntry('', "Data {:,.0f}, {:,.0f}|{:,.0f}".format(data_integral, data_underflow, data_overflow), '')
+    if mc_underflow==0 and mc_overflow==0:
+      leg.AddEntry('', "MC {:,.0f}".format(mc_integral), '')
+    else:
+      leg.AddEntry('', "MC {:,.0f}, {:,.0f}|{:,.0f}".format(mc_integral, mc_underflow, mc_overflow), '')
     leg.Draw('same')
     c.Print(args.out)
 c.Print(args.out+']')
