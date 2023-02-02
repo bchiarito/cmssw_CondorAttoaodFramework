@@ -8,9 +8,9 @@ git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODT
 cd PhysicsTools/NanoAODTools/python
 if [[ -z "$1" ]] ; then
   echo ""
-  echo "Got no argument, using default (https://github.com/bchiarito/cmssw_temp_attoframework_backend.git) github repo for backend"
+  echo "Got no argument, using default (https://github.com/bchiarito/cmssw_CondorAttoaodBackend.git) github repo for backend"
   echo ""
-  git clone https://github.com/bchiarito/cmssw_temp_attoframework_backend.git fmk_atto
+  git clone https://github.com/bchiarito/cmssw_CondorAttoaodBackend.git fmk_atto
 else
   echo ""
   echo "Using argument as github repo"
