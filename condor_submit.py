@@ -107,6 +107,8 @@ atto_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
 help="dataset name for metadata tree")
 atto_args.add_argument("--xs", default=1.0, type=float,
 help="cross section for metadata tree")
+atto_args.add_argument("--recophiphoton", default='None', metavar='def', choices=['None', 'HPID', "cutBased"],
+help="photon definition (or 'None' to omit recophi branches)")
 
 # plotting execution specification
 plotting_args = parser.add_argument_group('plotting mode execution')
@@ -398,7 +400,7 @@ for i in range(len(infile_tranches)):
   else: job_dir = 'Job_' + args.dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.recophiphoton
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
