@@ -5,14 +5,14 @@ def add_job(tag, options, loc):
 
 ##############################################################################
 
-output_dir       = 'fullrun_w_tight'
-job_tag          = 'fullrun_w_tight'
+output_dir       = 'twoprong/sanity_plots/atto'
+job_tag          = 'fullrun_sansD_feb3'
 common_options   = [
 '--input_cmslpc',
 '--filesPerJob=20',
 ]
 jobdir_prefix    = job_tag + '_'
-full_output_path = '/store/user/bchiari1/atto/' + output_dir + '/' + job_tag
+full_output_path = '/store/user/bchiari1/' + output_dir + '/' + job_tag
 
 add_job(tag='egamma18a', options='--data --datasetname=egamma18a',
         loc='/store/user/bchiari1/full_dataset_runs_egamma_18a_full/2022-08-23-18-32-47/fv1p4-10-44c4_bv1p1-1-331c')
@@ -43,7 +43,7 @@ args = parser.parse_args()
 
 for job in jobs:
   command = './condor_submit.py atto'
-  command = command + ' ' + job['input'] + ' ' + full_output_path+job['tag']
+  command = command + ' ' + job['input'] + ' ' + full_output_path+'/'+job['tag']
   for option in job['options']:
     command = command + ' ' + option
   command += ' '
