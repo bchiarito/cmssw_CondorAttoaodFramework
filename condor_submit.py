@@ -254,7 +254,7 @@ if args.verbose:
 if args.input_cmslpc:
   ret = os.system('xrdfs root://cmseos.fnal.gov/ ls ' + input_files[0] + ' > /dev/null')
   if not ret == 0:
-    raise SystemExit('ERROR: Input is not a valid file on cmslpc eos area! Did you mean to use --input_dataset?')
+    raise SystemExit('ERROR: Input is not a valid file on cmslpc eos area! 1) try voms-proxy-init 1) cannot do cmsenv 2) did you mean --input_dataset?')
 elif args.input_local:
   if not os.path.isfile(args.input) and not os.path.isdir(args.input):
     raise SystemExit('ERROR: Input is not a valid directory or file on hexcms!')
