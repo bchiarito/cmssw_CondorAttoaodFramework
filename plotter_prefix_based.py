@@ -36,6 +36,8 @@ mcdirs.append(args.prefix + 'gjets200to400/')
 mcdirs.append(args.prefix + 'gjets400to600/')
 mcdirs.append(args.prefix + 'gjets600toInf/')
 
+ROOT.gStyle.SetOptStat(0)
+
 # process data into one list of TH1's
 data_files = []
 col_data_histos = []
@@ -98,7 +100,7 @@ for hists in zip(data_histos, *all_mc_histos):
     c.SetLogy(0)
   else:
     print("plotting "+hists[0].GetName())
-    leg = ROOT.TLegend(0.8, 0.8, 1.0, 1.0)
+    leg = ROOT.TLegend(0.75, 0.8, 1.0, 1.0)
     hist_data = hists[0]
     hist_mcs = []
     for hist in hists[1:]:
