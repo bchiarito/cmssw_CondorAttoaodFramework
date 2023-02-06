@@ -17,7 +17,7 @@ common_options   = [
 '--lumi=59830'
 ]
 jobdir_prefix    = job_tag
-full_output_path = '/cms/chiarito/condor/' + output_dir + '/' + job_tag
+full_output_path = '/cms/chiarito/eos/' + output_dir + '/' + job_tag
 
 locs = {}
 if args.prefix:
