@@ -298,7 +298,7 @@ f_tag = tag_info_frontend[0]
 f_commits = tag_info_frontend[1]
 f_hash = tag_info_frontend[2]
 f_ver_string = f_tag+" +"+f_commits+" "+f_hash
-f_dir_string = 'f'+f_tag.replace('.','p')+"-"+f_commits+"-"+f_hash[-4:]
+f_dir_string = f_tag.replace('.','p')+"-"+f_commits+"-"+f_hash[-4:]
 
 # create output area
 base = args.output
