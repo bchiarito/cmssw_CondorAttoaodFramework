@@ -9,6 +9,7 @@ import math
 import re
 import time
 import socket
+import imp
 from datetime import datetime, timedelta, date
 from itertools import zip_longest
 sys.path.append(os.path.join(sys.path[0],'include'))
@@ -64,7 +65,6 @@ except ImportError as err:
 
 # command line options
 parser = argparse.ArgumentParser(usage="./%(prog)s MODE INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
-
 parser.add_argument("mode", choices=['atto','plotting'], metavar='MODE', help="choose 'atto' or 'plotting'")
 
 # input/output
@@ -79,7 +79,7 @@ help=argparse.SUPPRESS)
 input_options.add_argument("--input_dataset", action="store_true",
 help=argparse.SUPPRESS)
 parser.add_argument("output", metavar='OUTPUT',
-help="Absoulte path to local directory, or cmslpc eos storage (/store/user/...).")
+help="Absoulte path to local directory, or cmslpc eos storage (/store/user/...), or single hyphen '-' for plotting jobs to indicate subdirectory of attoaod location.")
 output_options = parser.add_mutually_exclusive_group()
 output_options.add_argument("--output_local", action="store_true",
 help=argparse.SUPPRESS)
@@ -187,6 +187,12 @@ if args.scheddLimit == -1:
 input_not_set = False
 if re.match("(?:" + "/.*/.*/MINIAOD" + r")\Z", args.input) or \
    re.match("(?:" + "/.*/.*/MINIAODSIM" + r")\Z", args.input): args.input_dataset = True
+if (args.input).startswith('Job_'):
+  if not args.input[-1] == '/': args.input += '/'
+  job = imp.load_source("job", args.input+"job_info.py")
+  output_path = job.output
+  atto_job_dir = args.input
+  args.input = output_path
 if args.input_local == False and args.input_cmslpc == False and args.input_dataset == False:
   input_not_set = True
 if input_not_set and site == "hexcms": args.input_local = True
@@ -266,6 +272,8 @@ else:
 # check output
 if args.output[0] == '.':
   raise SystemExit('ERROR: Must use absolute path for output location!')
+if args.output == '-':
+  args.output = args.input+'/plots/'
 output_not_set = False
 if not args.output[0:7] == '/store/':
   args.output_local = True
@@ -322,6 +330,15 @@ if args.output_cmslpc:
   ret = os.system("eos root://cmseos.fnal.gov rm " + output_path + "/blank.txt &> /dev/null")
   if not ret == 0: raise SystemExit('ERROR: Failed eosrm test file from output eos area!')
   os.system('rm blank.txt')
+
+# job directory
+if 'atto_job_dir' in globals():
+  if args.dir.startswith('condor_'):
+    job_dir = atto_job_dir+'/plotting_jobs/'
+    job_dir = os.path.normpath(job_dir)
+else:
+  if args.test: job_dir = 'TestJob_' + args.dir
+  else: job_dir = 'Job_' + args.dir
 
 # splitting
 num_total_files = len(input_files)
@@ -396,8 +413,7 @@ subs = []
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
-  if args.test: job_dir = 'TestJob_' + args.dir + suffix
-  else: job_dir = 'Job_' + args.dir + suffix
+  job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
   sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.recophiphoton
@@ -414,7 +430,8 @@ for i in range(len(infile_tranches)):
     branch_selection_filename
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
-  sub['JobBatchName'] = args.dir if args.batch is None else args.batch
+  #sub['JobBatchName'] = args.dir if args.batch is None else args.batch
+  sub['JobBatchName'] = job_dir.replace('/','-') if args.batch is None else args.batch
   sub['output'] = job_dir+'/stdout/$(Cluster)_$(Process)_out.txt'
   if args.noErr:
     sub['error'] = '/dev/null'
@@ -428,8 +445,7 @@ for i in range(len(infile_tranches)):
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
-  if args.test: job_dir = 'TestJob_' + args.dir + suffix
-  else: job_dir = 'Job_' + args.dir + suffix
+  job_dir = job_dir + suffix
   if args.test: args.force = True
   if os.path.isdir("./"+job_dir) and not args.force:
     raise SystemExit("ERROR: Directory " + job_dir + " already exists. Use option -f to overwrite")
@@ -443,8 +459,7 @@ for i in range(len(infile_tranches)):
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
-  if args.test: job_dir = 'TestJob_' + args.dir + suffix
-  else: job_dir = 'Job_' + args.dir + suffix
+  job_dir = job_dir + suffix
   for filename in infile_tranches[i]:
     os.system('mv ' + filename + ' ' + job_dir + '/infiles/')
   os.system('cp ' + new_unpacker_filename + ' ' + job_dir)
@@ -488,8 +503,7 @@ print("MODE                :", mode)
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
-  if args.test: job_dir = 'TestJob_' + args.dir + suffix
-  else: job_dir = 'Job_' + args.dir + suffix
+  job_dir = job_dir + suffix
   print("Job Directory       :", job_dir)
 if mode=='atto':
   if not datamc == 'data': print("Cross Section       :", str(args.xs))
@@ -506,7 +520,7 @@ print("Input               : " + i_assume)
 if len(input_files)>1: print("Example Input File  : " + ((ex_in[:88] + '..') if len(ex_in) > 90 else ex_in))
 else : print("Input File          : " + ((ex_in[:88] + '..') if len(ex_in) > 90 else ex_in))
 print("Output              : " + o_assume)
-print("Output Directory    :", output_path)
+print("Output Directory    :", '..' + output_path[-88:] if len(output_path)>90 else output_path)
 print("Schedd              :", schedd_ad["Name"])
 print("Grid Proxy          :", time_left + ' left')
 
@@ -522,8 +536,7 @@ if not args.auto:
       for i in range(len(infile_tranches)):
         if len(infile_tranches)==1: suffix = ''
         else: suffix = '_tranche'+str(i+1)
-        if args.test: job_dir = 'TestJob_' + args.dir + suffix
-        else: job_dir = 'Job_' + args.dir + suffix
+        job_dir = job_dir + suffix
         os.system('rm -rf '+job_dir)
       sys.exit()
     elif response == '': break
@@ -548,8 +561,7 @@ for i, tranche in enumerate(infile_tranches):
 for i in range(len(infile_tranches)):
   if len(infile_tranches)==1: suffix = ''
   else: suffix = '_tranche'+str(i+1)
-  if args.test: job_dir = 'TestJob_' + args.dir + suffix
-  else: job_dir = 'Job_' + args.dir + suffix
+  job_dir = job_dir + suffix
   template_filename = helper_dir+"/template_"+jobinfo_filename
   replaced_filename = jobinfo_filename
   to_replace = {}
