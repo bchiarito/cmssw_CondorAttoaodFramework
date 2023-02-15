@@ -4,7 +4,6 @@ echo ">>> Running on: `uname -a`"
 echo ">>> System software: `cat /etc/redhat-release`"
 echo ""
 echo "&&& Here there are all the input arguments &&&"
-echo "&&& unpacker stageout proc mc/data year lumi twoprongSB photonSB selection &&&"
 echo $@
 export INITIAL_DIR=$(pwd)
 echo ''
