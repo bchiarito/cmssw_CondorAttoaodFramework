@@ -43,7 +43,7 @@ for datadir in datadirs:
   print(datadir + " data filter efficiency: " + str(passfilter/total))
 data_histos = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_data_histos)  
 
-sys.exit()
+#sys.exit()
 
 # process gjets into one list of TH1's: gjets_histos
 color = ROOT.kGreen

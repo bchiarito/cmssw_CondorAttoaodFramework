@@ -14,7 +14,10 @@ def add_job(tag, options, loc):
 #job_tag          = 'plots_'+args.prefix[4:]
 #output_dir       = 'twoprong/sanity_plots/plots/'
 common_options   = [
-'--lumi=59830'
+'--lumi=59830',
+'--filesPerJob=1',
+#'--numJobs=1',
+'-f'
 ]
 #jobdir_prefix    = job_tag
 #full_output_path = '/cms/chiarito/eos/' + output_dir + '/' + job_tag
@@ -30,23 +33,23 @@ for d in os.listdir('.'):
 #for key in locs: print(key, locs[key])
 
 ## mc must have --numJobs=1
-add_job(tag='egamma18a', options='--data --filesPerJob=20',
+add_job(tag='egamma18a', options='--data',
         loc=locs['egamma18a'])
-add_job(tag='egamma18b', options='--data --filesPerJob=20',
+add_job(tag='egamma18b', options='--data',
         loc=locs['egamma18b'])
-add_job(tag='egamma18c', options='--data --filesPerJob=20',
+add_job(tag='egamma18c', options='--data',
         loc=locs['egamma18c'])
-add_job(tag='egamma18d', options='--data --filesPerJob=20',
+add_job(tag='egamma18d', options='--data',
         loc=locs['egamma18d'])
-add_job(tag='gjets40to100', options='--mc --numJobs=1',
+add_job(tag='gjets40to100', options='--mc',
         loc=locs['gjets40to100'])
-add_job(tag='gjets100to200', options='--mc --numJobs=1',
+add_job(tag='gjets100to200', options='--mc',
         loc=locs['gjets100to200'])
-add_job(tag='gjets200to400', options='--mc --numJobs=1',
+add_job(tag='gjets200to400', options='--mc',
         loc=locs['gjets200to400'])
-add_job(tag='gjets400to600', options='--mc --numJobs=1',
+add_job(tag='gjets400to600', options='--mc',
         loc=locs['gjets400to600'])
-add_job(tag='gjets600toInf', options='--mc --numJobs=1',
+add_job(tag='gjets600toInf', options='--mc',
         loc=locs['gjets600toInf'])
 
 ##############################################################################
@@ -65,5 +68,5 @@ for job in jobs:
     command = command + ' ' + option
   #command += ' --dir='+jobdir_prefix+job['tag']
   command += ' --auto'
-  print(command+'\n')
+  print('\n'+command+'\n')
   if not args.test: os.system(command)
