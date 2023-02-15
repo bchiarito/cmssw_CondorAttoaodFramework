@@ -30,6 +30,7 @@ hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
 branch_selection_filename = 'atto_branch_selection.txt'
+plotting_util_filename = 'plotting_util.py'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -416,7 +417,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.recophiphoton
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.recophiphoton+' '+args.input
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -427,7 +428,8 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
-    branch_selection_filename
+    branch_selection_filename + ", " + \
+    plotting_util_filename
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
   #sub['JobBatchName'] = args.dir if args.batch is None else args.batch
