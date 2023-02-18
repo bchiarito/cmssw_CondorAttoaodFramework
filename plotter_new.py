@@ -28,25 +28,22 @@ gjetsdirs.append(args.prefix + 'gjets100to200/' + plotting_jobs)
 gjetsdirs.append(args.prefix + 'gjets200to400/' + plotting_jobs)
 gjetsdirs.append(args.prefix + 'gjets400to600/' + plotting_jobs)
 gjetsdirs.append(args.prefix + 'gjets600toInf/' + plotting_jobs)
-
 dydirs = []
-dydirs.append('Job_plotting_dy50/')
+dydirs.append('Job_plotting2_dy50/')
 
-# process data into one list of TH1's: data_histos
+# process data into one list of TH1's
 data_files = []
 col_data_histos = []
 for datadir in datadirs:
   data_file = util.get_hadd(datadir)
   data_files.append(data_file)
   col_data_histos.append( [key.ReadObj() for key in (data_file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()] )
-  # print filter efficiency
-  #metadata = util.get_meta(datadir.replace('plots_', ''))
   metadata = util.get_meta(os.path.join(os.path.dirname(os.path.dirname(datadir)),''))
   total = float(metadata['evtProcessed']); passfilter = float(metadata['evtPassDatafilter'])
   print(datadir + " data filter efficiency: " + str(passfilter/total))
 data_histos = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_data_histos)  
 
-# process gjets into one list of TH1's: gjets_histos
+# process gjets into one list of TH1's
 gjets_files = []
 col_gjets_histos = []
 for mc_jobdir in gjetsdirs:
@@ -55,7 +52,7 @@ for mc_jobdir in gjetsdirs:
   col_gjets_histos.append( [key.ReadObj() for key in (mc_file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()] )
 gjets_histos = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_gjets_histos)  
 
-# process dy into one list of TH1's: gjets_histos
+# process dy into one list of TH1's
 dy_files = []
 col_dy_histos = []
 for mc_jobdir in dydirs:
@@ -66,15 +63,14 @@ dy_histos = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_dy_hi
 
 # add mcs into big collection
 all_mc_histos = [gjets_histos, dy_histos]
-#all_mc_histos = [gjets_histos]
 
 # style
 ROOT.gStyle.SetOptStat(0)
 
 # make gjets hthat plot
-c = ROOT.TCanvas()
-c.cd()
+c = ROOT.TCanvas('c1','c1')
 c.SetLogy()
+c.Print('aux.pdf[')
 c.Print(args.out+'[')
 for hists in zip(*col_gjets_histos):
   if (hists[0].GetName()).startswith('cutflow'):
@@ -83,7 +79,7 @@ for hists in zip(*col_gjets_histos):
       hist.SetLineColor(ROOT.kRed+i)
       hist.SetFillColor(ROOT.kRed+i)
       hist.Draw('hist')
-      c.Print(args.out)
+      c.Print('aux.pdf')
   else:
     if not (hists[0].GetName()).startswith('MC_'): continue
     print("plotting "+hists[0].GetName())
@@ -106,21 +102,20 @@ color = ROOT.kRed
 for hist in dy_histos:
   hist.SetLineColor(color)
   hist.SetFillColor(color)
-for hists in zip(data_histos, *all_mc_histos):
-  if (hists[0].GetName()).startswith('MC_'): continue
-  if (hists[0].GetName()).startswith('cutflow'):
-    print("plotting data "+hists[0].GetName())
+#for hists in zip(data_histos, *all_mc_histos):
+for data_hist, gjets_hist, dy_hist in zip(data_histos, gjets_histos, dy_histos):
+  if (data_hist.GetName()).startswith('MC_'): continue
+  if (data_hist.GetName()).startswith('cutflow'):
+    print("plotting data "+data_hist.GetName())
     c.SetLogy()
-    hist_data = hists[0]
+    hist_data = data_hist
     hist_data.Draw()
-    c.Print(args.out)
+    c.Print('aux.pdf')
   else:
-    print("plotting "+hists[0].GetName())
-    leg = ROOT.TLegend(0.75, 0.8, 1.0, 1.0)
-    hist_data = hists[0]
-    hist_mcs = []
-    for hist in hists[1:]:
-      hist_mcs.append(hist)
+    print("plotting "+data_hist.GetName())
+    leg = ROOT.TLegend(0.75, 0.75, 1.0, 1.0)
+    hist_data = data_hist
+    hist_mcs = [dy_hist, gjets_hist]
     if args.scale and not hist_data.Integral()==0: hist_data.Scale(1.0/hist_data.Integral())
     data_integral = hist_data.Integral()
     data_underflow = hist_data.GetBinContent(0)
@@ -147,7 +142,8 @@ for hists in zip(data_histos, *all_mc_histos):
     stack.Draw('hist same')
     hist_data.Draw("same")
     leg.AddEntry(hist_data, 'Data', 'l')
-    leg.AddEntry(hist_mcs[0], 'GJets', 'f')
+    leg.AddEntry(hist_mcs[1], 'GJets', 'f')
+    leg.AddEntry(hist_mcs[0], 'DY m50', 'f')
     if data_underflow==0 and data_overflow==0:
       leg.AddEntry('', "Data {:,.0f}".format(data_integral), '')
     else:
@@ -166,3 +162,4 @@ for hists in zip(data_histos, *all_mc_histos):
     leg.Draw('same')
     c.Print(args.out)
 c.Print(args.out+']')
+c.Print('aux.pdf]')

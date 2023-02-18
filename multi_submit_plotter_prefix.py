@@ -5,34 +5,25 @@ import imp
 import argparse
 parser = argparse.ArgumentParser(description='Executes multiple condor_submit.py commands, configuration inside script')
 parser.add_argument('-t', '--test', action='store_true', help='print command but do not run')
+parser.add_argument('-f', '--force', action='store_true', help='delete old job dirs if they exist')
 parser.add_argument('prefix', help='full run on all matching jobs directories')
 args = parser.parse_args()
 jobs = []
 def add_job(tag, options, loc):
   job = {}; job['input'] = loc; job['tag'] = tag; job['options'] = options.split(); jobs.append(job)
 
-#job_tag          = 'plots_'+args.prefix[4:]
-#output_dir       = 'twoprong/sanity_plots/plots/'
-common_options   = [
+common_options = [
 '--lumi=59830',
 '--filesPerJob=1',
-#'--numJobs=1',
-'-f'
 ]
-#jobdir_prefix    = job_tag
-#full_output_path = '/cms/chiarito/eos/' + output_dir + '/' + job_tag
+if args.force: common_options.append('-f')
 
 locs = {}
 for d in os.listdir('.'):
   if os.path.isdir(d) and d.startswith(args.prefix):
     tag = d[d.rfind('_')+1:]
-    #job = imp.load_source("job", d+"/job_info.py")
-    #path = job.output
-    #locs[tag] = path
     locs[tag] = d
-#for key in locs: print(key, locs[key])
 
-## mc must have --numJobs=1
 add_job(tag='egamma18a', options='--data',
         loc=locs['egamma18a'])
 add_job(tag='egamma18b', options='--data',
@@ -53,20 +44,15 @@ add_job(tag='gjets600toInf', options='--mc',
         loc=locs['gjets600toInf'])
 
 ##############################################################################
-# run the metadata summing script on each directory
-
-##############################################################################
 
 for job in jobs:
   command = './condor_submit.py plotting'
-  #command = command + ' ' + job['input'] + ' ' + full_output_path+job['tag']
   command = command + ' ' + job['input'] + ' -'
   for option in job['options']:
     command = command + ' ' + option
   command += ' '
   for option in common_options:
     command = command + ' ' + option
-  #command += ' --dir='+jobdir_prefix+job['tag']
   command += ' --auto'
   print('\n'+command+'\n')
   if not args.test: os.system(command)
