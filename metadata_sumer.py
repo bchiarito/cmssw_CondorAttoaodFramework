@@ -40,7 +40,7 @@ xs = add_branch(tree, 'f', 'xs')
 
 for branch in metadata_chain.GetListOfBranches():
   print(branch.GetName())
-
+'''
 for entry in metadata_chain:
   #print(entry.dataset_id)
   dataset_id[0] = entry.dataset_id
@@ -50,6 +50,37 @@ for entry in metadata_chain:
   evtPassDatafilter[0] = entry.evtPassDatafilter
   xs[0] = entry.xs
   tree.Fill()
+'''
+
+s_dataset_id = 0
+s_evtWritten = 0
+s_evtProcessed = 0
+s_evtPassDatafilter = 0
+s_xs = 0
+
+for entry in metadata_chain:
+  #print(entry.dataset_id)
+  s_dataset_id = entry.dataset_id
+  s_evtWritten += entry.evtWritten
+  s_evtProcessed += entry.evtProcessed
+  s_evtPassDatafilter += entry.evtPassDatafilter
+  s_xs = entry.xs
+
+dataset_id[0] = s_dataset_id
+evtWritten[0] = s_evtWritten
+evtProcessed[0] = s_evtProcessed
+evtPassDatafilter[0] = s_evtPassDatafilter
+xs[0] = s_xs
+tree.Fill()
+
+for entry in tree:
+  print(entry.dataset_id)
+  print(entry.evtWritten)
+  print(entry.evtProcessed)
+  print(entry.evtPassDatafilter)
+  print(entry.xs)
+
+print([entry.dataset_id for entry in tree])
 
 outfile = ROOT.TFile('full_metadata.root', 'recreate')
 tree.Write()
