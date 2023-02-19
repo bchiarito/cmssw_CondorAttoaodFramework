@@ -5,6 +5,9 @@ import sys
 import ROOT
 import json
 
+# global to prevent files from closing when going out of scope
+files = []
+
 # hadd directory and return the result
 def get_hadd(jobdir):
   job = imp.load_source("job", jobdir+"job_info.py")
@@ -37,3 +40,45 @@ def get_meta(path, jobdir=True):
   d['evtPassDatafilter'] = evtPassDatafilter
   d['xs'] = xs
   return d
+
+def get_histo_collection(dir_list):
+  '''
+  Takes a list of directories with histogram-level rootfiles
+  
+  will first hadd each directory
+  will then collection the histograms into a list
+
+  Returns a list, 1-1 with the original directories, each entry of which is a list of TH1's from the rootfiles
+  '''
+  col_histos = []
+  for dir in dir_list:
+    file = get_hadd(dir)
+    files.append(file)
+    col_histos.append( [key.ReadObj() for key in (file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()])
+  return col_histos
+
+def get_flat_histo_collection(dir_list):
+  '''
+  Similar to get_histo_collection but additionally adds the corresponding histograms from each directory
+  
+  Returns a list of TH1's, summed across both files and directories
+  '''
+  col_histos = []
+  for dir in dir_list:
+    file = get_hadd(dir)
+    files.append(file)
+    col_histos.append( [key.ReadObj() for key in (file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()])
+  return reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+def get_effs(dir_list):
+  '''
+  Takes a list of directories with atto-level rootfiles (incl metadata)
+  
+  Returns a list of data filter efficiencies, 1-1 with the original directories
+  '''
+  effs = []
+  for dir in dir_list:
+    metadata = get_meta(os.path.join(os.path.dirname(os.path.dirname(dir)),''))
+    total = float(metadata['evtProcessed']); passfilter = float(metadata['evtPassDatafilter'])
+    effs.append(passfilter/total)
+  return effs
