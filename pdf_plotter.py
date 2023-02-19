@@ -5,7 +5,7 @@ import imp
 import argparse
 from functools import reduce
 import ROOT
-import plotting_util as util
+import helper.plotting_util as util
 
 # command line options
 parser = argparse.ArgumentParser(description="Makes pdf from atto+nano job directories")
@@ -39,9 +39,9 @@ dydirs.append('Job_plotting2_dy50/')
 
 # process into TH1's
 data_histos = util.get_flat_histo_collection(datadirs)
-gjets_histos = util.get_flat_histo_collection(datadirs)
+gjets_histos = util.get_flat_histo_collection(gjetsdirs)
 dy_histos = util.get_flat_histo_collection(dydirs)
-col_gjets_histos = util.get_histo_collection(datadirs)
+col_gjets_histos = util.get_histo_collection(gjetsdirs)
 
 # start pdf files
 c = ROOT.TCanvas()

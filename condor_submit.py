@@ -429,7 +429,7 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
     branch_selection_filename + ", " + \
-    plotting_util_filename
+    "helper/" + plotting_util_filename
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
   #sub['JobBatchName'] = args.dir if args.batch is None else args.batch
