@@ -8,22 +8,15 @@ from array import array
 import ROOT
 
 # command line options
-parser = argparse.ArgumentParser(description="")
-# input/output
-parser.add_argument("jobdir", help='')
+parser = argparse.ArgumentParser(description="produce full metadata for local directory with attoaod")
+parser.add_argument("path", help='')
+parser.add_argument("--outfile", default='full_metadata.root', help='')
 args = parser.parse_args()
 
-job = imp.load_source("job", args.jobdir+"job_info.py")
-path = job.output
-
 metadata_chain = ROOT.TChain('Metadata')
-for fi in os.listdir(path):
-  if fi.endswith('.root'):
-    #print(fi)
-    metadata_chain.Add(path+'/'+fi)
-
-#for entry in metadata_chain:
-#  print(entry.dataset_id)
+for fi in os.listdir(args.path):
+  if fi.endswith('.root') and fi.startswith('attoaod'):
+    metadata_chain.Add(args.path+'/'+fi)
 
 def add_branch(tree, char, name):
   temp_array = array(char, [0])
@@ -38,20 +31,6 @@ evtProcessed = add_branch(tree, 'i', 'evtProcessed')
 evtPassDatafilter = add_branch(tree, 'i', 'evtPassDatafilter')
 xs = add_branch(tree, 'f', 'xs')
 
-for branch in metadata_chain.GetListOfBranches():
-  print(branch.GetName())
-'''
-for entry in metadata_chain:
-  #print(entry.dataset_id)
-  dataset_id[0] = entry.dataset_id
-  flag[0] = entry.flag
-  evtWritten[0] = entry.evtWritten
-  evtProcessed[0] = entry.evtProcessed
-  evtPassDatafilter[0] = entry.evtPassDatafilter
-  xs[0] = entry.xs
-  tree.Fill()
-'''
-
 s_dataset_id = 0
 s_evtWritten = 0
 s_evtProcessed = 0
@@ -59,30 +38,23 @@ s_evtPassDatafilter = 0
 s_xs = 0
 
 for entry in metadata_chain:
-  #print(entry.dataset_id)
-  s_dataset_id = entry.dataset_id
-  s_evtWritten += entry.evtWritten
-  s_evtProcessed += entry.evtProcessed
-  s_evtPassDatafilter += entry.evtPassDatafilter
-  s_xs = entry.xs
-
-dataset_id[0] = s_dataset_id
-evtWritten[0] = s_evtWritten
-evtProcessed[0] = s_evtProcessed
-evtPassDatafilter[0] = s_evtPassDatafilter
-xs[0] = s_xs
-tree.Fill()
+  dataset_id[0] = entry.dataset_id
+  flag[0] = entry.flag
+  evtWritten[0] = entry.evtWritten
+  evtProcessed[0] = entry.evtProcessed
+  evtPassDatafilter[0] = entry.evtPassDatafilter
+  xs[0] = entry.xs
+  tree.Fill()
 
 for entry in tree:
   print(entry.dataset_id)
+  print(entry.flag)
   print(entry.evtWritten)
   print(entry.evtProcessed)
   print(entry.evtPassDatafilter)
   print(entry.xs)
 
-print([entry.dataset_id for entry in tree])
-
-outfile = ROOT.TFile('full_metadata.root', 'recreate')
+outfile = ROOT.TFile(args.outfile, 'recreate')
 tree.Write()
 outfile.Close()
-os.system('mv full_metadata.root '+path)
+os.system('mv '+args.outfile+' '+args.path)
