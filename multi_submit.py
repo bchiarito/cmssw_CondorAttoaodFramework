@@ -16,23 +16,23 @@ parser.add_argument('--prefix', required='plotting' in sys.argv, help='match con
 parser.add_argument('-t', '--test', action='store_true', help='print command but do not run')
 parser.add_argument('-f', '--force', action='store_true', help='delete old job dirs if they exist')
 parser.add_argument('--fast', action='store_true', help='only 2 files')
-parser.add_argument('-d', '--dir', default='mutlirun_'+date.today().strftime("%b-%d-%Y"), help='for atto, name for job directories')
+parser.add_argument('-n', '--name', default='mutlirun_'+date.today().strftime("%b-%d-%Y"), help='for atto: name of run')
 args = parser.parse_args()
 
 # for atto
-full_output_path = '/cms/chiarito/eos/twoprong/sanity_plots/atto/' + args.dir
+full_output_path = '/cms/chiarito/eos/twoprong/atto/' + args.name
 
 if args.mode == 'atto':
-  common_options = [
-  '--lumi=59830',
-  '--filesPerJob=1',
-  ]
-if args.mode == 'plotting':
   common_options   = [
   '--filesPerJob=20',
   '--scheddLimit=100',
   '--filter="one_hpid_photon"',
   '--recophiphoton=HPID',
+  ]
+if args.mode == 'plotting':
+  common_options = [
+  '--lumi=59830',
+  '--filesPerJob=10',
   ]
 if args.force: common_options.append('-f')
 if args.fast: common_options.append('--files=2')
@@ -48,6 +48,7 @@ if args.mode == 'atto':
   locs['gjets200to400'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets200to400/'
   locs['gjets400to600'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets400to600/'
   locs['gjets600toInf'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets600toInf/'
+  locs['dy50'] = '/cms/twoprong/chiarito/nano/dy/dy_m50/fv1p4-23-d5d2_bv1p1-2-3aa0/'
 if args.mode == 'plotting':
   for d in os.listdir('.'):
     if os.path.isdir(d) and d.startswith(args.prefix):
@@ -63,6 +64,7 @@ add_job(tag='gjets100to200', options='--mc --xs=9223 --datasetname=gjets100to200
 add_job(tag='gjets200to400', options='--mc --xs=2303 --datasetname=gjets200to400', loc=locs['gjets200to400'])
 add_job(tag='gjets400to600', options='--mc --xs=274.5 --datasetname=gjets400to600', loc=locs['gjets400to600'])
 add_job(tag='gjets600toInf', options='--mc --xs=93.52 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
+add_job(tag='dy50', options='--mc --xs=6077 --datasetname=dy50', loc=locs['dy50'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
@@ -74,7 +76,7 @@ for job in jobs:
   command += ' '
   for option in common_options:
     command = command + ' ' + option
-  if args.mode == 'atto': command += ' --dir='+args.dir+'_'+job['tag']
+  if args.mode == 'atto': command += ' --dir='+args.name+'_'+job['tag']
   command += ' --auto'
   print('\n'+command+'\n')
   if not args.test: os.system(command)

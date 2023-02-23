@@ -35,7 +35,7 @@ gjetsdirs.append(args.prefix + 'gjets200to400/' + plotting_jobs)
 gjetsdirs.append(args.prefix + 'gjets400to600/' + plotting_jobs)
 gjetsdirs.append(args.prefix + 'gjets600toInf/' + plotting_jobs)
 dydirs = []
-dydirs.append('Job_plotting2_dy50/')
+dydirs.append(args.prefix + 'dy50/' + plotting_jobs)
 
 # process into TH1's
 data_histos = util.get_flat_histo_collection(datadirs)

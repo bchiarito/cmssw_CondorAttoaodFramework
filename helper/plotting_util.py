@@ -26,7 +26,7 @@ def get_meta(path, jobdir=True):
   d = {}
   metadata_chain = ROOT.TChain('Metadata')
   for fi in os.listdir(path):
-    if fi.endswith('.root') and fi.startswith('attoaod'): metadata_chain.Add(path+'/'+fi)
+    if fi.endswith('.root') and fi.startswith('ATTOAOD'): metadata_chain.Add(path+'/'+fi)
   evtWritten, evtProcessed, evtPassDatafilter = 0, 0, 0
   for entry in metadata_chain:
     dataset_id = entry.dataset_id

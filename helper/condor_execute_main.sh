@@ -51,6 +51,8 @@ echo '&&& HOME: &&&'
 echo $HOME
 echo '&&& ROOTSYS: &&&'
 echo $ROOTSYS
+echo '&&& python version &&&'
+python --version
 echo '&&& ROOT version &&&'
 export DISPLAY=localhost:0.0
 root -l -q -e "gROOT->GetVersion()"
@@ -79,11 +81,10 @@ else
     exit 2
 fi
 
-echo ''
 echo '&&& Finished Main Job Payload &&&'
 echo ''
 echo '&&& Running Stageout Script &&&'
-python stageout.py $3
+python stageout.py $3 $1
 exitcode=$?
 if [[ exitcode -eq 0 ]] ; then
     :

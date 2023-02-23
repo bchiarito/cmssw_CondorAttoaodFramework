@@ -158,8 +158,6 @@ args = parser.parse_args()
 
 # get mode
 mode = args.mode
-if mode == 'atto': finalfile_filename = 'attoaod.root'
-elif mode == 'plotting': finalfile_filename = 'plots.root'
 
 # get grid id
 grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
@@ -395,6 +393,8 @@ if args.input_dataset:
 use_template_to_replace(template_filename, new_unpacker_filename, to_replace)
 
 # prepare stageout script
+if mode == 'atto': finalfile_filename = 'ATTOAOD.root'
+elif mode == 'plotting': finalfile_filename = 'HISTO.root'
 template_filename = helper_dir+"/template_"+stageout_filename
 new_stageout_filename = stageout_filename
 to_replace = {}

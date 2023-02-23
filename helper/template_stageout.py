@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 # constants
 filename = "__finalfile__"
@@ -8,8 +9,16 @@ output_location = "__outputlocation__"
 redirector = "__redirector__"
 copy_command = "__copycommand__"
 
+if sys.argv[2] == 'atto':
+  tag_info_frontend = subprocess.check_output("git -C CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_atto/ describe --tags --long", shell=True)
+if sys.argv[2] == 'plotting':
+  tag_info_frontend = subprocess.check_output("git -C CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_plotting/ describe --tags --long", shell=True)
+tag_info_frontend = tag_info_frontend.split('-')
+f_tag = tag_info_frontend[0].replace('.','p')
+f_commits = tag_info_frontend[1]
+
 if __name__ == "__main__":
-  full_command = copy_command + " " + filename + " " + redirector + output_location + "/" + filename.replace('.root', '')+'_'+str(sys.argv[1])+".root"
+  full_command = copy_command + " " + filename + " " + redirector + output_location + "/" + filename.replace('.root',''+f_tag+'c'+f_commits+'_'+str(sys.argv[1])+'.root')
   print "Stageout: command:", full_command
   stat = int(os.system(full_command))
   if not stat == 0:
