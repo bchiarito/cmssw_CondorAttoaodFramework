@@ -1,3 +1,7 @@
+Region 1: tight
+Region 2: loose
+Region 0: neither
+
 ### running
 use condor_submit.py
 
