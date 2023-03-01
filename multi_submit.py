@@ -12,26 +12,24 @@ def add_job(tag, options, loc):
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_submit.py commands, configuration inside script')
 parser.add_argument('mode', choices=['atto', 'plotting'], help='atto or plotting')
-parser.add_argument('--prefix', required='plotting' in sys.argv, help='match condition when running plotting step')
+parser.add_argument('tag', help='name of run (atto) or prefix of job directories (plotting)')
 parser.add_argument('-t', '--test', action='store_true', help='print command but do not run')
 parser.add_argument('-f', '--force', action='store_true', help='delete old job dirs if they exist')
 parser.add_argument('--fast', action='store_true', help='only 2 files')
-parser.add_argument('-n', '--name', default='mutlirun_'+date.today().strftime("%b-%d-%Y"), help='for atto: name of run')
 args = parser.parse_args()
 
-# for atto
-full_output_path = '/cms/chiarito/eos/twoprong/atto/' + args.name
+full_output_path = '/cms/chiarito/eos/twoprong/atto/' + args.tag # for atto only
 
 if args.mode == 'atto':
   common_options   = [
-  '--filesPerJob=20',
-  '--scheddLimit=100',
+  '--filesPerJob=40',
+  '--scheddLimit=25',
   '--filter="one_hpid_photon"',
-  '--recophiphoton=HPID',
   ]
 if args.mode == 'plotting':
   common_options = [
   '--lumi=59830',
+#  '--filesPerJob=5',
   '--filesPerJob=10',
   ]
 if args.force: common_options.append('-f')
@@ -43,15 +41,22 @@ if args.mode == 'atto':
   locs['egamma18b'] = '/cms/twoprong/chiarito/nano/egamma/egamma_18b/fv1p4-12-b296_bv1p1-1-331c/'
   locs['egamma18c'] = '/cms/twoprong/chiarito/nano/egamma/egamma_18c/fv1p4-16-9f1a_bv1p1-1-331c/'
   locs['egamma18d'] = '/cms/twoprong/chiarito/nano/egamma/egamma_18d/'
-  locs['gjets40to100'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets40to100/'
-  locs['gjets100to200'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets100to200/'
-  locs['gjets200to400'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets200to400/'
-  locs['gjets400to600'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets400to600/'
-  locs['gjets600toInf'] = '/cms/twoprong/chiarito/nano/gjets-10percent/gjets600toInf/'
+  locs['gjets40to100'] = '/cms/twoprong/chiarito/nano/gjets/gjets40to100/'
+  locs['gjets100to200'] = '/cms/twoprong/chiarito/nano/gjets/gjets100to200/fv1p4-23-d5d2_bv1p1-2-3aa0/'
+  locs['gjets200to400'] = '/cms/twoprong/chiarito/nano/gjets/gjets200to400/'
+  locs['gjets400to600'] = '/cms/twoprong/chiarito/nano/gjets/gjets400to600/fv1p4-15-f8f9_bv1p1-1-331c/'
+  locs['gjets600toInf'] = '/cms/twoprong/chiarito/nano/gjets/gjets600toInf/fv1p4-15-f8f9_bv1p1-1-331c/'
   locs['dy50'] = '/cms/twoprong/chiarito/nano/dy/dy_m50/fv1p4-23-d5d2_bv1p1-2-3aa0/'
+  locs['qcd50to100'] = '/cms/twoprong/chiarito/nano/qcd/qcd50to100/2023-01-17-17-45-30/fv1p4-18-10c5_bv1p1-2-3aa0/'
+  locs['qcd100to200'] = '/cms/twoprong/chiarito/nano/qcd/qcd100to200/2023-01-18-13-50-06/fv1p4-19-ee0c_bv1p1-2-3aa0/'
+  locs['qcd200to300'] = '/cms/twoprong/chiarito/nano/qcd/qcd200to300/fv1p4-21-62e6_bv1p1-2-3aa0/'
+  locs['qcd300to500'] = '/cms/twoprong/chiarito/nano/qcd/qcd300to500/fv1p4-23-d5d2_bv1p1-2-3aa0/'
+  locs['qcd700to1000'] = '/cms/twoprong/chiarito/nano/qcd/qcd700to1000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
+  locs['qcd1000to1500'] = '/cms/twoprong/chiarito/nano/qcd/qcd1000to1500/fv1p4-19-ee0c_bv1p1-2-3aa0/'
+  locs['qcd1500to2000'] = '/cms/twoprong/chiarito/nano/qcd/qcd1500to2000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
 if args.mode == 'plotting':
   for d in os.listdir('.'):
-    if os.path.isdir(d) and d.startswith(args.prefix):
+    if os.path.isdir(d) and d.startswith(args.tag):
       tag = d[d.rfind('_')+1:]
       locs[tag] = d
 
@@ -65,6 +70,13 @@ add_job(tag='gjets200to400', options='--mc --xs=2303 --datasetname=gjets200to400
 add_job(tag='gjets400to600', options='--mc --xs=274.5 --datasetname=gjets400to600', loc=locs['gjets400to600'])
 add_job(tag='gjets600toInf', options='--mc --xs=93.52 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
 add_job(tag='dy50', options='--mc --xs=6077 --datasetname=dy50', loc=locs['dy50'])
+add_job(tag='qcd50to100', options='--mc --xs=187700000.0 --datasetname=qcd50to100', loc=locs['qcd50to100'])
+add_job(tag='qcd100to200', options='--mc --xs=23500000.0 --datasetname=qcd100to200', loc=locs['qcd100to200'])
+add_job(tag='qcd200to300', options='--mc --xs=1552000.0 --datasetname=qcd200to300', loc=locs['qcd200to300'])
+add_job(tag='qcd300to500', options='--mc --xs=321100.0 --datasetname=qcd300to500', loc=locs['qcd300to500'])
+add_job(tag='qcd700to1000', options='--mc --xs=6398.0 --datasetname=qcd700to1000', loc=locs['qcd700to1000'])
+add_job(tag='qcd1000to1500', options='--mc --xs=1122.0 --datasetname=qcd1000to1500', loc=locs['qcd1000to1500'])
+add_job(tag='qcd1500to2000', options='--mc --xs=109.4 --datasetname=qcd1500to2000', loc=locs['qcd1500to2000'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
