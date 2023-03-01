@@ -31,6 +31,10 @@ keep HT
 keep NJets
 keep PV_npvs
 keep htHat*
+keep HLT_Photon175
+keep HLT_Photon200
+keep HLT_Photon35_TwoProngs35
+keep HLT_Muon35_TwoProngs35
 
 #notably dropping:
 #jet
