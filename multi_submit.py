@@ -29,8 +29,8 @@ if args.mode == 'atto':
 if args.mode == 'plotting':
   common_options = [
   '--lumi=59830',
-#  '--filesPerJob=5',
-  '--filesPerJob=10',
+  '--filesPerJob=5',
+  #'--scheddLimit=15',
   ]
 if args.force: common_options.append('-f')
 if args.fast: common_options.append('--files=2')
@@ -64,11 +64,16 @@ add_job(tag='egamma18a', options='--data --datasetname=egamma18a', loc=locs['ega
 add_job(tag='egamma18b', options='--data --datasetname=egamma18b', loc=locs['egamma18b'])
 add_job(tag='egamma18c', options='--data --datasetname=egamma18c', loc=locs['egamma18c'])
 add_job(tag='egamma18d', options='--data --datasetname=egamma18d', loc=locs['egamma18d'])
-add_job(tag='gjets40to100', options='--mc --xs=20810 --datasetname=gjets40to100', loc=locs['gjets40to100'])
-add_job(tag='gjets100to200', options='--mc --xs=9223 --datasetname=gjets100to200', loc=locs['gjets100to200'])
-add_job(tag='gjets200to400', options='--mc --xs=2303 --datasetname=gjets200to400', loc=locs['gjets200to400'])
-add_job(tag='gjets400to600', options='--mc --xs=274.5 --datasetname=gjets400to600', loc=locs['gjets400to600'])
-add_job(tag='gjets600toInf', options='--mc --xs=93.52 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
+#add_job(tag='gjets40to100', options='--mc --xs=20810 --datasetname=gjets40to100', loc=locs['gjets40to100'])
+#add_job(tag='gjets100to200', options='--mc --xs=9223 --datasetname=gjets100to200', loc=locs['gjets100to200'])
+#add_job(tag='gjets200to400', options='--mc --xs=2303 --datasetname=gjets200to400', loc=locs['gjets200to400'])
+#add_job(tag='gjets400to600', options='--mc --xs=274.5 --datasetname=gjets400to600', loc=locs['gjets400to600'])
+#add_job(tag='gjets600toInf', options='--mc --xs=93.52 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
+add_job(tag='gjets40to100', options='--mc --xs=18650 --datasetname=gjets40to100', loc=locs['gjets40to100'])
+add_job(tag='gjets100to200', options='--mc --xs=8639 --datasetname=gjets100to200', loc=locs['gjets100to200'])
+add_job(tag='gjets200to400', options='--mc --xs=2173 --datasetname=gjets200to400', loc=locs['gjets200to400'])
+add_job(tag='gjets400to600', options='--mc --xs=260.7 --datasetname=gjets400to600', loc=locs['gjets400to600'])
+add_job(tag='gjets600toInf', options='--mc --xs=86.55 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
 add_job(tag='dy50', options='--mc --xs=6077 --datasetname=dy50', loc=locs['dy50'])
 add_job(tag='qcd50to100', options='--mc --xs=187700000.0 --datasetname=qcd50to100', loc=locs['qcd50to100'])
 add_job(tag='qcd100to200', options='--mc --xs=23500000.0 --datasetname=qcd100to200', loc=locs['qcd100to200'])
@@ -88,7 +93,7 @@ for job in jobs:
   command += ' '
   for option in common_options:
     command = command + ' ' + option
-  if args.mode == 'atto': command += ' --dir='+args.name+'_'+job['tag']
+  if args.mode == 'atto': command += ' --dir='+args.tag+'_'+job['tag']
   command += ' --auto'
   print('\n'+command+'\n')
   if not args.test: os.system(command)
