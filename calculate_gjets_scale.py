@@ -86,7 +86,6 @@ gjets_scale_factor = (data_integral - qcd_integral) / gjets_integral
 print("GJets factor:", gjets_scale_factor)
 
 print("")
-# cutflow plots
 for data_hist in data_histos:
   if (data_hist.GetName()).startswith('cutflow'):
     print("data trigger eff", float(data_hist.GetBinContent(4))/float(data_hist.GetBinContent(3)))
@@ -104,3 +103,8 @@ for hists in zip(*col_qcd_histos):
 for signal_hist in signal_histos:
   if (signal_hist.GetName()).startswith('cutflow'):
     print("signal trigger eff", float(signal_hist.GetBinContent(4))/float(signal_hist.GetBinContent(3)))
+
+print('\nData Filter efficiencies:')
+effs = util.get_effs(datadirs)
+for dir, eff in zip(datadirs, effs):
+  print(dir, eff)
