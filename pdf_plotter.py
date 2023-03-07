@@ -27,7 +27,6 @@ ROOT.gStyle.SetLegendFillColor(ROOT.TColor.GetColorTransparent(ROOT.kRed, 0.01))
 ROOT.gStyle.SetLegendBorderSize(0)
 main = args.out+'.pdf'
 cutflow = args.out+'_cutflow.pdf'
-SIGNAL_NORM = 10000
 GJETS_FACTOR = args.gjets_scale
 lumi = 59830 # pb^-1
 
@@ -172,7 +171,6 @@ for data_hist, gjets_hist, dy_hist, qcd_hist, signal1_hist, signal2_hist in zip(
     mc_underflow += hist.GetBinContent(0)
     mc_overflow += hist.GetBinContent(hist.GetNbinsX()+1)
   # prepare signal
-  #if not signal_hist.Integral()==0: signal_hist.Scale(SIGNAL_NORM/signal_hist.Integral())
   if args.scale and not signal1_hist.Integral()==0: signal1_hist.Scale(1.0/signal1_hist.Integral())
   signal1_integral = signal1_hist.Integral()
   signal1_underflow = signal1_hist.GetBinContent(0)
@@ -207,6 +205,7 @@ for data_hist, gjets_hist, dy_hist, qcd_hist, signal1_hist, signal2_hist in zip(
   # draw linear
   c.SetLogy(0)
   data_hist.Draw()
+  data_hist.SetMinimum(0)
   stack.Draw('hist same')
   signal1_hist.Draw('hist same')
   signal2_hist.Draw('hist same')
@@ -215,6 +214,7 @@ for data_hist, gjets_hist, dy_hist, qcd_hist, signal1_hist, signal2_hist in zip(
   c.Print(main)
   # draw log
   c.SetLogy(1)
+  data_hist.SetMinimum(1e-1)
   data_hist.Draw()
   stack.Draw('hist same')
   signal1_hist.Draw('hist same')
