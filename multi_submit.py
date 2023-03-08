@@ -30,7 +30,6 @@ if args.mode == 'plotting':
   common_options = [
   '--lumi=59830',
   '--filesPerJob=5',
-  #'--scheddLimit=15',
   ]
 if args.force: common_options.append('-f')
 if args.fast: common_options.append('--files=2')
@@ -54,6 +53,10 @@ if args.mode == 'atto':
   locs['qcd700to1000'] = '/cms/twoprong/chiarito/nano/qcd/qcd700to1000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd1000to1500'] = '/cms/twoprong/chiarito/nano/qcd/qcd1000to1500/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd1500to2000'] = '/cms/twoprong/chiarito/nano/qcd/qcd1500to2000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
+  locs['qcd2000toInf'] = '/cms/twoprong/chiarito/nano/qcd/qcd2000toInf/'
+  locs['signalM125m0p7'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_125_omega_0p7.root'
+  locs['signalM500meta'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_500_omega_eta.root'
+  locs['signalM1200m0p5'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_1200_omega_0p5.root'
 if args.mode == 'plotting':
   for d in os.listdir('.'):
     if os.path.isdir(d) and d.startswith(args.tag):
@@ -64,11 +67,6 @@ add_job(tag='egamma18a', options='--data --datasetname=egamma18a', loc=locs['ega
 add_job(tag='egamma18b', options='--data --datasetname=egamma18b', loc=locs['egamma18b'])
 add_job(tag='egamma18c', options='--data --datasetname=egamma18c', loc=locs['egamma18c'])
 add_job(tag='egamma18d', options='--data --datasetname=egamma18d', loc=locs['egamma18d'])
-#add_job(tag='gjets40to100', options='--mc --xs=20810 --datasetname=gjets40to100', loc=locs['gjets40to100'])
-#add_job(tag='gjets100to200', options='--mc --xs=9223 --datasetname=gjets100to200', loc=locs['gjets100to200'])
-#add_job(tag='gjets200to400', options='--mc --xs=2303 --datasetname=gjets200to400', loc=locs['gjets200to400'])
-#add_job(tag='gjets400to600', options='--mc --xs=274.5 --datasetname=gjets400to600', loc=locs['gjets400to600'])
-#add_job(tag='gjets600toInf', options='--mc --xs=93.52 --datasetname=gjets600toInf', loc=locs['gjets600toInf'])
 add_job(tag='gjets40to100', options='--mc --xs=18650 --datasetname=gjets40to100', loc=locs['gjets40to100'])
 add_job(tag='gjets100to200', options='--mc --xs=8639 --datasetname=gjets100to200', loc=locs['gjets100to200'])
 add_job(tag='gjets200to400', options='--mc --xs=2173 --datasetname=gjets200to400', loc=locs['gjets200to400'])
@@ -82,6 +80,10 @@ add_job(tag='qcd300to500', options='--mc --xs=321100.0 --datasetname=qcd300to500
 add_job(tag='qcd700to1000', options='--mc --xs=6398.0 --datasetname=qcd700to1000', loc=locs['qcd700to1000'])
 add_job(tag='qcd1000to1500', options='--mc --xs=1122.0 --datasetname=qcd1000to1500', loc=locs['qcd1000to1500'])
 add_job(tag='qcd1500to2000', options='--mc --xs=109.4 --datasetname=qcd1500to2000', loc=locs['qcd1500to2000'])
+add_job(tag='qcd2000toInf', options='--mc --xs=109.4 --datasetname=qcd2000toInf', loc=locs['qcd2000toInf'])
+add_job(tag='signalM125m0p7', options='--mc --xs=175.06 --datasetname=signalM125m0p7', loc=locs['signalM125m0p7'])
+add_job(tag='signalM500meta', options='--mc --xs=0.413 --datasetname=signalM500meta', loc=locs['signalM500meta'])
+add_job(tag='signalM1200m0p5', options='--mc --xs=0.005 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
