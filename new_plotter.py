@@ -153,9 +153,17 @@ if not args.nosanity:
         hist.SetFillColor(mc_color[i]+(j+1))
         hist.Draw('hist same')
       c.Print(main)
+
   # rest of plots
   for i in range(len(data_hist_collection)):
     data_hist = data_hist_collection[i]
+    # skip cutflow and mchat
+    if (data_hist.GetName()).startswith('cutflow'): continue
+    skip = False
+    for tag in mc_hat_tag:
+      if tag and (data_hist.GetName()).startswith(tag): skip = True
+    if skip: continue
+    # continue with plotting
     data_hist.Sumw2()
     mc_hists = [coll[i] for coll in mc_hist_collections]
     if args.gjets_scale_up: mc_hists[k].Scale(GJETS_SCALE_FACTOR)
