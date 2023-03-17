@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 metadata_chain = ROOT.TChain('Metadata')
 for fi in os.listdir(args.path):
-  if fi.endswith('.root') and fi.startswith('attoaod'):
+  if fi.endswith('.root') and fi.startswith('ATTOAOD'):
     metadata_chain.Add(args.path+'/'+fi)
 
 def add_branch(tree, char, name):
