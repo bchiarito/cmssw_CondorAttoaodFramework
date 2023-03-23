@@ -4,6 +4,7 @@ keep HighPtIdPhoton*
 keep nTwoProng
 keep TwoProng*
 keep RecoPhi*
+keep CutBased*
 keep Region
 keep GenPart*
 keep nGenPart*
