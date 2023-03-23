@@ -80,12 +80,15 @@ mc_dirs_list.append([
 ])
 
 # signal config
+signal_legend.append('Signal 125|0.7')
+signal_color.append(ROOT.kYellow+1)
+signal_dirs_list.append([args.prefix+'signalM125m0p7/'+plotting_jobs])
 signal_legend.append('Signal 500|eta')
 signal_color.append(ROOT.kRed)
-signal_dirs_list.append(['Job_signal_500_eta/'+plotting_jobs])
+signal_dirs_list.append([args.prefix+'signalM500meta/'+plotting_jobs])
 signal_legend.append('Signal 1200|0.5')
 signal_color.append(ROOT.kBlue)
-signal_dirs_list.append(['Job_signal_1200_0p5/'+plotting_jobs])
+signal_dirs_list.append([args.prefix+'signalM1200m0p5/'+plotting_jobs])
 
 ############################
 c = ROOT.TCanvas()
