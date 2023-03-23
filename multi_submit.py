@@ -18,12 +18,12 @@ parser.add_argument('-f', '--force', action='store_true', help='delete old job d
 parser.add_argument('--fast', action='store_true', help='only 2 files')
 args = parser.parse_args()
 
-full_output_path = '/cms/chiarito/eos/twoprong/atto/' + args.tag # for atto only
+full_output_path = '/cms/chiarito/eos/twoprong/sanity_plots/atto/' + args.tag # for atto only
 
 if args.mode == 'atto':
   common_options   = [
   '--filesPerJob=40',
-  '--scheddLimit=25',
+  '--scheddLimit=15',
   '--filter="one_hpid_photon"',
   ]
 if args.mode == 'plotting':
