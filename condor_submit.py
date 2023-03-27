@@ -102,7 +102,9 @@ help=argparse.SUPPRESS)
 
 # atto execution specification
 atto_args = parser.add_argument_group('atto mode execution')
-atto_args.add_argument("--filter", default="None", choices=['None', 'one_hpid_photon', "one_muon"], metavar='CHOICE',
+atto_args.add_argument("--filter", default="None",
+choices=['None', "one_hpid_photon", "one_either_photon", "one_muon", "full_selection_hpid", "full_selection_cbl"],
+metavar='CHOICE',
 help="apply event filtering: None (default), one_hpid_photon")
 atto_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
 help="dataset name for metadata tree")
