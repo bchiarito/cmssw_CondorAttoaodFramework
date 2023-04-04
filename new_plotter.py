@@ -63,6 +63,7 @@ mc_dirs_list.append([
   args.prefix+'qcd100to200/'+plotting_jobs,
   args.prefix+'qcd200to300/'+plotting_jobs,
   args.prefix+'qcd300to500/'+plotting_jobs,
+  args.prefix+'qcd500to700/'+plotting_jobs,
   args.prefix+'qcd700to1000/'+plotting_jobs,
   args.prefix+'qcd1000to1500/'+plotting_jobs,
   args.prefix+'qcd1500to2000/'+plotting_jobs,
@@ -80,13 +81,13 @@ mc_dirs_list.append([
 ])
 
 # signal config
-signal_legend.append('Signal 125|0.7')
+signal_legend.append('Signal 125,0.7')
 signal_color.append(ROOT.kYellow+1)
 signal_dirs_list.append([args.prefix+'signalM125m0p7/'+plotting_jobs])
-signal_legend.append('Signal 500|eta')
+signal_legend.append('Signal 500,eta')
 signal_color.append(ROOT.kRed)
 signal_dirs_list.append([args.prefix+'signalM500meta/'+plotting_jobs])
-signal_legend.append('Signal 1200|0.5')
+signal_legend.append('Signal 1200,0.5')
 signal_color.append(ROOT.kBlue)
 signal_dirs_list.append([args.prefix+'signalM1200m0p5/'+plotting_jobs])
 
