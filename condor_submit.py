@@ -29,7 +29,6 @@ fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
-branch_selection_filename = 'atto_branch_selection.txt'
 plotting_util_filename = 'plotting_util.py'
 
 # subroutines
@@ -110,6 +109,8 @@ atto_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
 help="dataset name for metadata tree")
 atto_args.add_argument("--xs", default=1.0, type=float,
 help="cross section for metadata tree")
+atto_args.add_argument("--branches", default="branch_selection_atto.txt", metavar='FILE',
+help="filename for branch selection (default: branch_selection_atto.txt)")
 
 # plotting execution specification
 plotting_args = parser.add_argument_group('plotting mode execution')
@@ -432,7 +433,7 @@ for i in range(len(infile_tranches)):
     job_dir+'/'+unpacker_filename + ", " + \
     job_dir+'/'+stageout_filename + ", " + \
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
-    branch_selection_filename + ", " + \
+    args.branches + ", " + \
     "helper/" + plotting_util_filename
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
