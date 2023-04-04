@@ -115,6 +115,10 @@ help="cross section for metadata tree")
 plotting_args = parser.add_argument_group('plotting mode execution')
 plotting_args.add_argument("--lumi", default=1.0,
 help="integrated luminosity")
+plotting_args.add_argument("--dEta", action="store_true", default=False,
+help="include cut dEta < 1.5")
+plotting_args.add_argument("--photon", default="HPID", choices=['HPID', "CBL"], metavar='CHOICE',
+help="choice for photon: HPID (default), CBL")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -417,7 +421,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+'placeholder'+' '+args.input
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+'placeholder'+' '+args.input+' '+str(args.dEta)+' '+args.photon
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
