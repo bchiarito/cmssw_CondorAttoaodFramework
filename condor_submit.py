@@ -418,7 +418,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+'placeholder'+' '+args.input
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
