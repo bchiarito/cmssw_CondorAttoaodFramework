@@ -17,7 +17,7 @@ tag_info_frontend = tag_info_frontend.split('-')
 f_tag = tag_info_frontend[0].replace('.','p')
 f_commits = tag_info_frontend[1]
 if f_commits == '0': f_commits = ''
-elif f_commits == '0': f_commits = 'c'+f_commits
+else: f_commits = 'c'+f_commits
 
 if __name__ == "__main__":
   full_command = copy_command + " " + filename + " " + redirector + output_location + "/" + filename.replace('.root',''+f_tag+f_commits+'_'+str(sys.argv[1])+'.root')
