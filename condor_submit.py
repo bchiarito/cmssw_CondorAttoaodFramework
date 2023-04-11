@@ -238,6 +238,7 @@ elif args.input_cmslpc:
     totalfiles = len(list_of_files) 
     if percentmax: maxfiles = int(args.files * totalfiles)
     for line in list_of_files:
+      if not '.root' in line: continue
       input_files.append(line)
       if len(input_files) == maxfiles: break
     if args.extra_input:
