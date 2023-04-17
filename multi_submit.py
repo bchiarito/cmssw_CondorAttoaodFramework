@@ -23,13 +23,15 @@ full_output_path = '/cms/chiarito/eos/twoprong/sanity_plots/atto/' + args.tag # 
 if args.mode == 'atto':
   common_options   = [
   '--filesPerJob=40',
-  '--scheddLimit=15',
-  '--filter="one_hpid_photon"',
+  '--scheddLimit=20',
+  '--filter="one_either_photon"',
   ]
 if args.mode == 'plotting':
   common_options = [
   '--lumi=59830',
   '--filesPerJob=5',
+#  '--dEta',
+  '--photon=HPID'
   ]
 if args.force: common_options.append('-f')
 if args.fast: common_options.append('--files=2')
@@ -50,6 +52,7 @@ if args.mode == 'atto':
   locs['qcd100to200'] = '/cms/twoprong/chiarito/nano/qcd/qcd100to200/2023-01-18-13-50-06/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd200to300'] = '/cms/twoprong/chiarito/nano/qcd/qcd200to300/fv1p4-21-62e6_bv1p1-2-3aa0/'
   locs['qcd300to500'] = '/cms/twoprong/chiarito/nano/qcd/qcd300to500/fv1p4-23-d5d2_bv1p1-2-3aa0/'
+  locs['qcd500to700'] = '/cms/twoprong/chiarito/nano/qcd/qcd500to700/fv1p5-1-303b_bv1p1-2-3aa0/'
   locs['qcd700to1000'] = '/cms/twoprong/chiarito/nano/qcd/qcd700to1000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd1000to1500'] = '/cms/twoprong/chiarito/nano/qcd/qcd1000to1500/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd1500to2000'] = '/cms/twoprong/chiarito/nano/qcd/qcd1500to2000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
@@ -77,10 +80,11 @@ add_job(tag='qcd50to100', options='--mc --xs=187700000.0 --datasetname=qcd50to10
 add_job(tag='qcd100to200', options='--mc --xs=23500000.0 --datasetname=qcd100to200', loc=locs['qcd100to200'])
 add_job(tag='qcd200to300', options='--mc --xs=1552000.0 --datasetname=qcd200to300', loc=locs['qcd200to300'])
 add_job(tag='qcd300to500', options='--mc --xs=321100.0 --datasetname=qcd300to500', loc=locs['qcd300to500'])
+add_job(tag='qcd500to700', options='--mc --xs=30250.0 --datasetname=qcd500to700', loc=locs['qcd500to700'])
 add_job(tag='qcd700to1000', options='--mc --xs=6398.0 --datasetname=qcd700to1000', loc=locs['qcd700to1000'])
 add_job(tag='qcd1000to1500', options='--mc --xs=1122.0 --datasetname=qcd1000to1500', loc=locs['qcd1000to1500'])
 add_job(tag='qcd1500to2000', options='--mc --xs=109.4 --datasetname=qcd1500to2000', loc=locs['qcd1500to2000'])
-add_job(tag='qcd2000toInf', options='--mc --xs=109.4 --datasetname=qcd2000toInf', loc=locs['qcd2000toInf'])
+add_job(tag='qcd2000toInf', options='--mc --xs=21.74 --datasetname=qcd2000toInf', loc=locs['qcd2000toInf'])
 add_job(tag='signalM125m0p7', options='--mc --xs=175.06 --datasetname=signalM125m0p7', loc=locs['signalM125m0p7'])
 add_job(tag='signalM500meta', options='--mc --xs=0.413 --datasetname=signalM500meta', loc=locs['signalM500meta'])
 add_job(tag='signalM1200m0p5', options='--mc --xs=0.005 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])

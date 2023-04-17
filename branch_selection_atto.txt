@@ -23,11 +23,7 @@ keep run
 keep dataset_id
 keep flag
 keep nPhoton
-keep Photon_pt
-keep Photon_phi
-keep Photon_eta
-keep Photon_mass
-keep Photon_cutBased
+keep Photon*
 keep HT
 keep NJets
 keep PV_npvs
