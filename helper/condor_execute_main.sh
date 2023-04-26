@@ -30,7 +30,17 @@ export HOME=$INITIAL_DIR
 export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
 export SCRAM_ARCH=slc7_amd64_gcc820
 echo '&&& About to copying over tarball &&&'
-xrdcp -s root://cmseos.fnal.gov//store/user/$4/tarballs/$1/CMSSW_10_6_20.tgz .
+if [ ${15} == "hexcms" ]; then
+  cp /cms/$4/tarballs/$1/CMSSW_10_6_20.tgz .
+elif [ ${15} == "cmslpc" ]; then
+  xrdcp -s root://cmseos.fnal.gov//store/user/$4/tarballs/$1/CMSSW_10_6_20.tgz .
+else
+  echo '&&& ERROR! Could not determine site, did not copy over tarball !!! &&&'
+  echo $1
+  echo ${13}
+  echo ${14}
+  echo ${15}
+fi
 echo '&&& Finished copying over tarball &&&'
 source $VO_CMS_SW_DIR/cmsset_default.sh
 tar -xf CMSSW_10_6_20.tgz

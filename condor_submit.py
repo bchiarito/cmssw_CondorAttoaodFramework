@@ -164,8 +164,11 @@ args = parser.parse_args()
 # get mode
 mode = args.mode
 
-# get grid id
-grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
+# get grid id / username
+if site == 'hexcms':
+  griduser_id = (subprocess.check_output("whoami").decode('utf-8')).strip()
+if site == 'cmslpc':
+  griduser_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
 
 # check data/mc
 if args.mc: datamc = "mc"
@@ -423,7 +426,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.dEta)+' '+args.photon
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.dEta)+' '+args.photon+' '+site
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
