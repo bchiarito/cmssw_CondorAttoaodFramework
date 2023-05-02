@@ -30,6 +30,10 @@ hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
 plotting_util_filename = 'plotting_util.py'
+backend_copy_atto_hexcms = 'backend/atto_xrdcp_hexcms.sh'
+backend_copy_atto_cmslpc = 'backend/atto_xrdcp_cmslpc.sh'
+backend_copy_plotting_hexcms = 'backend/plotting_xrdcp_hexcms.sh'
+backend_copy_plotting_cmslpc = 'backend/plotting_xrdcp_cmslpc.sh'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -143,6 +147,8 @@ help="do not use xrdcp, supply LFN directly to cmssw cfg")
 
 # convenience
 other_args = parser.add_argument_group('misc options')
+other_args.add_argument("-x", "--noxrdcp", action="store_true",
+help="don't overwrite remote backend tarball")
 other_args.add_argument("-f", "--force", action="store_true",
 help="overwrite job directory if it already exists")
 other_args.add_argument("-t", "--test", default=False, action="store_true",
@@ -501,6 +507,19 @@ if site == 'cmslpc':
   )
   schedd_ad = coll_query[0]
 schedd = htcondor.Schedd(schedd_ad)
+
+# copy over backend tarball
+if not args.noxrdcp:
+  print("Preparing to update backend code with xrdcp copy script...")
+  if site == 'cmslpc' and mode == 'atto':
+    os.system('./'+backend_copy_atto_cmslpc+' '+griduser_id)
+  if site == 'cmslpc' and mode == 'plotting':
+    os.system('./'+backend_copy_plotting_cmslpc+' '+griduser_id)
+  if site == 'hexcms' and mode == 'atto':
+    os.system('./'+backend_copy_atto_hexcms+' '+griduser_id)
+  if site == 'cmslpc' and mode == 'atto':
+    os.system('./'+backend_copy_plotting_hexcms+' '+griduser_id)
+  print("Finished updating backend code.")
 
 # print summary
 if args.output_local: o_assume = 'local'
