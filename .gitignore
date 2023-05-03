@@ -3,3 +3,4 @@ backend_plotting_cmssw/
 backend_atto_cmssw/
 *.pdf
 x509up*
+*.root

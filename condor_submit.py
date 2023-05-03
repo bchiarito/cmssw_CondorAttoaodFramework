@@ -30,6 +30,10 @@ hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
 payload_script = 'payload_mode.sh'
 plotting_util_filename = 'plotting_util.py'
+backend_copy_atto_hexcms = 'backend/atto_xrdcp_hexcms.sh'
+backend_copy_atto_cmslpc = 'backend/atto_xrdcp_cmslpc.sh'
+backend_copy_plotting_hexcms = 'backend/plotting_xrdcp_hexcms.sh'
+backend_copy_plotting_cmslpc = 'backend/plotting_xrdcp_cmslpc.sh'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -143,6 +147,8 @@ help="do not use xrdcp, supply LFN directly to cmssw cfg")
 
 # convenience
 other_args = parser.add_argument_group('misc options')
+other_args.add_argument("-x", "--noxrdcp", action="store_true",
+help="don't overwrite remote backend tarball")
 other_args.add_argument("-f", "--force", action="store_true",
 help="overwrite job directory if it already exists")
 other_args.add_argument("-t", "--test", default=False, action="store_true",
@@ -164,8 +170,11 @@ args = parser.parse_args()
 # get mode
 mode = args.mode
 
-# get grid id
-grid_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
+# get grid id / username
+if site == 'hexcms':
+  griduser_id = (subprocess.check_output("whoami").decode('utf-8')).strip()
+if site == 'cmslpc':
+  griduser_id = (subprocess.check_output("voms-proxy-info --identity", shell=True).decode('utf-8')).split('/')[5][3:]
 
 # check data/mc
 if args.mc: datamc = "mc"
@@ -423,7 +432,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+grid_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.dEta)+' '+args.photon
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.dEta)+' '+args.photon+' '+site
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -498,6 +507,19 @@ if site == 'cmslpc':
   )
   schedd_ad = coll_query[0]
 schedd = htcondor.Schedd(schedd_ad)
+
+# copy over backend tarball
+if not args.noxrdcp:
+  print("Preparing to update backend code with xrdcp copy script...")
+  if site == 'cmslpc' and mode == 'atto':
+    os.system('./'+backend_copy_atto_cmslpc+' '+griduser_id)
+  if site == 'cmslpc' and mode == 'plotting':
+    os.system('./'+backend_copy_plotting_cmslpc+' '+griduser_id)
+  if site == 'hexcms' and mode == 'atto':
+    os.system('./'+backend_copy_atto_hexcms+' '+griduser_id)
+  if site == 'cmslpc' and mode == 'atto':
+    os.system('./'+backend_copy_plotting_hexcms+' '+griduser_id)
+  print("Finished updating backend code.")
 
 # print summary
 if args.output_local: o_assume = 'local'

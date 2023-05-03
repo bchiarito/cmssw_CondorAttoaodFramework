@@ -150,6 +150,7 @@ if not args.nosanity:
       hists[0].SetLineColor(mc_color[i])
       hists[0].SetFillColor(mc_color[i])
       hists[0].SetMinimum(1.0)
+      hists[0].SetMaximum(1e10)
       #hists[0].GetYaxis().SetRangeUser(1e3, 1e9)
       hists[0].Draw('hist')
       for j, hist in enumerate(hists[1:]):
