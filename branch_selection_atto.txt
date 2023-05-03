@@ -8,6 +8,9 @@ keep CutBased*
 keep Region
 keep GenPart*
 keep nGenPart*
+keep GenPhi*
+keep nGenOmega
+keep GenOmega*
 keep GenJet*
 keep nGenJet
 keep MET*

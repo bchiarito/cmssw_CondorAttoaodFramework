@@ -6,6 +6,9 @@ keep TwoProng*
 keep RecoPhi*
 keep CutBased*
 keep Region
+keep GenPhi*
+keep nGenOmega
+keep GenOmega*
 #keep GenPart*
 #keep nGenPart*
 #keep GenJet*
