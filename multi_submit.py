@@ -23,15 +23,15 @@ full_output_path = '/cms/chiarito/eos/twoprong/sanity_plots/atto/' + args.tag # 
 if args.mode == 'atto':
   common_options   = [
   '-x',
-  '--filesPerJob=40',
-  '--scheddLimit=20',
+  '--filesPerJob=60',
+  '--scheddLimit=25',
   '--filter="one_either_photon"',
   ]
 if args.mode == 'plotting':
   common_options = [
   '-x',
   '--lumi=59830',
-  '--filesPerJob=5',
+  '--filesPerJob=4',
 #  '--dEta',
   '--photon=HPID'
   ]
