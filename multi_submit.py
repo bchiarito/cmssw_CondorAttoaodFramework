@@ -87,9 +87,9 @@ add_job(tag='qcd700to1000', options='--mc --xs=6398.0 --datasetname=qcd700to1000
 add_job(tag='qcd1000to1500', options='--mc --xs=1122.0 --datasetname=qcd1000to1500', loc=locs['qcd1000to1500'])
 add_job(tag='qcd1500to2000', options='--mc --xs=109.4 --datasetname=qcd1500to2000', loc=locs['qcd1500to2000'])
 add_job(tag='qcd2000toInf', options='--mc --xs=21.74 --datasetname=qcd2000toInf', loc=locs['qcd2000toInf'])
-add_job(tag='signalM125m0p7', options='--mc --xs=175.06 --datasetname=signalM125m0p7', loc=locs['signalM125m0p7'])
-add_job(tag='signalM500meta', options='--mc --xs=0.413 --datasetname=signalM500meta', loc=locs['signalM500meta'])
-add_job(tag='signalM1200m0p5', options='--mc --xs=0.005 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])
+add_job(tag='signalM125m0p7', options='--mc --xs=51.335 --datasetname=signalM125m0p7', loc=locs['signalM125m0p7'])
+add_job(tag='signalM500meta', options='--mc --xs=0.353898 --datasetname=signalM500meta', loc=locs['signalM500meta'])
+add_job(tag='signalM1200m0p5', options='--mc --xs=0.0035389 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
