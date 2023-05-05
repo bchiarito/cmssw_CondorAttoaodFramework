@@ -45,8 +45,8 @@ def get_histo_collection(dir_list):
   '''
   Takes a list of directories with histogram-level rootfiles
   
-  will first hadd each directory
-  will then collection the histograms into a list
+  first hadds each directory
+  then collects the histograms into a list
 
   Returns a list, 1-1 with the original directories, each entry of which is a list of TH1's from the rootfiles
   '''
@@ -60,6 +60,7 @@ def get_histo_collection(dir_list):
 def get_flat_histo_collection(dir_list):
   '''
   Similar to get_histo_collection but additionally adds the corresponding histograms from each directory
+  only appropriate if each directory in the list corresponds to the same dataset
   
   Returns a list of TH1's, summed across both files and directories
   '''
