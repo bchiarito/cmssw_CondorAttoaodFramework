@@ -509,7 +509,10 @@ if site == 'cmslpc':
 schedd = htcondor.Schedd(schedd_ad)
 
 # copy over backend tarball
-if not args.noxrdcp:
+do_copy = False
+if not args.noxrdcp and mode == 'atto' and os.path.isdir('backend_atto_cmssw'): do_cppy = True
+if not args.noxrdcp and mode == 'plotting' and os.path.isdir('backend_plotting_cmssw'): do_cppy = True
+if do_copy:
   print("Preparing to update backend code with xrdcp copy script...")
   if site == 'cmslpc' and mode == 'atto':
     os.system('./'+backend_copy_atto_cmslpc+' '+griduser_id)
