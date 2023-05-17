@@ -156,11 +156,11 @@ if not args.nosanity:
       hist.Draw('hist')
       c.Print(main)
     for numer, denom in zip(numer_plots, denom_plots):
-      eff = numer.Clone()
+      eff = ROOT.TEfficiency(numer, denom)
+      eff.SetLineColor(signal_color[i])
+      eff.SetMarkerColor(signal_color[i])
       eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
-      #eff.SetMarkerStyle()
-      eff.Divide(denom)
-      eff.Draw('CPE')
+      eff.Draw('AP')
       c.Print(main)
 
   # mc hat plots
