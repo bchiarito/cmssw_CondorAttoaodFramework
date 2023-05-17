@@ -90,6 +90,7 @@ signal_dirs_list.append([args.prefix+'signalM500meta/'+plotting_jobs])
 signal_legend.append('Signal 1200,0.5')
 signal_color.append(ROOT.kBlue)
 signal_dirs_list.append([args.prefix+'signalM1200m0p5/'+plotting_jobs])
+signal_tag = 'SIGNAL_'
 
 ############################
 c = ROOT.TCanvas()
@@ -141,6 +142,27 @@ if args.filter_eff:
 # sanity plots
 if not args.nosanity:
   c.Print(main+'[')
+
+  # signal plots
+  c.SetLogy(0)
+  for i, coll in enumerate(signal_hist_collections):
+    numer_plots = []
+    denom_plots = []
+    for hist in coll:
+      if not (hist.GetName()).startswith(signal_tag): continue
+      if 'NUMER' in hist.GetName(): numer_plots.append(hist)
+      if 'DENOM' in hist.GetName(): denom_plots.append(hist)
+      hist.SetLineColor(signal_color[i])
+      hist.Draw('hist')
+      c.Print(main)
+    for numer, denom in zip(numer_plots, denom_plots):
+      eff = numer.Clone()
+      eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
+      #eff.SetMarkerStyle()
+      eff.Divide(denom)
+      eff.Draw('CPE')
+      c.Print(main)
+
   # mc hat plots
   c.SetLogy()
   for i in range(len(mc_hat_tag)):
