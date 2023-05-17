@@ -24,11 +24,12 @@ if args.mode == 'atto':
   common_options   = [
   '-x',
   '--filesPerJob=60',
-  '--scheddLimit=25',
+  '--scheddLimit=30',
   '--filter="one_either_photon"',
   ]
 if args.mode == 'plotting':
   common_options = [
+  '--plotter=sanity', 
   '-x',
   '--lumi=59830',
   '--filesPerJob=4',
