@@ -120,10 +120,12 @@ help="filename for branch selection (default: branch_selection_atto.txt)")
 plotting_args = parser.add_argument_group('plotting mode execution')
 plotting_args.add_argument("--lumi", default=1.0,
 help="integrated luminosity")
-plotting_args.add_argument("--dEta", action="store_true", default=False,
-help="include cut dEta < 1.5")
+plotting_args.add_argument("--cut", default='None',
+help="optional cut string")
 plotting_args.add_argument("--photon", default="HPID", choices=['HPID', "CBL"], metavar='CHOICE',
 help="choice for photon: HPID (default), CBL")
+plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'None'], metavar='CHOICE',
+help="choice for plotter code: sanity, bkg")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -169,6 +171,7 @@ args = parser.parse_args()
 
 # get mode
 mode = args.mode
+if mode=='plotting' and args.plotter=='None': raise SystemExit("Configuration Error: Must specify option --plotter in plotting mode.")
 
 # get grid id / username
 if site == 'hexcms':
@@ -432,7 +435,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.dEta)+' '+args.photon+' '+site
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+args.plotter
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
