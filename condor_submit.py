@@ -523,7 +523,7 @@ if do_copy:
     os.system('./'+backend_copy_plotting_cmslpc+' '+griduser_id)
   if site == 'hexcms' and mode == 'atto':
     os.system('./'+backend_copy_atto_hexcms+' '+griduser_id)
-  if site == 'hexcms' and mode == 'atto':
+  if site == 'hexcms' and mode == 'plotting':
     os.system('./'+backend_copy_plotting_hexcms+' '+griduser_id)
   print("Finished updating backend code.")
 
