@@ -31,7 +31,7 @@ if not args.sanity: ROOT.TPad.Divide(c1, 1, 2)
 c1.Print("plots.pdf[")
 
 # pi0: masspi0 plots for all eta regions, barrel, and endcap; pi0_bins: pt-binned masspi0 plots in barrel and endcap; overlay; pt-binned plots with overlayed ratios for each twoprong region
-sanity_plots = ["sieie", "hoe", "pfRelIso03_chg", "hadTow"]  
+sanity_plots = ["sieie", "pfRelIso03_chg", "hadTow"]  
 main_plots = ["pi0", "pi0_bins"]
 test_plots = ["overlay"]
 if args.sanity: plots = sanity_plots
