@@ -18,20 +18,17 @@ def fitfunc(x, p):
    
     land = norm*ROOT.TMath.Landau(x[0], mpv, sigma)
   
-    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma);
-    y12=ROOT.TMath.Exp(C1*bound1);
+    y11 = norm*ROOT.TMath.Landau(bound1, mpv, sigma);
+    y12 = ROOT.TMath.Exp(C1*bound1);
     exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
     
-    y21=ROOT.TMath.Exp(C1*bound2)*y11/y12
-    y22=ROOT.TMath.Exp(C2*bound2)
-    exp2=ROOT.TMath.Exp(C2*x[0])*y21/y22
+    y21 = ROOT.TMath.Exp(C1*bound2)*y11/y12
+    y22 = ROOT.TMath.Exp(C2*bound2)
+    exp2 = ROOT.TMath.Exp(C2*x[0])*y21/y22
     
     if x[0] < bound1: return land
     elif x[0] < bound2: return exp1
     else: return exp2
-
-f2 = ROOT.TF1('f2', fitfunc, 0, 50, 7)
-f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2")
 
 
 # command line options
@@ -45,8 +42,7 @@ parser.add_argument("--test", "-t", default=False, action="store_true", help="cr
 # parse args
 args = parser.parse_args()
 
-#outfile = ROOT.TFile('trigger_eff.root', 'recreate')
-infile1 = ROOT.TFile(sys.argv[1], 'UPDATE')
+infile1 = ROOT.TFile(sys.argv[1])
 
 # other config
 ROOT.gStyle.SetOptStat(0)
@@ -74,84 +70,6 @@ photon_regions = ["tight", "loose"]
 bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
 
 
-i = 6
-region = "noniso_sym"
-eta_reg = "barrel"
-
-# Generate correct plots names to access from summed histogram files
-egamma_tight_plots = "plots/twoprong_masspi0_" + region + "_" + eta_reg
-egamma_loose_plots = "plots/twoprong_masspi0_" + region + "_" + eta_reg
-
-if i == len(bins) - 1:
-    egamma_tight_plots += "_" + str(bins[i]) + "+"
-    egamma_loose_plots += "_" + str(bins[i]) + "+"
-else:
-    egamma_tight_plots += "_" + str(bins[i]) + "_" + str(bins[i+1])
-    egamma_loose_plots += "_" + str(bins[i]) + "_" + str(bins[i+1])
-
-# Reference name of the histogram created in the backend 
-egamma_tight_plots += "_tight"
-egamma_loose_plots += "_loose"
-
-# Get the histograms from the input file
-h_egamma_tight = infile1.Get(egamma_tight_plots)
-h_egamma_loose = infile1.Get(egamma_loose_plots)
-
-# Configure display options
-h_egamma_tight.SetLineColor(ROOT.kBlack)
-h_egamma_loose.SetLineColor(ROOT.kGreen+2)
-h_egamma_loose.SetFillColor(ROOT.kGreen+2)
-
-# Normalize histograms to unit integral
-if not h_egamma_tight.Integral() == 0: h_egamma_tight.Scale(1.0/h_egamma_tight.Integral())
-if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
-
-# Fit loose histogram to a curve (in this case, pt bin is 120 to 140)
-if region == "noniso_sym" and str(bins[i]) == "120" and eta_reg == "barrel":
-    f2.SetParameters(h_egamma_loose.GetEntries(), h_egamma_loose.GetMean(), 0.5, -3, -1, h_egamma_loose.GetMean()+0.5, h_egamma_loose.GetMean()*3)
-    h_egamma_loose.Fit('f2', 'L', "", 0, 15)
-
-# Create ratio histogram, which displays the tight photon / loose photon ratio
-h_ratio = h_egamma_tight.Clone()
-h_ratio.Reset()
-h_ratio.SetLineColor(ROOT.kBlack)
-h_ratio.Divide(h_egamma_tight, h_egamma_loose)
-
-# Create title for plot 
-title = region + " Twoprong"
-if eta_reg == "barrel": title += ", Barrel"
-elif eta_reg == "endcap": title += ", Endcap"
-if i == len(bins) - 1: title += ", pt > " + str(bins[i])
-else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
-
-# Legend creation
-legend = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
-legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
-legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "f")
-
-h_egamma_tight.SetTitle(title)
-h_ratio.SetTitle("Tight / Loose Photon")  
-
-# Draw plots
-c1.cd(1)
-h_egamma_tight.Draw()  # draw data first so that it appears over the mc
-stack = ROOT.THStack('hs', 'hs')
-stack.Add(h_egamma_loose)
-stack.Draw("hist same")
-h_egamma_tight.Draw("samee")  # this is where the data is actually drawn to the canvas
-ROOT.gPad.SetLogy()
-h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
-legend.Draw("same")
-c1.cd(2)  # draw ratio plots
-h_ratio.Draw("e")
-h_ratio.GetXaxis().SetRangeUser(0, 26)
-h_ratio.GetYaxis().SetRangeUser(-2, 4)
-h_ratio.SetStats(0)
-ROOT.gPad.SetGridy(1)
-ROOT.gPad.Update()
-c1.Print("plots.pdf")    
-
-"""
 for item in plots:
     if item == "pfRelIso03_chg" or item == "sieie" or item == "hoe" or item == "hadTow":  # sanity plots
         for region in photon_regions:
@@ -292,9 +210,11 @@ for item in plots:
                     if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
                     
                     # Fit loose histogram to a curve (in this case, pt bin is 120 to 140)
-                    if region == "noniso_sym" and str(bins[i]) == "120" and eta_reg == "barrel":
-                        f2.SetParameters(h_egamma_loose.GetEntries(), h_egamma_loose.GetMean(), 0.5, -3, -1, h_egamma_loose.GetMean()+0.5, h_egamma_loose.GetMean()*3)
-                        h_egamma_loose.Fit('f2', 'L', "", 0, 15)
+                    if region == "noniso_sym" and str(bins[i]) == "140" and eta_reg == "barrel":
+                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 7)
+                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2")
+                        f2.SetParameters(h_egamma_tight.GetEntries(), h_egamma_tight.GetMean(), 0.5, -3, -1, h_egamma_tight.GetMean()+0.5, h_egamma_tight.GetMean()*3)
+                        h_egamma_tight.Fit('f2', 'L', "", 0, 15)
                     
                     # Create ratio histogram, which displays the tight photon / loose photon ratio
                     h_ratio = h_egamma_tight.Clone()
@@ -460,7 +380,6 @@ for item in plots:
                 ROOT.gPad.SetGridy(1)
                 ROOT.gPad.Update()
                 c1.Print("plots.pdf")    
-"""
 
 c1.Print("plots.pdf]")
 infile1.Close()
