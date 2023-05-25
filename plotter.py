@@ -6,6 +6,31 @@ import argparse
 import array
 
 
+# Function for fitting specific pt-bin histogram
+def fitfunc(x, p):
+    norm = p[0]
+    mpv = p[1]
+    sigma = p[2]
+    C1 = p[3]
+    C2 = p[4]
+    bound1 = p[5]
+    bound2 = p[6]
+   
+    land = norm*ROOT.TMath.Landau(x[0], mpv, sigma)
+  
+    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma);
+    y12=ROOT.TMath.Exp(C1*bound1);
+    exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
+    
+    y21=ROOT.TMath.Exp(C1*bound2)*y11/y12
+    y22=ROOT.TMath.Exp(C2*bound2)
+    exp2=ROOT.TMath.Exp(C2*x[0])*y21/y22
+    
+    if x[0] < bound1: return land
+    elif x[0] < bound2: return exp1
+    else: return exp2
+
+
 # command line options
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("input", metavar="INPUT", help="input root file")
@@ -33,17 +58,21 @@ c1.Print("plots.pdf[")
 # pi0: masspi0 plots for all eta regions, barrel, and endcap; pi0_bins: pt-binned masspi0 plots in barrel and endcap; overlay; pt-binned plots with overlayed ratios for each twoprong region
 sanity_plots = ["sieie", "pfRelIso03_chg", "hadTow"]  
 main_plots = ["pi0", "pi0_bins"]
-test_plots = ["overlay"]
+test_plots = ["pi0_bins"]
 if args.sanity: plots = sanity_plots
 elif args.test: plots = test_plots
 else: plots = main_plots
 
 eta_regions = ["all", "barrel", "endcap"]
 regions = ["iso_sym", "iso_asym", "noniso_sym", "noniso_asym"]
+test_regions = ["noniso_sym"]
+if args.test: regions = test_regions
 photon_regions = ["tight", "loose"]
+bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
+
 
 for item in plots:
-    if item == "pfRelIso03_chg" or item == "sieie" or item == "hoe" or item == "hadTow":
+    if item == "pfRelIso03_chg" or item == "sieie" or item == "hoe" or item == "hadTow":  # sanity plots
         for region in photon_regions:
             iso_sym = "photon_" + region + "_" + item + "_iso_sym"
             iso_asym = "photon_" + region + "_" + item + "_iso_asym"
@@ -92,10 +121,10 @@ for item in plots:
             elif item == "pfRelIso03_chg" and region == "loose": h_iso_sym.GetXaxis().SetRangeUser(0, 0.2)
             elif item == "hadTow" and region == "tight": h_iso_sym.GetXaxis().SetRangeUser(0, 0.1) 
             elif item == "hadTow" and region == "loose": h_iso_sym.GetXaxis().SetRangeUser(0, 0.2) 
-            c1.Print("plots.pdf")    
-    elif item == "pi0": 
+            c1.Print("plots.pdf")
+    elif item == "pi0":  # un-pt-binned massPi0 plots
         for region in regions:  # loop through twoprong regions
-            for eta_reg in eta_regions:  # nested loop through eta regions
+            for eta_reg in eta_regions:  # loop through eta regions for a fixed twoprong sideband
                 if not eta_reg == "barrel" and not eta_reg == "endcap":
                     h_egamma_tight = infile1.Get("plots/twoprong_masspi0_" + region + "_tight")
                     h_egamma_loose = infile1.Get("plots/twoprong_masspi0_" + region + "_loose")
@@ -148,12 +177,12 @@ for item in plots:
                 ROOT.gPad.Update()
                 c1.Print("plots.pdf")    
     elif item == "pi0_bins":
-        bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
-        regions = ["iso_sym", "iso_asym", "noniso_sym", "noniso_asym"]
-        for region in regions:
-            for i in range(len(bins)):
-                for eta_reg in eta_regions:
-                    if not eta_reg == "barrel" and not eta_reg == "endcap": continue
+        for region in regions:  # loop through twoprong sideband regions
+            for i in range(len(bins)):  # loop through pt bins for a fixed twoprong sideband
+                for eta_reg in eta_regions:  # loop through eta regions for fixed pt-bin and fixed twoprong sideband
+                    if not eta_reg == "barrel" and not eta_reg == "endcap": continue  # no pt-bin plots for barrel and endcap combined, so skip this case
+
+                    # Generate correct plots names to access from summed histogram files
                     egamma_tight_plots = "plots/twoprong_masspi0_" + region + "_" + eta_reg
                     egamma_loose_plots = "plots/twoprong_masspi0_" + region + "_" + eta_reg
                 
@@ -164,19 +193,31 @@ for item in plots:
                         egamma_tight_plots += "_" + str(bins[i]) + "_" + str(bins[i+1])
                         egamma_loose_plots += "_" + str(bins[i]) + "_" + str(bins[i+1])
                     
+                    # Reference name of the histogram created in the backend 
                     egamma_tight_plots += "_tight"
                     egamma_loose_plots += "_loose"
                         
+                    # Get the histograms from the input file
                     h_egamma_tight = infile1.Get(egamma_tight_plots)
                     h_egamma_loose = infile1.Get(egamma_loose_plots)
-
+                    
+                    # Configure display options
                     h_egamma_tight.SetLineColor(ROOT.kBlack)
                     h_egamma_loose.SetLineColor(ROOT.kGreen+2)
                     h_egamma_loose.SetFillColor(ROOT.kGreen+2)
-                     
+
+                    # Normalize histograms to unit integral
                     if not h_egamma_tight.Integral() == 0: h_egamma_tight.Scale(1.0/h_egamma_tight.Integral())
                     if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
                     
+                    # Fit loose histogram to a curve (in this case, pt bin is 120 to 140)
+                    if region == "noniso_sym" and str(bins[i]) == "120" and eta_reg == "barrel":
+                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 7)
+                        f2.SetParameters(h_egamma_loose.GetEntries(), h_egamma_loose.GetMean(), 0.5, -3, -1, h_egamma_loose.GetMean()+0.5, h_egamma_loose.GetMean()*3)
+                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2")
+                        h_egamma_loose.Fit('f2', 'L', "", 0, 15)
+                    
+                    # Create ratio histogram, which displays the tight photon / loose photon ratio
                     h_ratio = h_egamma_tight.Clone()
                     h_ratio.Reset()
                     h_ratio.SetLineColor(ROOT.kBlack)
@@ -203,12 +244,11 @@ for item in plots:
                     stack = ROOT.THStack('hs', 'hs')
                     stack.Add(h_egamma_loose)
                     stack.Draw("hist same")
-                    h_egamma_tight.Draw("samee")
+                    h_egamma_tight.Draw("samee")  # this is where the data is actually drawn to the canvas
                     ROOT.gPad.SetLogy()
                     h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
                     legend.Draw("same")
-                    
-                    c1.cd(2)
+                    c1.cd(2)  # draw ratio plots
                     h_ratio.Draw("e")
                     h_ratio.GetXaxis().SetRangeUser(0, 26)
                     h_ratio.GetYaxis().SetRangeUser(-2, 4)
@@ -217,7 +257,6 @@ for item in plots:
                     ROOT.gPad.Update()
                     c1.Print("plots.pdf")    
     elif item == "overlay":
-        bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
         for i in range(len(bins)):
             for eta_reg in eta_regions:
                 if not eta_reg == "barrel" and not eta_reg == "endcap": continue
@@ -331,8 +370,7 @@ for item in plots:
                 ROOT.gPad.SetLogy()
                 h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
                 legend1.Draw("same")
-                
-                c1.cd(2)
+                c1.cd(2) # draw ratio plots
                 h_ratio_iso_sym.Draw("e")
                 h_ratio_iso_asym.Draw("samee")
                 h_ratio_noniso_sym.Draw("samee")
