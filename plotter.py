@@ -1,9 +1,10 @@
 import math
+import ROOT
 import sys
 import os
-import ROOT
 import argparse
 import array
+import fitting_utils as util
 
 
 # Function for fitting specific pt-bin histogram
@@ -16,16 +17,19 @@ def fitfunc(x, p):
     bound1 = p[5]
     bound2 = p[6]
    
-    land = norm*ROOT.TMath.Landau(x[0], mpv, sigma)
+    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
   
-    y11 = norm*ROOT.TMath.Landau(bound1, mpv, sigma);
-    y12 = ROOT.TMath.Exp(C1*bound1);
-    exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
-    
-    y21 = ROOT.TMath.Exp(C1*bound2)*y11/y12
-    y22 = ROOT.TMath.Exp(C2*bound2)
-    exp2 = ROOT.TMath.Exp(C2*x[0])*y21/y22
-    
+    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma);
+    y12=ROOT.TMath.Exp(C1*bound1)
+    if y12 == 0: exp1 = 1000000000000
+    else: exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
+     
+    if y12 == 0: y21 = 1000000000000
+    else: y21=ROOT.TMath.Exp(C1*bound2)*y11/y12
+    y22=ROOT.TMath.Exp(C2*bound2)
+    if y22 == 0: exp2 = 1000000000000
+    else: exp2=ROOT.TMath.Exp(C2*x[0])*y21/y22
+     
     if x[0] < bound1: return land
     elif x[0] < bound2: return exp1
     else: return exp2
@@ -37,7 +41,7 @@ parser.add_argument("input", metavar="INPUT", help="input root file")
 
 # plot specification
 parser.add_argument("--sanity", "-s", default=False, action="store_true", help="create sanity plots")
-parser.add_argument("--test", "-t", default=False, action="store_true", help="create test plots")
+parser.add_argument("--test", default=False, action="store_true", help="create test plots")
 
 # parse args
 args = parser.parse_args()
@@ -51,19 +55,19 @@ ROOT.gStyle.SetLegendBorderSize(0)
 leg_x1, leg_x2, leg_y1, leg_y2 = 0.7, 0.60, 0.89, 0.89
 
 c1 = ROOT.TCanvas("c1", "c1", 800, 600)
-if not args.sanity: ROOT.TPad.Divide(c1, 1, 2)
+#if not args.sanity: ROOT.TPad.Divide(c1, 1, 2)
 c1.Print("plots.pdf[")
 
 # pi0: masspi0 plots for all eta regions, barrel, and endcap; pi0_bins: pt-binned masspi0 plots in barrel and endcap; overlay; pt-binned plots with overlayed ratios for each twoprong region
 sanity_plots = ["sieie", "pfRelIso03_chg", "hadTow"]  
-main_plots = ["pi0", "pi0_bins"]
+main_plots = ["pi0_bins"]
 test_plots = ["pi0_bins"]
 if args.sanity: plots = sanity_plots
 elif args.test: plots = test_plots
 else: plots = main_plots
 
 eta_regions = ["all", "barrel", "endcap"]
-regions = ["iso_sym", "iso_asym", "noniso_sym", "noniso_asym"]
+regions = ["iso_asym", "noniso_sym", "noniso_asym"]
 test_regions = ["noniso_sym"]
 if args.test: regions = test_regions
 photon_regions = ["tight", "loose"]
@@ -122,6 +126,7 @@ for item in plots:
             elif item == "hadTow" and region == "loose": h_iso_sym.GetXaxis().SetRangeUser(0, 0.2) 
             c1.Print("plots.pdf")
     elif item == "pi0":  # un-pt-binned massPi0 plots
+        ROOT.TPad.Divide(c1, 1, 2)
         for region in regions:  # loop through twoprong regions
             for eta_reg in eta_regions:  # loop through eta regions for a fixed twoprong sideband
                 if not eta_reg == "barrel" and not eta_reg == "endcap":
@@ -163,7 +168,7 @@ for item in plots:
                 mc_stack.Add(h_egamma_loose)
                 mc_stack.Draw("hist same")
                 h_egamma_tight.Draw("samee")
-                #ROOT.gPad.SetLogy()
+                ROOT.gPad.SetLogy()
                 h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
                 legend.Draw("same")
                 
@@ -202,26 +207,19 @@ for item in plots:
                     
                     # Configure display options
                     h_egamma_tight.SetLineColor(ROOT.kBlack)
-                    h_egamma_loose.SetLineColor(ROOT.kGreen+2)
-                    h_egamma_loose.SetFillColor(ROOT.kGreen+2)
+                    h_egamma_loose.SetLineColor(ROOT.kBlue+1)
+                    
+                    print("BEGINNING OF PT BIN: " + str(bins[i]))
+                    # Fit loose histogram to a curve
+                    f2 = ROOT.TF1('f2', fitfunc, 0, 50, 7)
+                    f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2")
+                    f2.SetParameters(h_egamma_loose.GetEntries(), h_egamma_loose.GetMean(), 0.5, -3, -1, h_egamma_loose.GetMean()+0.5, h_egamma_loose.GetMean()*3)
+                    h_egamma_loose.Fit(f2, 'L', "", 0, 15)
 
-                    # Normalize histograms to unit integral
-                    if not h_egamma_tight.Integral() == 0: h_egamma_tight.Scale(1.0/h_egamma_tight.Integral())
-                    if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
-                    
-                    # Fit loose histogram to a curve (in this case, pt bin is 120 to 140)
-                    if region == "noniso_sym" and str(bins[i]) == "140" and eta_reg == "barrel":
-                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 7)
-                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2")
-                        f2.SetParameters(h_egamma_tight.GetEntries(), h_egamma_tight.GetMean(), 0.5, -3, -1, h_egamma_tight.GetMean()+0.5, h_egamma_tight.GetMean()*3)
-                        h_egamma_tight.Fit('f2', 'L', "", 0, 15)
-                    
-                    # Create ratio histogram, which displays the tight photon / loose photon ratio
-                    h_ratio = h_egamma_tight.Clone()
-                    h_ratio.Reset()
-                    h_ratio.SetLineColor(ROOT.kBlack)
-                    h_ratio.Divide(h_egamma_tight, h_egamma_loose)
-                   
+                    h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
+                    h_egamma_tight.Reset()
+                    h_egamma_tight = h_fitted_egamma_loose.Clone()
+
                     # Create title for plot 
                     title = region + " Twoprong"
                     if eta_reg == "barrel": title += ", Barrel"
@@ -231,28 +229,21 @@ for item in plots:
                    
                     # Legend creation
                     legend = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
-                    legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                    legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "f")
+                    #legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                    legend.AddEntry(h_egamma_tight, "Fitted Loose Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                    legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
 
-                    h_egamma_tight.SetTitle(title)
-                    h_ratio.SetTitle("Tight / Loose Photon")  
+                    h_egamma_loose.SetTitle(title)
+                    h_egamma_loose.SetMaximum()
                     
                     # Draw plots
                     c1.cd(1)
-                    h_egamma_tight.Draw()  # draw data first so that it appears over the mc
-                    stack = ROOT.THStack('hs', 'hs')
-                    stack.Add(h_egamma_loose)
-                    stack.Draw("hist same")
-                    h_egamma_tight.Draw("samee")  # this is where the data is actually drawn to the canvas
+                    h_egamma_loose.Draw()  # draw data first so that it appears over the mc
+                    h_egamma_tight.Draw("hist same")
+                    h_egamma_loose.Draw("hist same")  # this is where the data is actually drawn to the canvas
                     ROOT.gPad.SetLogy()
-                    h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
+                    h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
                     legend.Draw("same")
-                    c1.cd(2)  # draw ratio plots
-                    h_ratio.Draw("e")
-                    h_ratio.GetXaxis().SetRangeUser(0, 26)
-                    h_ratio.GetYaxis().SetRangeUser(-2, 4)
-                    h_ratio.SetStats(0)
-                    ROOT.gPad.SetGridy(1)
                     ROOT.gPad.Update()
                     c1.Print("plots.pdf")    
     elif item == "overlay":
