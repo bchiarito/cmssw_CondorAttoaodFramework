@@ -33,8 +33,7 @@ if args.mode == 'plotting':
   '-x',
   '--lumi=59830',
   '--filesPerJob=4',
-#  '--dEta',
-  '--photon=HPID'
+  '--photon=CBL'
   ]
 if args.force: common_options.append('-f')
 if args.fast: common_options.append('--files=2')
@@ -60,7 +59,7 @@ if args.mode == 'atto':
   locs['qcd1000to1500'] = '/cms/twoprong/chiarito/nano/qcd/qcd1000to1500/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd1500to2000'] = '/cms/twoprong/chiarito/nano/qcd/qcd1500to2000/fv1p4-19-ee0c_bv1p1-2-3aa0/'
   locs['qcd2000toInf'] = '/cms/twoprong/chiarito/nano/qcd/qcd2000toInf/'
-  locs['signalM125m0p7'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_125_omega_0p7.root'
+  locs['signalM125m0p55'] = '/cms/chiarito/rootfiles/signal/SingleM125m0p55-1mil-Apr2023Run2/'
   locs['signalM500meta'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_500_omega_eta.root'
   locs['signalM1200m0p5'] = '/cms/chiarito/rootfiles/signal/NANOAOD_phi_1200_omega_0p5.root'
 if args.mode == 'plotting':
@@ -88,9 +87,9 @@ add_job(tag='qcd700to1000', options='--mc --xs=6398.0 --datasetname=qcd700to1000
 add_job(tag='qcd1000to1500', options='--mc --xs=1122.0 --datasetname=qcd1000to1500', loc=locs['qcd1000to1500'])
 add_job(tag='qcd1500to2000', options='--mc --xs=109.4 --datasetname=qcd1500to2000', loc=locs['qcd1500to2000'])
 add_job(tag='qcd2000toInf', options='--mc --xs=21.74 --datasetname=qcd2000toInf', loc=locs['qcd2000toInf'])
-add_job(tag='signalM125m0p7', options='--mc --xs=51.335 --datasetname=signalM125m0p7', loc=locs['signalM125m0p7'])
-add_job(tag='signalM500meta', options='--mc --xs=0.353898 --datasetname=signalM500meta', loc=locs['signalM500meta'])
-add_job(tag='signalM1200m0p5', options='--mc --xs=0.0035389 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])
+add_job(tag='signalM125m0p55', options='--sigRes --xs=51.335 --datasetname=signalM125m0p55', loc=locs['signalM125m0p55'])
+add_job(tag='signalM500meta', options='--sigRes --xs=0.353898 --datasetname=signalM500meta', loc=locs['signalM500meta'])
+add_job(tag='signalM1200m0p5', options='--sigRes --xs=0.0035389 --datasetname=signalM1200m0p5', loc=locs['signalM1200m0p5'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
