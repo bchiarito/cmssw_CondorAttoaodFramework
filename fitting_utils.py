@@ -1,5 +1,6 @@
 import ROOT
 import sys
+import math
 
 RANGE_LOW = 0 
 RANGE_HIGH = 10
@@ -14,7 +15,7 @@ def getname():
   NAME_COUNT += 1
   return 'obj'+str(NAME_COUNT)
 
-def TemplateToHistogram(func, bins, low, high, integral=False):
+def TemplateToHistogram(func, bins, low, high, integral=False, debug=False):
   '''
   Takes ROOT TF1 function template, and a binning
 
@@ -23,8 +24,12 @@ def TemplateToHistogram(func, bins, low, high, integral=False):
   name = getname()  
   hist = ROOT.TH1D(name, name, bins, low, high)
   for i in range(hist.GetNbinsX()):
-    if not integral: hist.SetBinContent(i+1, func.Eval(hist.GetBinCenter(i+1)))
-    else: hist.SetBinContent(i+1, func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1) ) )
+    if not integral:
+      val = func.Eval(hist.GetBinCenter(i+1))
+      hist.SetBinContent(i+1, val) if not math.isnan(val) else hist.SetBinContent(i+1, 0)
+    else:
+      val = func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))
+      hist.SetBinContent(i+1, val) if not math.isnan(val) else hist.SetBinContent(i+1, 0)
   return hist
 
 def HistogramToFunction(hist):
