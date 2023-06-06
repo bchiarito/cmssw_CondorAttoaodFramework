@@ -97,7 +97,7 @@ if __name__ == '__main__':
   raw_input() 
 
   print('fit second histogram with function')
-  hist_target.Fit(func_with_poly)
+  hist_target.Fit(func_with_poly, "L")
   hist_target.Draw()
   raw_input() 
 
