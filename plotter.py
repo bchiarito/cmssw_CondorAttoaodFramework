@@ -348,7 +348,8 @@ for item in plots:
                     h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
                     fitted_func = util.HistogramToFunction(h_fitted_egamma_loose)
                     func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
-                    h_egamma_tight.Fit(func_with_poly) 
+                    h_egamma_tight.Fit(func_with_poly, '0L') 
+                    tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 300, 0, 50)
 
                     # Create title for plot 
                     title = region + " Twoprong"
@@ -368,6 +369,7 @@ for item in plots:
                     h_egamma_loose.SetMaximum()
                     
                     # Draw plots
+                    c1.Divide(2)
                     c1.cd(1)
                     h_egamma_loose.Draw()  # draw data first so that it appears over the mc
                     h_egamma_tight.Draw("same")
@@ -378,7 +380,17 @@ for item in plots:
                     else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
                     legend.Draw("same")
                     ROOT.gPad.Update()
+                    c1.cd(2)
+                    h_egamma_tight.Draw("e")
+                    tight_fit_as_hist.SetLineColor(ROOT.kBlue)
+                    tight_fit_as_hist.SetLineWidth(2)
+                    tight_fit_as_hist.SetFillColor(ROOT.kGreen+2)
+                    tight_fit_as_hist.Draw("same l e3")
+                    h_egamma_tight.Draw("e same")
                     c1.Print("plots.pdf")    
+                    
+
+
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
