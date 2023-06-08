@@ -305,7 +305,7 @@ for item in plots:
                 c1.Print("plots.pdf")    
     elif item == "pi0_bins":
         if args.ratio: ROOT.TPad.Divide(c1, 1, 2)
-        else: ROOT.TPad.Divide(c1, 2, 2)
+        #else: ROOT.TPad.Divide(c1, 2, 2)
         if args.testBin is not None: test_bin = binConverter(args.testBin)
         for region in regions:  # loop through twoprong sideband regions
             if args.testBin is not None: 
@@ -445,7 +445,12 @@ for item in plots:
                             if args.ratio: h_ratio.SetTitle("Tight / Loose")
                             
                             # Draw plots
-                            c1.cd(1)
+                            if args.ratio: c1.cd(1)
+                            else:
+                              c1.cd()
+                              pad1 = ROOT.TPad('pad1', 'pad1', 0, 0.3, 0.5, 1)
+                              pad1.Draw()
+                              pad1.cd()
                             h_egamma_loose.SetTitle(title)
                             h_egamma_loose.SetMaximum()
                             h_egamma_loose.Draw("e")
@@ -473,14 +478,17 @@ for item in plots:
                                 ROOT.gPad.Update()
                                 legend1.Draw("same")
                             else:
-                                c1.cd(2)
+                                c1.cd()
+                                pad2 = ROOT.TPad('pad2', 'pad2', 0.5, 0.3, 1, 1)
+                                pad2.Draw()
+                                pad2.cd()
                                 h_egamma_tight.Draw("e")
                                 tight_fit_as_hist.SetLineColor(ROOT.kRed)
                                 tight_fit_as_hist.SetLineWidth(2)
                                 tight_fit_as_hist_errorbars = tight_fit_as_hist.Clone()
                                 tight_fit_as_hist_errorbars.SetFillColor(ROOT.kRed+2)
                                 tight_fit_as_hist_errorbars.Draw("same e2")
-                                tight_fit_as_hist.Draw("same l")
+                                tight_fit_as_hist.Draw("same hist")
                                 h_egamma_tight.Draw("e same")
                                 ROOT.gPad.SetLogy()
                                 if bins[i] < 80: h_egamma_tight.GetXaxis().SetRangeUser(0, 5)
@@ -491,7 +499,10 @@ for item in plots:
                                 legend2.Draw("same")
 
                             if not args.ratio:
-                                c1.cd(3)
+                                c1.cd()
+                                pad3 = ROOT.TPad('pad3', 'pad3', 0, 0, 0.5, 0.3)
+                                pad3.Draw()
+                                pad3.cd()
                                 h_loose_residual.SetTitle("(Loose - Fit) / Fit")
                                 h_loose_residual.SetLineColor(ROOT.kBlack)
                                 h_loose_residual.Draw('p')
@@ -504,7 +515,10 @@ for item in plots:
                                 elif bins[i] < 380: h_loose_residual.GetXaxis().SetRangeUser(0, 20)
                                 else: h_loose_residual.GetXaxis().SetRangeUser(0, 26)
 
-                                c1.cd(4)
+                                c1.cd()
+                                pad4 = ROOT.TPad('pad4', 'pad4', 0.5, 0, 1, 0.3)
+                                pad4.Draw()
+                                pad4.cd()
                                 h_tight_residual.SetTitle("(Tight - Fit) / Fit")
                                 h_tight_residual.SetLineColor(ROOT.kBlack)
                                 h_tight_residual.Draw('p')
@@ -517,7 +531,7 @@ for item in plots:
                                 elif bins[i] < 380: h_tight_residual.GetXaxis().SetRangeUser(0, 20)
                                 else: h_tight_residual.GetXaxis().SetRangeUser(0, 26)
 
-                            raw_input()
+                            #raw_input()
 
                             c1.Print("plots.pdf")    
                         # after loop on fits
@@ -556,7 +570,7 @@ for item in plots:
                         print "F43: "+ str(F43)
                         #print (rss4, rss3)
                         print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
-                        raw_input()
+                        if args.testBin is not None: raw_input()
                         
 
     elif item == "poly":
