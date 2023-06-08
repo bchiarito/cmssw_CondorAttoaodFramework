@@ -19,7 +19,7 @@ def TemplateToHistogram(func, bins, low, high, integral=False, debug=False):
   '''
   Takes ROOT TF1 function template, and a binning
 
-  Returns a ROOT TH1D histogram vesion, by using the function midpoint in each bin
+  Returns a ROOT TH1D histogram vesion
   '''
   name = getname()  
   hist = ROOT.TH1D(name, name, bins, low, high)
@@ -28,7 +28,7 @@ def TemplateToHistogram(func, bins, low, high, integral=False, debug=False):
       val = func.Eval(hist.GetBinCenter(i+1))
       hist.SetBinContent(i+1, val) if not math.isnan(val) else hist.SetBinContent(i+1, 0)
     else:
-      val = func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))
+      val = (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))) / hist.GetBinWidth(i+1)
       hist.SetBinContent(i+1, val) if not math.isnan(val) else hist.SetBinContent(i+1, 0)
   return hist
 
