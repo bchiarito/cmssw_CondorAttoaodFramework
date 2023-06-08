@@ -289,6 +289,7 @@ for item in plots:
                 c1.Print("plots.pdf")    
     elif item == "pi0_bins":
         if args.ratio: ROOT.TPad.Divide(c1, 1, 2)
+        else: ROOT.TPad.Divide(c1, 2, 2)
         if args.testBin is not None: test_bin = binConverter(args.testBin)
         for region in regions:  # loop through twoprong sideband regions
             if args.testBin is not None: 
@@ -375,16 +376,30 @@ for item in plots:
                                 f2.SetParLimits(9, 0.5, 7)
                                 f2.SetParLimits(10, 0.5, 7)
                             
-                            for j in range(5): loose_fit = h_egamma_loose.Fit(f2, 'SL', "", 0, 25)
+                            for j in range(5): loose_fit = h_egamma_loose.Fit(f2, '0SL', "", 0, 25)
                             chi2 = loose_fit.Chi2()
                             ndf = loose_fit.Ndf()
                             
-                            h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
-                            fitted_func = util.HistogramToFunction(h_fitted_egamma_loose)
+                            loose_fit_as_hist = util.TemplateToHistogram(f2, 1000, 0, 50)
+                            fitted_func = util.HistogramToFunction(loose_fit_as_hist)
                             func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
                             h_egamma_tight.Fit(func_with_poly, '0L') 
-                            tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 300, 0, 50)
+                            tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 1000, 0, 50)
 
+                            h_loose_residual_num = h_egamma_loose.Clone()
+                            h_loose_residual_num.Reset()
+                            h_loose_residual = h_egamma_loose.Clone()
+                            h_loose_residual.Reset()
+                            h_loose_residual_num.Add(h_egamma_loose, loose_fit_as_hist, 1, -1)
+                            h_loose_residual.Divide(h_loose_residual_num, loose_fit_as_hist)
+
+                            h_tight_residual_num = h_egamma_tight.Clone()
+                            h_tight_residual_num.Reset()
+                            h_tight_residual = h_egamma_tight.Clone()
+                            h_tight_residual.Reset()
+                            h_tight_residual_num.Add(h_egamma_tight, tight_fit_as_hist, 1, -1)
+                            h_tight_residual.Divide(h_tight_residual_num, tight_fit_as_hist)
+                            
                             # Create title for plot 
                             title = region + " Twoprong"
                             if eta_reg == "barrel": title += ", Barrel"
@@ -397,11 +412,14 @@ for item in plots:
                             else: title += ", 4 exp"
                            
                             # Legend creation
-                            legend = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
-                            legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                            #legend.AddEntry(h_egamma_tight, "Fitted Loose Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                            legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
-                            if not args.ratio: legend.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
+                            legend1 = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
+                            legend1.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
+                            if not args.ratio: legend1.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
+
+                            legend2 = ROOT.TLegend(0.65, 0.55, 0.9, 0.7)
+                            legend2.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                            legend2.AddEntry(tight_fit_as_hist, "Fitted Tight", "f")
+                            
 
                             if args.ratio: h_ratio.SetTitle("Tight / Loose")
                             
@@ -409,21 +427,22 @@ for item in plots:
                             c1.cd(1)
                             h_egamma_loose.SetTitle(title)
                             h_egamma_loose.SetMaximum()
-                            h_egamma_loose.Draw()  # draw data first so that it appears over the mc
-                            h_egamma_tight.Draw("same")
-                            h_egamma_loose.Draw("E same")  # this is where the data is actually drawn to the canvas
+                            h_egamma_loose.Draw("e")
+                            f2.Draw("same")
                             ROOT.gPad.SetLogy()
-                            if bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
+                            if bins[i] < 80: h_egamma_loose.GetXaxis().SetRangeUser(0, 5)
+                            elif bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
                             elif bins[i] < 200: h_egamma_loose.GetXaxis().SetRangeUser(0, 15)
                             elif bins[i] < 380: h_egamma_loose.GetXaxis().SetRangeUser(0, 20)
                             else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
-                            legend.Draw("same")
+                            legend1.Draw("same")
                             ROOT.gPad.Update()
                             
                             if args.ratio:
                                 c1.cd(2)
                                 h_ratio.Draw("e")
-                                if bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
+                                if bins[i] < 80: h_ratio.GetXaxis().SetRangeUser(0, 5)
+                                elif bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
                                 elif bins[i] < 380: h_ratio.GetXaxis().SetRangeUser(0, 20)
                                 else: h_ratio.GetXaxis().SetRangeUser(0, 26)
@@ -431,19 +450,52 @@ for item in plots:
                                 h_ratio.SetStats(0)
                                 ROOT.gPad.SetGridy(1)
                                 ROOT.gPad.Update()
-                            """
+                                legend1.Draw("same")
                             else:
                                 c1.cd(2)
                                 h_egamma_tight.Draw("e")
                                 tight_fit_as_hist.SetLineColor(ROOT.kBlue)
                                 tight_fit_as_hist.SetLineWidth(2)
-                                tight_fit_as_hist.SetFillColor(ROOT.kGreen+2)
+                                tight_fit_as_hist.SetFillColor(ROOT.kRed)
                                 tight_fit_as_hist.Draw("same l e3")
                                 h_egamma_tight.Draw("e same")
-                                if bins[i] < 120: h_egamma_tight.GetXaxis().SetRangeUser(0, 10)
+                                ROOT.gPad.SetLogy()
+                                if bins[i] < 80: h_egamma_tight.GetXaxis().SetRangeUser(0, 5)
+                                elif bins[i] < 120: h_egamma_tight.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_egamma_tight.GetXaxis().SetRangeUser(0, 15)
+                                elif bins[i] < 380: h_egamma_tight.GetXaxis().SetRangeUser(0, 20)
                                 else: h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
-                            """
+                                legend2.Draw("same")
+
+                            if not args.ratio:
+                                c1.cd(3)
+                                h_loose_residual.SetTitle("(Loose - Fit) / Fit")
+                                h_loose_residual.SetLineColor(ROOT.kBlack)
+                                h_loose_residual.Draw('p')
+                                h_loose_residual.SetMarkerStyle(8)
+                                h_loose_residual.SetMarkerSize(0.25)
+                                h_loose_residual.GetYaxis().SetRangeUser(-2, 2)
+                                if bins[i] < 80: h_loose_residual.GetXaxis().SetRangeUser(0, 5)
+                                elif bins[i] < 120: h_loose_residual.GetXaxis().SetRangeUser(0, 10)
+                                elif bins[i] < 200: h_loose_residual.GetXaxis().SetRangeUser(0, 15)
+                                elif bins[i] < 380: h_loose_residual.GetXaxis().SetRangeUser(0, 20)
+                                else: h_loose_residual.GetXaxis().SetRangeUser(0, 26)
+
+                                c1.cd(4)
+                                h_tight_residual.SetTitle("(Tight - Fit) / Fit")
+                                h_tight_residual.SetLineColor(ROOT.kBlack)
+                                h_tight_residual.Draw('p')
+                                h_tight_residual.SetMarkerStyle(8)
+                                h_tight_residual.SetMarkerSize(0.25)
+                                h_tight_residual.GetYaxis().SetRangeUser(-2, 2)
+                                if bins[i] < 80: h_tight_residual.GetXaxis().SetRangeUser(0, 5)
+                                elif bins[i] < 120: h_tight_residual.GetXaxis().SetRangeUser(0, 10)
+                                elif bins[i] < 200: h_tight_residual.GetXaxis().SetRangeUser(0, 15)
+                                elif bins[i] < 380: h_tight_residual.GetXaxis().SetRangeUser(0, 20)
+                                else: h_tight_residual.GetXaxis().SetRangeUser(0, 26)
+
+                            raw_input()
+
                             c1.Print("plots.pdf")    
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
