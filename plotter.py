@@ -40,11 +40,10 @@ def fitfunc2(x, p):
     C1 = p[3]
     C2 = p[4]
     bound1 = p[5]
-    bound2 = p[6]
-    b12 = p[7]
+    b12 = p[6]
 
     if bound1 < 0: bound1 = 0
-    if bound2 < bound1: bound2 = bound1 + b12
+    bound2 = bound1 + b12
 
     land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
   
@@ -70,14 +69,12 @@ def fitfunc3(x, p):
     C2 = p[4]
     C3 = p[5]
     bound1 = p[6]
-    bound2 = p[7]
-    bound3 = p[8]
-    b12 = p[9]
-    b23 = p[10]
+    b12 = p[7]
+    b23 = p[8]
 
     if bound1 < 0: bound1 = 0
-    if bound2 < bound1: bound2 = bound1 + b12
-    if bound3 < bound2: bound3 = bound2 + b23
+    bound2 = bound1 + b12
+    bound3 = bound2 + b23
 
     land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
   
@@ -99,6 +96,50 @@ def fitfunc3(x, p):
     else: return exp3
 
 
+# Function for fitting specific pt-bin histogram (3 exponentials)
+def fitfunc4(x, p):
+    norm = p[0]
+    mpv = p[1]
+    sigma = p[2]
+    C1 = p[3]
+    C2 = p[4]
+    C3 = p[5]
+    C4 = p[6]
+    bound1 = p[7]
+    b12 = p[8]
+    b23 = p[9]
+    b34 = p[10]
+
+    if bound1 < 0: bound1 = 0
+    bound2 = bound1 + b12
+    bound3 = bound2 + b23
+    bound4 = bound3 + b34
+
+    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
+  
+    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma)
+    y12=ROOT.TMath.Exp(C1*bound1)
+    exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
+     
+    y21=ROOT.TMath.Exp(C1*bound2)*y11/y12
+    y22=ROOT.TMath.Exp(C2*bound2)
+    exp2=ROOT.TMath.Exp(C2*x[0])*y21/y22
+     
+    y31=ROOT.TMath.Exp(C2*bound3)*y21/y22
+    y32=ROOT.TMath.Exp(C3*bound3)
+    exp3=ROOT.TMath.Exp(C3*x[0])*y31/y32
+
+    y41=ROOT.TMath.Exp(C3*bound4)*y31/y32
+    y42=ROOT.TMath.Exp(C4*bound4)
+    exp4=ROOT.TMath.Exp(C4*x[0])*y41/y42
+    
+    if x[0] < bound1: return land
+    elif x[0] < bound2: return exp1
+    elif x[0] < bound3: return exp2
+    elif x[0] < bound4: return exp3
+    else: return exp4
+
+
 # command line options
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("input", metavar="INPUT", help="input root file")
@@ -111,7 +152,6 @@ parser.add_argument("--ratio", default=False, action="store_true", help="create 
 
 # parse args
 args = parser.parse_args()
-
 infile1 = ROOT.TFile(sys.argv[1])
 
 # other config
@@ -295,36 +335,45 @@ for item in plots:
                     else:
                         print("BEGINNING OF PT BIN: " + str(bins[i]))
                         # Fit loose histogram to a curve
-                        for k in range(3):
+                        for k in range(4):
                             nEntries = h_egamma_loose.GetEntries()
                             mean = h_egamma_loose.GetMean()
                             if k == 0: 
                                 f2 = ROOT.TF1('f2', fitfunc1, 0, 50, 5)
                                 f2.SetParNames("Constant","MPV","Sigma","C1","Boundary1")
                                 f2.SetParameters(nEntries, mean, 0.5, -3, mean*2)
-                                f2.SetParLimits(3, -20, 0)
+                                f2.SetParLimits(3, -10, 0)
                                 f2.SetParLimits(4, 0, 25)
                             elif k == 1: 
-                                f2 = ROOT.TF1('f2', fitfunc2, 0, 50, 8)
-                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2","BoundDiff12")
-                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, mean*2, mean*3, 0.6)
-                                f2.SetParLimits(3, -20, 0)
-                                f2.SetParLimits(4, -20, 0)
+                                f2 = ROOT.TF1('f2', fitfunc2, 0, 50, 7)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","BoundDiff12")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, mean*2, 0.6)
+                                f2.SetParLimits(3, -10, 0)
+                                f2.SetParLimits(4, -10, 0)
                                 f2.SetParLimits(5, 0, 25)
+                                f2.SetParLimits(6, 0.5, 7)
+                            elif k == 2: 
+                                f2 = ROOT.TF1('f2', fitfunc3, 0, 50, 9)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","BoundDiff12","BoundDiff23")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, mean*2, 0.6, 2)
+                                f2.SetParLimits(3, -10, 0)
+                                f2.SetParLimits(4, -10, 0)
+                                f2.SetParLimits(5, -10, 0)
                                 f2.SetParLimits(6, 0, 25)
-                                f2.SetParLimits(7, 0.5, 5)
+                                f2.SetParLimits(7, 0.5, 7)
+                                f2.SetParLimits(8, 0.5, 7)
                             else: 
-                                f2 = ROOT.TF1('f2', fitfunc3, 0, 50, 11)
-                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3","BoundDiff12","BoundDiff23")
-                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, mean*2, mean*3, mean*4, 0.6, 0.6)
-                                f2.SetParLimits(3, -20, 0)
-                                f2.SetParLimits(4, -20, 0)
-                                f2.SetParLimits(5, -20, 0)
-                                f2.SetParLimits(6, 0, 25)
+                                f2 = ROOT.TF1('f2', fitfunc4, 0, 50, 11)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","C4","Boundary1","BoundDiff12","BoundDiff23","BoundDiff34")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, -0.25, mean*2, 0.6, 2, 4)
+                                f2.SetParLimits(3, -10, 0)
+                                f2.SetParLimits(4, -10, 0)
+                                f2.SetParLimits(5, -10, 0)
+                                f2.SetParLimits(6, -10, 0)
                                 f2.SetParLimits(7, 0, 25)
-                                f2.SetParLimits(8, 0, 25)
-                                f2.SetParLimits(9, 0.5, 5)
-                                f2.SetParLimits(10, 0.5, 5)
+                                f2.SetParLimits(8, 0.5, 7)
+                                f2.SetParLimits(9, 0.5, 7)
+                                f2.SetParLimits(10, 0.5, 7)
                             
                             for j in range(5): loose_fit = h_egamma_loose.Fit(f2, 'SL', "", 0, 25)
                             chi2 = loose_fit.Chi2()
@@ -344,10 +393,11 @@ for item in plots:
                             else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
                             if k == 0: title += ", 1 exp"
                             elif k == 1: title += ", 2 exp"
-                            else: title += ", 3 exp"
+                            elif k == 2: title += ", 3 exp"
+                            else: title += ", 4 exp"
                            
                             # Legend creation
-                            legend = ROOT.TLegend(0.65, 0.15, 0.9, 0.3)
+                            legend = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
                             legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
                             #legend.AddEntry(h_egamma_tight, "Fitted Loose Photon, " + str(h_egamma_tight.GetEntries()), "l")
                             legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
@@ -365,8 +415,8 @@ for item in plots:
                             ROOT.gPad.SetLogy()
                             if bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
                             elif bins[i] < 200: h_egamma_loose.GetXaxis().SetRangeUser(0, 15)
+                            elif bins[i] < 380: h_egamma_loose.GetXaxis().SetRangeUser(0, 20)
                             else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
-                            h_egamma_loose.GetYaxis().SetRangeUser(0.10, 10000)
                             legend.Draw("same")
                             ROOT.gPad.Update()
                             
@@ -375,6 +425,7 @@ for item in plots:
                                 h_ratio.Draw("e")
                                 if bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
+                            elif bins[i] < 380: h_ratio.GetXaxis.().SetRangeUser(0, 20)
                                 else: h_ratio.GetXaxis().SetRangeUser(0, 26)
                                 h_ratio.GetYaxis().SetRangeUser(-2, 4)
                                 h_ratio.SetStats(0)
