@@ -6,6 +6,17 @@ import argparse
 import array
 import fitting_utils as util
 
+def count_nonzero_bins(hist):
+  count = 0
+  for i in range(hist.GetNbinsX()):
+    if not hist.GetBinContent(i) == 0: count += 1
+  return count
+
+def RSS(func, hist):
+  rss = 0
+  for i in range(hist.GetNbinsX()):
+    rss += (hist.GetBinContent(i+1) - func.Eval(hist.GetBinCenter(i+1)))**2
+  return rss
 
 def binConverter(test_bin):
     bin_list = test_bin.split(" ")
@@ -295,6 +306,8 @@ for item in plots:
                     else:
                         print("BEGINNING OF PT BIN: " + str(bins[i]))
                         # Fit loose histogram to a curve
+                        rss = []
+                        num_param = []
                         for k in range(3):
                             nEntries = h_egamma_loose.GetEntries()
                             mean = h_egamma_loose.GetMean()
@@ -330,6 +343,9 @@ for item in plots:
                             chi2 = loose_fit.Chi2()
                             ndf = loose_fit.Ndf()
                             
+                            rss.append(RSS(f2, h_egamma_loose))
+                            num_param.append(f2.GetNpar())
+
                             h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
                             fitted_func = util.HistogramToFunction(h_fitted_egamma_loose)
                             func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
@@ -394,6 +410,38 @@ for item in plots:
                                 else: h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
                             """
                             c1.Print("plots.pdf")    
+                        # after loop on fits
+                        rss1 = rss[0]
+                        rss2 = rss[1]
+                        rss3 = rss[2]
+                        rss4 = rss[3]
+                        p1 = num_param[0]
+                        p2 = num_param[1]
+                        p3 = num_param[2]
+                        p4 = num_param[3]
+                        n = count_nonzero_bins(h_egamma_loose)
+                        F21 = ((rss1 - rss2)/(p2 - p1)) / (rss2/(n - p2))
+                        F31 = ((rss1 - rss3)/(p3 - p1)) / (rss3/(n - p3))
+                        F32 = ((rss2 - rss3)/(p3 - p2)) / (rss3/(n - p3))
+                        F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
+                        F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
+                        F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
+                        #print(rss1, rss2)
+                        #print(p1, p2, n)
+                        print "F21: "+ str(F21)
+                        print "({}, {}) degrees of freedom".format(p2-p1, n-p2)
+                        print "F31: "+ str(F21)
+                        print "({}, {}) degrees of freedom".format(p3-p1, n-p3)
+                        print "F32: "+ str(F32)
+                        print "({}, {}) degrees of freedom".format(p3-p2, n-p3)
+                        print "F41: "+ str(F41)
+                        print "({}, {}) degrees of freedom".format(p4-p1, n-p4)
+                        print "F42: "+ str(F42)
+                        print "({}, {}) degrees of freedom".format(p4-p2, n-p4)
+                        print "F43: "+ str(F43)
+                        print "({}, {}) degrees of freedom".format(p4-p3, n-p4)
+                        
+
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
