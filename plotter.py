@@ -425,7 +425,7 @@ for item in plots:
                                 h_ratio.Draw("e")
                                 if bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
-                            elif bins[i] < 380: h_ratio.GetXaxis.().SetRangeUser(0, 20)
+                                elif bins[i] < 380: h_ratio.GetXaxis().SetRangeUser(0, 20)
                                 else: h_ratio.GetXaxis().SetRangeUser(0, 26)
                                 h_ratio.GetYaxis().SetRangeUser(-2, 4)
                                 h_ratio.SetStats(0)
