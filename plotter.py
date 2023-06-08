@@ -12,8 +12,57 @@ def binConverter(test_bin):
     return bin_list
 
 
-# Function for fitting specific pt-bin histogram
-def fitfunc(x, p):
+# Function for fitting specific pt-bin histogram (1 exponential)
+def fitfunc1(x, p):
+    norm = p[0]
+    mpv = p[1]
+    sigma = p[2]
+    C1 = p[3]
+    bound1 = p[4]
+   
+    if bound1 < 0: bound1 = 0
+
+    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
+  
+    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma)
+    y12=ROOT.TMath.Exp(C1*bound1)
+    exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
+
+    if x[0] < bound1: return land
+    else: return exp1
+
+
+# Function for fitting specific pt-bin histogram (2 exponentials)
+def fitfunc2(x, p):
+    norm = p[0]
+    mpv = p[1]
+    sigma = p[2]
+    C1 = p[3]
+    C2 = p[4]
+    bound1 = p[5]
+    bound2 = p[6]
+    b12 = p[7]
+
+    if bound1 < 0: bound1 = 0
+    if bound2 < bound1: bound2 = bound1 + b12
+
+    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
+  
+    y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma)
+    y12=ROOT.TMath.Exp(C1*bound1)
+    exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
+     
+    y21=ROOT.TMath.Exp(C1*bound2)*y11/y12
+    y22=ROOT.TMath.Exp(C2*bound2)
+    exp2=ROOT.TMath.Exp(C2*x[0])*y21/y22
+
+    if x[0] < bound1: return land
+    elif x[0] < bound2: return exp1
+    else: return exp2
+
+
+# Function for fitting specific pt-bin histogram (3 exponentials)
+def fitfunc3(x, p):
     norm = p[0]
     mpv = p[1]
     sigma = p[2]
@@ -23,10 +72,12 @@ def fitfunc(x, p):
     bound1 = p[6]
     bound2 = p[7]
     bound3 = p[8]
+    b12 = p[9]
+    b23 = p[10]
 
     if bound1 < 0: bound1 = 0
-    if bound2 < bound1: bound2 = bound1 
-    if bound3 < bound2: bound3 = bound2
+    if bound2 < bound1: bound2 = bound1 + b12
+    if bound3 < bound2: bound3 = bound2 + b23
 
     land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
   
@@ -84,7 +135,7 @@ else: plots = main_plots
 
 eta_regions = ["all", "barrel", "endcap"]
 regions = ["iso_asym", "noniso_sym", "noniso_asym"]
-test_regions = ["noniso_asym"]
+test_regions = ["noniso_sym"]
 if args.test: regions = test_regions
 photon_regions = ["tight", "loose"]
 bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
@@ -223,8 +274,7 @@ for item in plots:
                     
                     # Reference name of the histogram created in the backend 
                     egamma_tight_plots += "_tight"
-                    print(egamma_tight_plots)
-                    egamma_loose_plots += "_loose_reweighted"
+                    egamma_loose_plots += "_loose"
                     
                     # Get the histograms from the input file
                     h_egamma_tight = infile1.Get(egamma_tight_plots)
@@ -234,7 +284,7 @@ for item in plots:
                     h_egamma_tight.SetLineColor(ROOT.kBlack)
                     h_egamma_loose.SetLineColor(ROOT.kBlue+1)
 
-                    if args.ratio:
+                    if args.ratio:  # create unfitted ratio plots between tight and loose photons
                         if not h_egamma_tight.Integral() == 0: h_egamma_tight.Scale(1.0/h_egamma_tight.Integral())
                         if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
                          
@@ -245,160 +295,105 @@ for item in plots:
                     else:
                         print("BEGINNING OF PT BIN: " + str(bins[i]))
                         # Fit loose histogram to a curve
-                        for j in range(10):
-                            if j == 0:
-                                f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
-                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
+                        for k in range(3):
+                            nEntries = h_egamma_loose.GetEntries()
+                            mean = h_egamma_loose.GetMean()
+                            if k == 0: 
+                                f2 = ROOT.TF1('f2', fitfunc1, 0, 50, 5)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","Boundary1")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, mean*2)
+                                f2.SetParLimits(3, -20, 0)
+                                f2.SetParLimits(4, 0, 25)
+                            elif k == 1: 
+                                f2 = ROOT.TF1('f2', fitfunc2, 0, 50, 8)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","Boundary2","BoundDiff12")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, mean*2, mean*3, 0.6)
+                                f2.SetParLimits(3, -20, 0)
+                                f2.SetParLimits(4, -20, 0)
+                                f2.SetParLimits(5, 0, 25)
+                                f2.SetParLimits(6, 0, 25)
+                                f2.SetParLimits(7, 0.5, 5)
+                            else: 
+                                f2 = ROOT.TF1('f2', fitfunc3, 0, 50, 11)
+                                f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3","BoundDiff12","BoundDiff23")
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, mean*2, mean*3, mean*4, 0.6, 0.6)
                                 f2.SetParLimits(3, -20, 0)
                                 f2.SetParLimits(4, -20, 0)
                                 f2.SetParLimits(5, -20, 0)
                                 f2.SetParLimits(6, 0, 25)
                                 f2.SetParLimits(7, 0, 25)
                                 f2.SetParLimits(8, 0, 25)
-                                f2.SetParameters(h_egamma_loose.GetEntries(), h_egamma_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_loose.GetMean()+0.5, h_egamma_loose.GetMean()*3, h_egamma_loose.GetMean()*5)
-                                if region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 20:
-                                    f2.FixParameter(7, 1.9)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 40:
-                                    f2.FixParameter(6, 1.033)
-                                    f2.FixParameter(7, 2.294)
-                                    f2.FixParameter(8, 2.9)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 70:
-                                    f2.FixParameter(6, 1.215)
-                                    f2.FixParameter(7, 2)
-                                    f2.FixParameter(8, 3.6)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 80:
-                                    f2.FixParameter(6, 1.4)
-                                    f2.FixParameter(7, 2.5)
-                                    f2.FixParameter(8, 4.5)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 100:
-                                    f2.FixParameter(6, 1.65)
-                                    f2.FixParameter(7, 2.944)
-                                    f2.FixParameter(8, 5)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 120:
-                                    f2.FixParameter(6, 1.839)
-                                    f2.FixParameter(7, 3.33)
-                                    f2.FixParameter(8, 6.2)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 120:
-                                    f2.FixParameter(6, 1.746)
-                                    f2.FixParameter(7, 3.75)
-                                    f2.FixParameter(8, 5.4)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 140:
-                                    f2.FixParameter(6, 1.893)
-                                    f2.FixParameter(7, 3.75)
-                                    f2.FixParameter(8, 5.4)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 160:
-                                    f2.FixParameter(6, 2.073)
-                                    f2.FixParameter(7, 4.5)
-                                    f2.FixParameter(8, 6.5)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 180:
-                                    f2.FixParameter(6, 2.21)
-                                    f2.FixParameter(7, 5)
-                                    f2.FixParameter(8, 7)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 180:
-                                    f2.FixParameter(6, 2.27)
-                                    f2.FixParameter(7, 5)
-                                    f2.FixParameter(8, 6.5)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 180:
-                                    f2.FixParameter(6, 2.27)
-                                    f2.FixParameter(7, 5)
-                                    f2.FixParameter(8, 6.5)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 200:
-                                    f2.FixParameter(6, 2.386)
-                                    f2.FixParameter(7, 5)
-                                    f2.FixParameter(8, 9.5)
-                                elif region == "noniso_sym" and eta_reg == "endcap" and bins[i] == 200:
-                                    f2.FixParameter(6, 2.398)
-                                    f2.FixParameter(7, 4)
-                                    f2.FixParameter(8, 6)
-                                elif region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 240:
-                                    f2.FixParameter(6, 1.685)
-                                    f2.FixParameter(7, 2.391)
-                                    f2.FixParameter(8, 5)
-                                elif region == "noniso_asym" and eta_reg == "endcap" and bins[i] == 60:
-                                    f2.FixParameter(6, 1.147)
-                                    f2.FixParameter(7, 2.2)
-                                    f2.FixParameter(8, 3)
-                                elif region == "noniso_asym" and eta_reg == "barrel" and bins[i] == 80:
-                                    f2.FixParameter(6, 2.118)
-                                    f2.FixParameter(7, 3)
-                                    f2.FixParameter(8, 3.8)
-                                elif region == "noniso_asym" and eta_reg == "endcap" and bins[i] == 80:
-                                    f2.FixParameter(6, 1.268)
-                                    f2.FixParameter(7, 2)
-                                    f2.FixParameter(8, 3.2)
-                                elif region == "noniso_asym" and eta_reg == "endcap" and bins[i] == 120:
-                                    f2.FixParameter(6, 1.487)
-                                    f2.FixParameter(7, 1.515)
-                                    f2.FixParameter(8, 5)
-                                elif region == "noniso_asym" and eta_reg == "barrel" and bins[i] == 140:
-                                    f2.FixParameter(6, 1.391)
-                                    f2.FixParameter(7, 1.714)
-                                    f2.FixParameter(8, 4)
-                                elif region == "noniso_asym" and eta_reg == "barrel" and bins[i] == 160:
-                                    f2.FixParameter(6, 1.801)
-                                    f2.FixParameter(7, 25)
-                                    f2.FixParameter(8, 25)
-                                elif region == "noniso_asym" and eta_reg == "barrel" and bins[i] == 200:
-                                    f2.FixParameter(6, 2.052)
-                                    f2.FixParameter(7, 5.875)
-                                    f2.FixParameter(8, 25)
-                                elif region == "noniso_asym" and eta_reg == "barrel" and bins[i] == 240:
-                                    f2.FixParameter(6, 2.002)
-                                    f2.FixParameter(7, 4)
-                                    f2.FixParameter(8, 6)
-                                elif region == "noniso_asym" and eta_reg == "endcap" and bins[i] == 300:
-                                    f2.FixParameter(6, 2.906)
-                                    f2.FixParameter(7, 4)
-                                    f2.FixParameter(8, 6)
+                                f2.SetParLimits(9, 0.5, 5)
+                                f2.SetParLimits(10, 0.5, 5)
+                            
+                            for j in range(5): loose_fit = h_egamma_loose.Fit(f2, 'SL', "", 0, 25)
+                            chi2 = loose_fit.Chi2()
+                            ndf = loose_fit.Ndf()
+                            
+                            h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
+                            fitted_func = util.HistogramToFunction(h_fitted_egamma_loose)
+                            func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
+                            h_egamma_tight.Fit(func_with_poly, '0L') 
+                            tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 300, 0, 50)
 
-                            loose_fit = h_egamma_loose.Fit(f2, 'SL', "", 0, 25)
+                            # Create title for plot 
+                            title = region + " Twoprong"
+                            if eta_reg == "barrel": title += ", Barrel"
+                            elif eta_reg == "endcap": title += ", Endcap"
+                            if i == len(bins) - 1: title += ", pt > " + str(bins[i])
+                            else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
+                            if k == 0: title += ", 1 exp"
+                            elif k == 1: title += ", 2 exp"
+                            else: title += ", 3 exp"
+                           
+                            # Legend creation
+                            legend = ROOT.TLegend(0.65, 0.15, 0.9, 0.3)
+                            legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                            #legend.AddEntry(h_egamma_tight, "Fitted Loose Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                            legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
+                            if not args.ratio: legend.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
 
-                        chi2 = loose_fit.Chi2()
-                        ndf = loose_fit.Ndf()
-                        
-                        h_fitted_egamma_loose = util.TemplateToHistogram(f2, 300, 0, 50)
-                        fitted_func = util.HistogramToFunction(h_fitted_egamma_loose)
-                        func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
-                        h_egamma_tight.Fit(func_with_poly) 
-
-                    # Create title for plot 
-                    title = region + " Twoprong"
-                    if eta_reg == "barrel": title += ", Barrel"
-                    elif eta_reg == "endcap": title += ", Endcap"
-                    if i == len(bins) - 1: title += ", pt > " + str(bins[i])
-                    else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
-                   
-                    # Legend creation
-                    legend = ROOT.TLegend(0.65, 0.15, 0.9, 0.3)
-                    legend.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                    #legend.AddEntry(h_egamma_tight, "Fitted Loose Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                    legend.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
-                    legend.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
-
-                    h_egamma_loose.SetTitle(title)
-                    h_egamma_loose.SetMaximum()
-                    
-                    # Draw plots
-                    c1.cd(1)
-                    h_egamma_loose.Draw()  # draw data first so that it appears over the mc
-                    h_egamma_tight.Draw("same")
-                    h_egamma_loose.Draw("E same")  # this is where the data is actually drawn to the canvas
-                    ROOT.gPad.SetLogy()
-                    if bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
-                    elif bins[i] < 200: h_egamma_loose.GetXaxis().SetRangeUser(0, 15)
-                    else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
-                    legend.Draw("same")
-                    ROOT.gPad.Update()
-                    
-                    if args.ratio:
-                        c1.cd(2)
-                        h_ratio.Draw("e")
-                        h_ratio.GetXaxis().SetRangeUser(0, 26)
-                        h_ratio.GetYaxis().SetRangeUser(-2, 4)
-                        h_ratio.SetStats(0)
-                        ROOT.gPad.SetGridy(1)
-                        ROOT.gPad.Update()
-                    c1.Print("plots.pdf")    
+                            if args.ratio: h_ratio.SetTitle("Tight / Loose")
+                            
+                            # Draw plots
+                            c1.cd(1)
+                            h_egamma_loose.SetTitle(title)
+                            h_egamma_loose.SetMaximum()
+                            h_egamma_loose.Draw()  # draw data first so that it appears over the mc
+                            h_egamma_tight.Draw("same")
+                            h_egamma_loose.Draw("E same")  # this is where the data is actually drawn to the canvas
+                            ROOT.gPad.SetLogy()
+                            if bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
+                            elif bins[i] < 200: h_egamma_loose.GetXaxis().SetRangeUser(0, 15)
+                            else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
+                            h_egamma_loose.GetYaxis().SetRangeUser(0.10, 10000)
+                            legend.Draw("same")
+                            ROOT.gPad.Update()
+                            
+                            if args.ratio:
+                                c1.cd(2)
+                                h_ratio.Draw("e")
+                                if bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
+                                elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
+                                else: h_ratio.GetXaxis().SetRangeUser(0, 26)
+                                h_ratio.GetYaxis().SetRangeUser(-2, 4)
+                                h_ratio.SetStats(0)
+                                ROOT.gPad.SetGridy(1)
+                                ROOT.gPad.Update()
+                            """
+                            else:
+                                c1.cd(2)
+                                h_egamma_tight.Draw("e")
+                                tight_fit_as_hist.SetLineColor(ROOT.kBlue)
+                                tight_fit_as_hist.SetLineWidth(2)
+                                tight_fit_as_hist.SetFillColor(ROOT.kGreen+2)
+                                tight_fit_as_hist.Draw("same l e3")
+                                h_egamma_tight.Draw("e same")
+                                if bins[i] < 120: h_egamma_tight.GetXaxis().SetRangeUser(0, 10)
+                                elif bins[i] < 200: h_egamma_tight.GetXaxis().SetRangeUser(0, 15)
+                                else: h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
+                            """
+                            c1.Print("plots.pdf")    
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
