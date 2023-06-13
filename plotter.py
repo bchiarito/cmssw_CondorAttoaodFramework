@@ -447,20 +447,26 @@ for item in plots:
                             h_egamma_tight.Fit(func_with_poly, '0L') 
                             tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 1000, 0, 50)
 
-                            h_loose_residual_num = h_egamma_loose.Clone()
-                            h_loose_residual_num.Reset()
-                            h_loose_residual = h_egamma_loose.Clone()
-                            h_loose_residual.Reset()
-                            h_loose_residual_num.Add(h_egamma_loose, loose_fit_as_hist, 1, -1)
-                            h_loose_residual.Divide(h_loose_residual_num, loose_fit_as_hist)
+                            h_loose_pull_num = h_egamma_loose.Clone()
+                            h_loose_pull_num.Reset()
+                            h_loose_pull = h_egamma_loose.Clone()
+                            h_loose_pull.Reset()
+                            h_loose_pull_num.Add(h_egamma_loose, loose_fit_as_hist, 1, -1)  # Numerator of pull hist is data - fit
+                            for j in range(h_loose_pull_num.GetNbinsX()): 
+                                if h_egamma_loose.GetBinContent(j+1) == 0: sqrt_err = 1.8
+                                else: sqrt_err = h_egamma_loose.GetBinError(j+1)
+                                h_loose_pull.SetBinContent(j+1, h_loose_pull_num.GetBinContent(j+1)/sqrt_err)
 
-                            h_tight_residual_num = h_egamma_tight.Clone()
-                            h_tight_residual_num.Reset()
-                            h_tight_residual = h_egamma_tight.Clone()
-                            h_tight_residual.Reset()
-                            h_tight_residual_num.Add(h_egamma_tight, tight_fit_as_hist, 1, -1)
-                            h_tight_residual.Divide(h_tight_residual_num, tight_fit_as_hist)
-                            
+                            h_tight_pull_num = h_egamma_tight.Clone()
+                            h_tight_pull_num.Reset()
+                            h_tight_pull = h_egamma_tight.Clone()
+                            h_tight_pull.Reset()
+                            h_tight_pull_num.Add(h_egamma_tight, tight_fit_as_hist, 1, -1)  # Numerator of pull hist is data - fit
+                            for j in range(h_tight_pull_num.GetNbinsX()): 
+                                if h_egamma_tight.GetBinContent(j+1) == 0: sqrt_err = 1.8
+                                else: sqrt_err = h_egamma_tight.GetBinError(j+1)
+                                h_tight_pull.SetBinContent(j+1, h_tight_pull_num.GetBinContent(j+1)/sqrt_err)
+
                             # Create title for plot 
                             title = region + " Twoprong"
                             if eta_reg == "barrel": title += ", Barrel"
@@ -528,76 +534,77 @@ for item in plots:
                                 pad3 = ROOT.TPad('pad3', 'pad3', 0, 0, 0.5, 0.3)
                                 pad3.Draw()
                                 pad3.cd()
-                                h_loose_residual.SetTitle("(Loose - Fit) / Fit")
-                                h_loose_residual.SetLineColor(ROOT.kBlack)
-                                h_loose_residual.Draw('p')
-                                h_loose_residual.SetMarkerStyle(8)
-                                h_loose_residual.SetMarkerSize(0.25)
-                                h_loose_residual.GetYaxis().SetRangeUser(-2, 2)
-                                if bins[i] < 80: h_loose_residual.GetXaxis().SetRangeUser(0, 5)
-                                elif bins[i] < 120: h_loose_residual.GetXaxis().SetRangeUser(0, 10)
-                                elif bins[i] < 200: h_loose_residual.GetXaxis().SetRangeUser(0, 15)
-                                elif bins[i] < 380: h_loose_residual.GetXaxis().SetRangeUser(0, 20)
-                                else: h_loose_residual.GetXaxis().SetRangeUser(0, 26)
+                                h_loose_pull.SetTitle("(Loose - Fit) / Error")
+                                h_loose_pull.SetLineColor(ROOT.kBlack)
+                                h_loose_pull.Draw('p')
+                                h_loose_pull.SetMarkerStyle(8)
+                                h_loose_pull.SetMarkerSize(0.25)
+                                h_loose_pull.GetYaxis().SetRangeUser(-3, 3)
+                                if bins[i] < 80: h_loose_pull.GetXaxis().SetRangeUser(0, 5)
+                                elif bins[i] < 120: h_loose_pull.GetXaxis().SetRangeUser(0, 10)
+                                elif bins[i] < 200: h_loose_pull.GetXaxis().SetRangeUser(0, 15)
+                                elif bins[i] < 380: h_loose_pull.GetXaxis().SetRangeUser(0, 20)
+                                else: h_loose_pull.GetXaxis().SetRangeUser(0, 26)
                                 
                                 if not region == "iso_sym":
                                     c1.cd()
                                     pad4 = ROOT.TPad('pad4', 'pad4', 0.5, 0, 1, 0.3)
                                     pad4.Draw()
                                     pad4.cd()
-                                    h_tight_residual.SetTitle("(Tight - Fit) / Fit")
-                                    h_tight_residual.SetLineColor(ROOT.kBlack)
-                                    h_tight_residual.Draw('p')
-                                    h_tight_residual.SetMarkerStyle(8)
-                                    h_tight_residual.SetMarkerSize(0.25)
-                                    h_tight_residual.GetYaxis().SetRangeUser(-2, 2)
-                                    if bins[i] < 80: h_tight_residual.GetXaxis().SetRangeUser(0, 5)
-                                    elif bins[i] < 120: h_tight_residual.GetXaxis().SetRangeUser(0, 10)
-                                    elif bins[i] < 200: h_tight_residual.GetXaxis().SetRangeUser(0, 15)
-                                    elif bins[i] < 380: h_tight_residual.GetXaxis().SetRangeUser(0, 20)
-                                    else: h_tight_residual.GetXaxis().SetRangeUser(0, 26)
+                                    h_tight_pull.SetTitle("(Tight - Fit) / Error")
+                                    h_tight_pull.SetLineColor(ROOT.kBlack)
+                                    h_tight_pull.Draw('p')
+                                    h_tight_pull.SetMarkerStyle(8)
+                                    h_tight_pull.SetMarkerSize(0.25)
+                                    h_tight_pull.GetYaxis().SetRangeUser(-3, 3)
+                                    if bins[i] < 80: h_tight_pull.GetXaxis().SetRangeUser(0, 5)
+                                    elif bins[i] < 120: h_tight_pull.GetXaxis().SetRangeUser(0, 10)
+                                    elif bins[i] < 200: h_tight_pull.GetXaxis().SetRangeUser(0, 15)
+                                    elif bins[i] < 380: h_tight_pull.GetXaxis().SetRangeUser(0, 20)
+                                    else: h_tight_pull.GetXaxis().SetRangeUser(0, 26)
 
-                        c1.Print(args.name + ".pdf")    
-                        """
-                        # after loop on fits
-                        rss1 = rss[0]
-                        rss2 = rss[1]
-                        rss3 = rss[2]
-                        rss4 = rss[3]
-                        p1 = num_param[0]
-                        p2 = num_param[1]
-                        p3 = num_param[2]
-                        p4 = num_param[3]
-                        n = count_nonzero_bins(h_egamma_loose)
-                        F21 = ((rss1 - rss2)/(p2 - p1)) / (rss2/(n - p2))
-                        F31 = ((rss1 - rss3)/(p3 - p1)) / (rss3/(n - p3))
-                        F32 = ((rss2 - rss3)/(p3 - p2)) / (rss3/(n - p3))
-                        F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
-                        F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
-                        F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
-                        #print(rss1, rss2)
-                        #print(p1, p2, n)
-                        print "F21: "+ str(F21)
-                        #print (rss2, rss1)
-                        print "  ({}, {}) degrees of freedom".format(p2-p1, n-p2)
-                        print "F31: "+ str(F21)
-                        #print (rss3, rss1)
-                        print "  ({}, {}) degrees of freedom".format(p3-p1, n-p3)
-                        print "F32: "+ str(F32)
-                        #print (rss3, rss2)
-                        print "  ({}, {}) degrees of freedom".format(p3-p2, n-p3)
-                        print "F41: "+ str(F41)
-                        #print (rss4, rss1)
-                        print "  ({}, {}) degrees of freedom".format(p4-p1, n-p4)
-                        print "F42: "+ str(F42)
-                        #print (rss4, rss2)
-                        print "  ({}, {}) degrees of freedom".format(p4-p2, n-p4)
-                        print "F43: "+ str(F43)
-                        #print (rss4, rss3)
-                        print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
-                        if args.testBin is not None: raw_input()
-                        """
-                    
+                            c1.Print(args.name + ".pdf")    
+                            
+                            """
+                            # after loop on fits
+                            rss1 = rss[0]
+                            rss2 = rss[1]
+                            rss3 = rss[2]
+                            rss4 = rss[3]
+                            p1 = num_param[0]
+                            p2 = num_param[1]
+                            p3 = num_param[2]
+                            p4 = num_param[3]
+                            n = count_nonzero_bins(h_egamma_loose)
+                            F21 = ((rss1 - rss2)/(p2 - p1)) / (rss2/(n - p2))
+                            F31 = ((rss1 - rss3)/(p3 - p1)) / (rss3/(n - p3))
+                            F32 = ((rss2 - rss3)/(p3 - p2)) / (rss3/(n - p3))
+                            F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
+                            F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
+                            F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
+                            #print(rss1, rss2)
+                            #print(p1, p2, n)
+                            print "F21: "+ str(F21)
+                            #print (rss2, rss1)
+                            print "  ({}, {}) degrees of freedom".format(p2-p1, n-p2)
+                            print "F31: "+ str(F21)
+                            #print (rss3, rss1)
+                            print "  ({}, {}) degrees of freedom".format(p3-p1, n-p3)
+                            print "F32: "+ str(F32)
+                            #print (rss3, rss2)
+                            print "  ({}, {}) degrees of freedom".format(p3-p2, n-p3)
+                            print "F41: "+ str(F41)
+                            #print (rss4, rss1)
+                            print "  ({}, {}) degrees of freedom".format(p4-p1, n-p4)
+                            print "F42: "+ str(F42)
+                            #print (rss4, rss2)
+                            print "  ({}, {}) degrees of freedom".format(p4-p2, n-p4)
+                            print "F43: "+ str(F43)
+                            #print (rss4, rss3)
+                            print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
+                            if args.testBin is not None: raw_input()
+                            """
+                        
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
@@ -607,141 +614,141 @@ for item in plots:
                 egamma_iso_asym_tight = "plots/twoprong_masspi0_iso_asym_" + eta_reg
                 egamma_noniso_sym_tight = "plots/twoprong_masspi0_noniso_sym_" + eta_reg
                 egamma_noniso_asym_tight = "plots/twoprong_masspi0_noniso_asym_" + eta_reg
-                egamma_iso_asym_loose = "plots/twoprong_masspi0_iso_asym_" + eta_reg
-                egamma_noniso_sym_loose = "plots/twoprong_masspi0_noniso_sym_" + eta_reg
-                egamma_noniso_asym_loose = "plots/twoprong_masspi0_noniso_asym_" + eta_reg
+            egamma_iso_asym_loose = "plots/twoprong_masspi0_iso_asym_" + eta_reg
+            egamma_noniso_sym_loose = "plots/twoprong_masspi0_noniso_sym_" + eta_reg
+            egamma_noniso_asym_loose = "plots/twoprong_masspi0_noniso_asym_" + eta_reg
+        
+            if i == len(bins) - 1:
+                egamma_iso_asym_tight += "_" + str(bins[i]) + "+"
+                egamma_noniso_sym_tight += "_" + str(bins[i]) + "+"
+                egamma_noniso_asym_tight += "_" + str(bins[i]) + "+"
+                egamma_iso_asym_loose += "_" + str(bins[i]) + "+"
+                egamma_noniso_sym_loose += "_" + str(bins[i]) + "+"
+                egamma_noniso_asym_loose += "_" + str(bins[i]) + "+"
+            else:
+                egamma_iso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
+                egamma_noniso_sym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
+                egamma_noniso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
+                egamma_iso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
+                egamma_noniso_sym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
+                egamma_noniso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
             
-                if i == len(bins) - 1:
-                    egamma_iso_asym_tight += "_" + str(bins[i]) + "+"
-                    egamma_noniso_sym_tight += "_" + str(bins[i]) + "+"
-                    egamma_noniso_asym_tight += "_" + str(bins[i]) + "+"
-                    egamma_iso_asym_loose += "_" + str(bins[i]) + "+"
-                    egamma_noniso_sym_loose += "_" + str(bins[i]) + "+"
-                    egamma_noniso_asym_loose += "_" + str(bins[i]) + "+"
-                else:
-                    egamma_iso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_sym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_iso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_sym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                
-                # Reference name of the histogram created in the backend 
-                egamma_iso_asym_tight += "_tight"
-                egamma_noniso_sym_tight += "_tight"
-                egamma_noniso_asym_tight += "_tight"
-                egamma_iso_asym_loose += "_loose"
-                egamma_noniso_sym_loose += "_loose"
-                egamma_noniso_asym_loose += "_loose"
-                
-                # Get the histograms from the input file
-                h_egamma_iso_asym_tight = infile1.Get(egamma_iso_asym_tight)
-                h_egamma_noniso_sym_tight = infile1.Get(egamma_noniso_sym_tight)
-                h_egamma_noniso_asym_tight = infile1.Get(egamma_noniso_asym_tight)
-                h_egamma_iso_asym_loose = infile1.Get(egamma_iso_asym_loose)
-                h_egamma_noniso_sym_loose = infile1.Get(egamma_noniso_sym_loose)
-                h_egamma_noniso_asym_loose = infile1.Get(egamma_noniso_asym_loose)
-                
-                print("BEGINNING OF PT BIN: " + str(bins[i]))
-                # Fit loose histogram to a curve
-                for j in range(10):
-                    if j == 0:
-                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
-                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
-                        f2.SetParLimits(3, -20, 0)
-                        f2.SetParLimits(4, -20, 0)
-                        f2.SetParLimits(5, -20, 0)
-                        f2.SetParLimits(6, 0, 25)
-                        f2.SetParLimits(7, 0, 25)
-                        f2.SetParLimits(8, 0, 25)
-                        f2.SetParameters(h_egamma_iso_asym_loose.GetEntries(), h_egamma_iso_asym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_iso_asym_loose.GetMean()+0.5, h_egamma_iso_asym_loose.GetMean()*3, h_egamma_iso_asym_loose.GetMean()*5)
-                    loose_fit_iso_asym = h_egamma_iso_asym_loose.Fit(f2, 'SL', "", 0.167, 25)
+            # Reference name of the histogram created in the backend 
+            egamma_iso_asym_tight += "_tight"
+            egamma_noniso_sym_tight += "_tight"
+            egamma_noniso_asym_tight += "_tight"
+            egamma_iso_asym_loose += "_loose"
+            egamma_noniso_sym_loose += "_loose"
+            egamma_noniso_asym_loose += "_loose"
+            
+            # Get the histograms from the input file
+            h_egamma_iso_asym_tight = infile1.Get(egamma_iso_asym_tight)
+            h_egamma_noniso_sym_tight = infile1.Get(egamma_noniso_sym_tight)
+            h_egamma_noniso_asym_tight = infile1.Get(egamma_noniso_asym_tight)
+            h_egamma_iso_asym_loose = infile1.Get(egamma_iso_asym_loose)
+            h_egamma_noniso_sym_loose = infile1.Get(egamma_noniso_sym_loose)
+            h_egamma_noniso_asym_loose = infile1.Get(egamma_noniso_asym_loose)
+            
+            print("BEGINNING OF PT BIN: " + str(bins[i]))
+            # Fit loose histogram to a curve
+            for j in range(10):
+                if j == 0:
+                    f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
+                    f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
+                    f2.SetParLimits(3, -20, 0)
+                    f2.SetParLimits(4, -20, 0)
+                    f2.SetParLimits(5, -20, 0)
+                    f2.SetParLimits(6, 0, 25)
+                    f2.SetParLimits(7, 0, 25)
+                    f2.SetParLimits(8, 0, 25)
+                    f2.SetParameters(h_egamma_iso_asym_loose.GetEntries(), h_egamma_iso_asym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_iso_asym_loose.GetMean()+0.5, h_egamma_iso_asym_loose.GetMean()*3, h_egamma_iso_asym_loose.GetMean()*5)
+                loose_fit_iso_asym = h_egamma_iso_asym_loose.Fit(f2, 'SL', "", 0.167, 25)
 
-                chi2_iso_asym = loose_fit_iso_asym.Chi2()
-                ndf_iso_asym = loose_fit_iso_asym.Ndf()
-                
-                h_fitted_egamma_iso_asym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
-                fitted_func_iso_asym = util.HistogramToFunction(h_fitted_egamma_iso_asym_loose)
-                func_with_poly_iso_asym = util.MultiplyWithPolyToTF1(fitted_func_iso_asym, 1)
-                h_egamma_iso_asym_tight.Fit(func_with_poly_iso_asym) 
-                p0_iso_asym = func_with_poly_iso_asym.GetParameter(0)
-                p1_iso_asym = func_with_poly_iso_asym.GetParameter(1)
-                f_iso_asym = ROOT.TF1("f_iso_asym", str(p0_iso_asym) + " + " + str(p1_iso_asym) + "*x", 0, 26)
+            chi2_iso_asym = loose_fit_iso_asym.Chi2()
+            ndf_iso_asym = loose_fit_iso_asym.Ndf()
+            
+            h_fitted_egamma_iso_asym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
+            fitted_func_iso_asym = util.HistogramToFunction(h_fitted_egamma_iso_asym_loose)
+            func_with_poly_iso_asym = util.MultiplyWithPolyToTF1(fitted_func_iso_asym, 1)
+            h_egamma_iso_asym_tight.Fit(func_with_poly_iso_asym) 
+            p0_iso_asym = func_with_poly_iso_asym.GetParameter(0)
+            p1_iso_asym = func_with_poly_iso_asym.GetParameter(1)
+            f_iso_asym = ROOT.TF1("f_iso_asym", str(p0_iso_asym) + " + " + str(p1_iso_asym) + "*x", 0, 26)
 
-                for j in range(10):
-                    if j == 0:
-                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
-                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
-                        f2.SetParLimits(3, -20, 0)
-                        f2.SetParLimits(4, -20, 0)
-                        f2.SetParLimits(5, -20, 0)
-                        f2.SetParLimits(6, 0, 25)
-                        f2.SetParLimits(7, 0, 25)
-                        f2.SetParLimits(8, 0, 25)
-                        f2.SetParameters(h_egamma_noniso_sym_loose.GetEntries(), h_egamma_noniso_sym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_noniso_sym_loose.GetMean()+0.5, h_egamma_noniso_sym_loose.GetMean()*3, h_egamma_noniso_sym_loose.GetMean()*5)
-                    loose_fit_noniso_sym = h_egamma_noniso_sym_loose.Fit(f2, 'SL', "", 0.167, 25)
+            for j in range(10):
+                if j == 0:
+                    f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
+                    f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
+                    f2.SetParLimits(3, -20, 0)
+                    f2.SetParLimits(4, -20, 0)
+                    f2.SetParLimits(5, -20, 0)
+                    f2.SetParLimits(6, 0, 25)
+                    f2.SetParLimits(7, 0, 25)
+                    f2.SetParLimits(8, 0, 25)
+                    f2.SetParameters(h_egamma_noniso_sym_loose.GetEntries(), h_egamma_noniso_sym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_noniso_sym_loose.GetMean()+0.5, h_egamma_noniso_sym_loose.GetMean()*3, h_egamma_noniso_sym_loose.GetMean()*5)
+                loose_fit_noniso_sym = h_egamma_noniso_sym_loose.Fit(f2, 'SL', "", 0.167, 25)
 
-                chi2_noniso_sym = loose_fit_noniso_sym.Chi2()
-                ndf_noniso_sym = loose_fit_noniso_sym.Ndf()
-                
-                h_fitted_egamma_noniso_sym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
-                fitted_func_noniso_sym = util.HistogramToFunction(h_fitted_egamma_noniso_sym_loose)
-                func_with_poly_noniso_sym = util.MultiplyWithPolyToTF1(fitted_func_noniso_sym, 1)
-                h_egamma_noniso_sym_tight.Fit(func_with_poly_noniso_sym) 
-                p0_noniso_sym = func_with_poly_noniso_sym.GetParameter(0)
-                p1_noniso_sym = func_with_poly_noniso_sym.GetParameter(1)
-                f_noniso_sym = ROOT.TF1("f_noniso_sym", str(p0_noniso_sym) + " + " + str(p1_noniso_sym) + "*x", 0, 26)
-                f_noniso_sym.SetLineColor(ROOT.kGreen+2)
+            chi2_noniso_sym = loose_fit_noniso_sym.Chi2()
+            ndf_noniso_sym = loose_fit_noniso_sym.Ndf()
+            
+            h_fitted_egamma_noniso_sym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
+            fitted_func_noniso_sym = util.HistogramToFunction(h_fitted_egamma_noniso_sym_loose)
+            func_with_poly_noniso_sym = util.MultiplyWithPolyToTF1(fitted_func_noniso_sym, 1)
+            h_egamma_noniso_sym_tight.Fit(func_with_poly_noniso_sym) 
+            p0_noniso_sym = func_with_poly_noniso_sym.GetParameter(0)
+            p1_noniso_sym = func_with_poly_noniso_sym.GetParameter(1)
+            f_noniso_sym = ROOT.TF1("f_noniso_sym", str(p0_noniso_sym) + " + " + str(p1_noniso_sym) + "*x", 0, 26)
+            f_noniso_sym.SetLineColor(ROOT.kGreen+2)
 
-                for j in range(10):
-                    if j == 0:
-                        f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
-                        f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
-                        f2.SetParLimits(3, -20, 0)
-                        f2.SetParLimits(4, -20, 0)
-                        f2.SetParLimits(5, -20, 0)
-                        f2.SetParLimits(6, 0, 25)
-                        f2.SetParLimits(7, 0, 25)
-                        f2.SetParLimits(8, 0, 25)
-                        f2.SetParameters(h_egamma_noniso_asym_loose.GetEntries(), h_egamma_noniso_asym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_noniso_asym_loose.GetMean()+0.5, h_egamma_noniso_asym_loose.GetMean()*3, h_egamma_noniso_asym_loose.GetMean()*5)
-                    loose_fit_noniso_asym = h_egamma_noniso_asym_loose.Fit(f2, 'SL', "", 0.167, 25)
+            for j in range(10):
+                if j == 0:
+                    f2 = ROOT.TF1('f2', fitfunc, 0, 50, 9)
+                    f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","Boundary2","Boundary3")
+                    f2.SetParLimits(3, -20, 0)
+                    f2.SetParLimits(4, -20, 0)
+                    f2.SetParLimits(5, -20, 0)
+                    f2.SetParLimits(6, 0, 25)
+                    f2.SetParLimits(7, 0, 25)
+                    f2.SetParLimits(8, 0, 25)
+                    f2.SetParameters(h_egamma_noniso_asym_loose.GetEntries(), h_egamma_noniso_asym_loose.GetMean(), 0.5, -3, -1, -10, h_egamma_noniso_asym_loose.GetMean()+0.5, h_egamma_noniso_asym_loose.GetMean()*3, h_egamma_noniso_asym_loose.GetMean()*5)
+                loose_fit_noniso_asym = h_egamma_noniso_asym_loose.Fit(f2, 'SL', "", 0.167, 25)
 
-                chi2_noniso_asym = loose_fit_noniso_asym.Chi2()
-                ndf_noniso_asym = loose_fit_noniso_asym.Ndf()
-                
-                h_fitted_egamma_noniso_asym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
-                fitted_func_noniso_asym = util.HistogramToFunction(h_fitted_egamma_noniso_asym_loose)
-                func_with_poly_noniso_asym = util.MultiplyWithPolyToTF1(fitted_func_noniso_asym, 1)
-                h_egamma_noniso_asym_tight.Fit(func_with_poly_noniso_asym) 
-                p0_noniso_asym = func_with_poly_noniso_asym.GetParameter(0)
-                p1_noniso_asym = func_with_poly_noniso_asym.GetParameter(1)
-                f_noniso_asym = ROOT.TF1("f_noniso_asym", str(p0_noniso_asym) + " + " + str(p1_noniso_asym) + "*x", 0, 26)
-                f_noniso_asym.SetLineColor(ROOT.kBlue+1)
+            chi2_noniso_asym = loose_fit_noniso_asym.Chi2()
+            ndf_noniso_asym = loose_fit_noniso_asym.Ndf()
+            
+            h_fitted_egamma_noniso_asym_loose = util.TemplateToHistogram(f2, 300, 0, 50)
+            fitted_func_noniso_asym = util.HistogramToFunction(h_fitted_egamma_noniso_asym_loose)
+            func_with_poly_noniso_asym = util.MultiplyWithPolyToTF1(fitted_func_noniso_asym, 1)
+            h_egamma_noniso_asym_tight.Fit(func_with_poly_noniso_asym) 
+            p0_noniso_asym = func_with_poly_noniso_asym.GetParameter(0)
+            p1_noniso_asym = func_with_poly_noniso_asym.GetParameter(1)
+            f_noniso_asym = ROOT.TF1("f_noniso_asym", str(p0_noniso_asym) + " + " + str(p1_noniso_asym) + "*x", 0, 26)
+            f_noniso_asym.SetLineColor(ROOT.kBlue+1)
 
-                # Create title for plot 
-                title = "" 
-                if eta_reg == "barrel": title += "Barrel"
-                elif eta_reg == "endcap": title += "Endcap"
-                if i == len(bins) - 1: title += ", pt > " + str(bins[i])
-                else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
-               
-                # Legend creation
-                legend = ROOT.TLegend(leg_x1-0.1, leg_x2+0.1, leg_y1, leg_y2)
-                legend.AddEntry(f_iso_asym, "Iso_Asym: " + "{:.2}".format(p0_iso_asym) + " + " + "{:.2}".format(p1_iso_asym) + "*x", "l") 
-                legend.AddEntry(f_noniso_sym, "NonIso_Sym: " + "{:.2}".format(p0_noniso_sym) + " + " + "{:.2}".format(p1_noniso_sym) + "*x", "l") 
-                legend.AddEntry(f_noniso_asym, "NonIso_Asym: " + "{:.2}".format(p0_noniso_asym) + " + " + "{:.2}".format(p1_noniso_asym) + "*x", "l") 
+            # Create title for plot 
+            title = "" 
+            if eta_reg == "barrel": title += "Barrel"
+            elif eta_reg == "endcap": title += "Endcap"
+            if i == len(bins) - 1: title += ", pt > " + str(bins[i])
+            else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
+           
+            # Legend creation
+            legend = ROOT.TLegend(leg_x1-0.1, leg_x2+0.1, leg_y1, leg_y2)
+            legend.AddEntry(f_iso_asym, "Iso_Asym: " + "{:.2}".format(p0_iso_asym) + " + " + "{:.2}".format(p1_iso_asym) + "*x", "l") 
+            legend.AddEntry(f_noniso_sym, "NonIso_Sym: " + "{:.2}".format(p0_noniso_sym) + " + " + "{:.2}".format(p1_noniso_sym) + "*x", "l") 
+            legend.AddEntry(f_noniso_asym, "NonIso_Asym: " + "{:.2}".format(p0_noniso_asym) + " + " + "{:.2}".format(p1_noniso_asym) + "*x", "l") 
 
-                f_iso_asym.SetTitle(title)
-                
-                # Draw plots
-                c1.cd(1)
-                f_iso_asym.Draw()  # draw data first so that it appears over the mc
-                f_noniso_sym.Draw("same")
-                f_noniso_asym.Draw("same")
-                legend.Draw("same")
-                f_iso_asym.GetYaxis().SetRangeUser(-3, 3)
-                ROOT.gPad.Update()
-                c1.Print(args.name + ".pdf")    
+            f_iso_asym.SetTitle(title)
+            
+            # Draw plots
+            c1.cd(1)
+            f_iso_asym.Draw()  # draw data first so that it appears over the mc
+            f_noniso_sym.Draw("same")
+            f_noniso_asym.Draw("same")
+            legend.Draw("same")
+            f_iso_asym.GetYaxis().SetRangeUser(-3, 3)
+            ROOT.gPad.Update()
+            c1.Print(args.name + ".pdf")    
 
 c1.Print(args.name + ".pdf]")
 infile1.Close()
