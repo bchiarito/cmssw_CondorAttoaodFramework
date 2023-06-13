@@ -14,14 +14,18 @@ def count_nonzero_bins(hist):
 
 def RSS(func, hist, integral=False):
   rss = 0
+  by_bin = []
   for i in range(hist.GetNbinsX()):
     if hist.GetBinContent(i+1) == 0: continue
-    if not integral: rss += (hist.GetBinContent(i+1) - func.Eval(hist.GetBinCenter(i+1)))**2
-    else: rss += ( hist.GetBinContent(i+1) - (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1) )**2
-    #print(hist.GetBinContent(i+1), (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1))
-    #print(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))
-    #print(rss)
-  return rss
+    if not integral:
+      val = (hist.GetBinContent(i+1) - func.Eval(hist.GetBinCenter(i+1)))**2
+      rss += val
+      by_bin.append(val)
+    else:
+      val = ( hist.GetBinContent(i+1) - (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1) )**2
+      rss += val
+      by_bin.append(val)
+  return rss, by_bin
 
 def binConverter(test_bin):
     bin_list = test_bin.split(" ")
@@ -354,6 +358,7 @@ for item in plots:
                         # Fit loose histogram to a curve
                         rss = []
                         num_param = []
+                        by_bins = []
                         for k in range(4):
                             nEntries = h_egamma_loose.GetEntries()
                             mean = h_egamma_loose.GetMean()
@@ -398,7 +403,9 @@ for item in plots:
                             chi2 = loose_fit.Chi2()
                             ndf = loose_fit.Ndf()
                             
-                            rss.append(RSS(f2, h_egamma_loose))
+                            total, by_bin = RSS(f2, h_egamma_loose)
+                            rss.append(total)
+                            by_bins.append(by_bin)
                             num_param.append(f2.GetNpar())
 
                             loose_fit_as_hist = util.TemplateToHistogram(f2, 1000, 0, 50)
@@ -550,25 +557,27 @@ for item in plots:
                         F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
                         F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
                         F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
-                        #print(rss1, rss2)
-                        #print(p1, p2, n)
+                        print str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)
+                        print str(rss1)+" "+str(rss2)+" "+str(rss3)+" "+str(rss4)
+                        print str(n)
+                        print ""
+                        for b in range(len(by_bins[0])):
+                          s = str(b)+": "
+                          for array in by_bins:
+                            s = s+" "+"{:.3}".format(array[b])
+                          print s
+                        print ""
                         print "F21: "+ str(F21)
-                        #print (rss2, rss1)
                         print "  ({}, {}) degrees of freedom".format(p2-p1, n-p2)
                         print "F31: "+ str(F21)
-                        #print (rss3, rss1)
                         print "  ({}, {}) degrees of freedom".format(p3-p1, n-p3)
                         print "F32: "+ str(F32)
-                        #print (rss3, rss2)
                         print "  ({}, {}) degrees of freedom".format(p3-p2, n-p3)
                         print "F41: "+ str(F41)
-                        #print (rss4, rss1)
                         print "  ({}, {}) degrees of freedom".format(p4-p1, n-p4)
                         print "F42: "+ str(F42)
-                        #print (rss4, rss2)
                         print "  ({}, {}) degrees of freedom".format(p4-p2, n-p4)
                         print "F43: "+ str(F43)
-                        #print (rss4, rss3)
                         print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
                         if args.testBin is not None: raw_input()
                         
