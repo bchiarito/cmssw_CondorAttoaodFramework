@@ -165,6 +165,8 @@ parser.add_argument("--sanity", "-s", default=False, action="store_true", help="
 parser.add_argument("--test", default=False, action="store_true", help="create test plots")
 parser.add_argument("--testBin", default=None, help="specify bin to test")
 parser.add_argument("--ratio", default=False, action="store_true", help="create ratio plots instead of fit plots")
+parser.add_argument("--fit", default=False, action="store_true", help="create fit plots only")
+parser.add_argument("--name", default="plots", help="create name for plots pdf")
 
 # parse args
 args = parser.parse_args()
@@ -179,7 +181,7 @@ leg_x1, leg_x2, leg_y1, leg_y2 = 0.7, 0.60, 0.89, 0.89
 
 c1 = ROOT.TCanvas("c1", "c1", 800, 600)
 #if not args.sanity: ROOT.TPad.Divide(c1, 1, 2)
-c1.Print("plots.pdf[")
+c1.Print(args.name + ".pdf[")
 
 # pi0: masspi0 plots for all eta regions, barrel, and endcap; pi0_bins: pt-binned masspi0 plots in barrel and endcap; overlay; pt-binned plots with overlayed ratios for each twoprong region
 sanity_plots = ["sieie", "pfRelIso03_chg", "hadTow"]  
@@ -190,12 +192,11 @@ elif args.test: plots = test_plots
 else: plots = main_plots
 
 eta_regions = ["all", "barrel", "endcap"]
-regions = ["iso_asym", "noniso_sym", "noniso_asym"]
+regions = ["iso_sym", "iso_asym", "noniso_sym", "noniso_asym"]
 test_regions = ["noniso_sym"]
 if args.test: regions = test_regions
 photon_regions = ["tight", "loose"]
 bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
-
 
 for item in plots:
     if item == "pfRelIso03_chg" or item == "sieie" or item == "hoe" or item == "hadTow":  # sanity plots
@@ -247,7 +248,7 @@ for item in plots:
             elif item == "pfRelIso03_chg" and region == "loose": h_iso_sym.GetXaxis().SetRangeUser(0, 0.2)
             elif item == "hadTow" and region == "tight": h_iso_sym.GetXaxis().SetRangeUser(0, 0.1) 
             elif item == "hadTow" and region == "loose": h_iso_sym.GetXaxis().SetRangeUser(0, 0.2) 
-            c1.Print("plots.pdf")
+            c1.Print(args.name + ".pdf")
     elif item == "pi0":  # un-pt-binned massPi0 plots
         ROOT.TPad.Divide(c1, 1, 2)
         for region in regions:  # loop through twoprong regions
@@ -302,10 +303,9 @@ for item in plots:
                 h_ratio.SetStats(0)
                 ROOT.gPad.SetGridy(1)
                 ROOT.gPad.Update()
-                c1.Print("plots.pdf")    
+                c1.Print(args.name + ".pdf")    
     elif item == "pi0_bins":
         if args.ratio: ROOT.TPad.Divide(c1, 1, 2)
-        #else: ROOT.TPad.Divide(c1, 2, 2)
         if args.testBin is not None: test_bin = binConverter(args.testBin)
         for region in regions:  # loop through twoprong sideband regions
             if args.testBin is not None: 
@@ -332,6 +332,7 @@ for item in plots:
                     # Reference name of the histogram created in the backend 
                     egamma_tight_plots += "_tight"
                     egamma_loose_plots += "_loose"
+                    if args.ratio: egamma_loose_plots += "_reweighted"
                     
                     # Get the histograms from the input file
                     h_egamma_tight = infile1.Get(egamma_tight_plots)
@@ -349,8 +350,47 @@ for item in plots:
                         h_ratio.Reset()
                         h_ratio.SetLineColor(ROOT.kBlack)
                         h_ratio.Divide(h_egamma_tight, h_egamma_loose)
+                        h_ratio.SetTitle("Tight / Loose")
+                        
+                        # Create legend
+                        legend1 = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
+                        legend1.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
+                        legend1.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
+                        
+                        # Create title for plot 
+                        title = region + " Twoprong"
+                        if eta_reg == "barrel": title += ", Barrel"
+                        elif eta_reg == "endcap": title += ", Endcap"
+                        if i == len(bins) - 1: title += ", pt > " + str(bins[i])
+                        else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
+                        
+                        c1.cd(1)
+                        h_egamma_loose.SetTitle(title)
+                        h_egamma_loose.SetMaximum()
+                        h_egamma_loose.Draw("e")
+                        h_egamma_tight.Draw("samee")
+                        ROOT.gPad.SetLogy()
+                        if bins[i] < 80: h_egamma_loose.GetXaxis().SetRangeUser(0, 5)
+                        elif bins[i] < 120: h_egamma_loose.GetXaxis().SetRangeUser(0, 10)
+                        elif bins[i] < 200: h_egamma_loose.GetXaxis().SetRangeUser(0, 15)
+                        elif bins[i] < 380: h_egamma_loose.GetXaxis().SetRangeUser(0, 20)
+                        else: h_egamma_loose.GetXaxis().SetRangeUser(0, 26)
+                        legend1.Draw("same")
+
+                        c1.cd(2)
+                        h_ratio.Draw("e")
+                        if bins[i] < 80: h_ratio.GetXaxis().SetRangeUser(0, 5)
+                        elif bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
+                        elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
+                        elif bins[i] < 380: h_ratio.GetXaxis().SetRangeUser(0, 20)
+                        else: h_ratio.GetXaxis().SetRangeUser(0, 26)
+                        h_ratio.GetYaxis().SetRangeUser(-2, 4)
+                        h_ratio.SetStats(0)
+                        ROOT.gPad.SetGridy(1)
+                        ROOT.gPad.Update()
+                        c1.Print(args.name + ".pdf")
                     else:
-                        print("BEGINNING OF PT BIN: " + str(bins[i]))
+                        print("########## BEGINNING OF PT BIN: " + str(bins[i]) + ", " + eta_reg.upper() + " ##########")
                         # Fit loose histogram to a curve
                         rss = []
                         num_param = []
@@ -366,33 +406,33 @@ for item in plots:
                             elif k == 1: 
                                 f2 = ROOT.TF1('f2', fitfunc2, 0, 50, 7)
                                 f2.SetParNames("Constant","MPV","Sigma","C1","C2","Boundary1","BoundDiff12")
-                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, mean*2, 0.6)
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, mean, mean/2)
                                 f2.SetParLimits(3, -10, 0)
                                 f2.SetParLimits(4, -10, 0)
                                 f2.SetParLimits(5, 0, 25)
-                                f2.SetParLimits(6, 0.5, 7)
+                                f2.SetParLimits(6, 0.2, 7)
                             elif k == 2: 
                                 f2 = ROOT.TF1('f2', fitfunc3, 0, 50, 9)
                                 f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","Boundary1","BoundDiff12","BoundDiff23")
-                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, mean*2, 0.6, 2)
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, mean, mean/2, mean/2)
                                 f2.SetParLimits(3, -10, 0)
                                 f2.SetParLimits(4, -10, 0)
                                 f2.SetParLimits(5, -10, 0)
                                 f2.SetParLimits(6, 0, 25)
-                                f2.SetParLimits(7, 0.5, 7)
-                                f2.SetParLimits(8, 0.5, 7)
+                                f2.SetParLimits(7, 0.2, 7)
+                                f2.SetParLimits(8, 0.2, 7)
                             else: 
                                 f2 = ROOT.TF1('f2', fitfunc4, 0, 50, 11)
                                 f2.SetParNames("Constant","MPV","Sigma","C1","C2","C3","C4","Boundary1","BoundDiff12","BoundDiff23","BoundDiff34")
-                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, -0.25, mean*2, 0.6, 2, 4)
+                                f2.SetParameters(nEntries, mean, 0.5, -3, -1, -0.5, -0.25, mean, mean/2, mean/2, mean/2)
                                 f2.SetParLimits(3, -10, 0)
                                 f2.SetParLimits(4, -10, 0)
                                 f2.SetParLimits(5, -10, 0)
                                 f2.SetParLimits(6, -10, 0)
                                 f2.SetParLimits(7, 0, 25)
-                                f2.SetParLimits(8, 0.5, 7)
-                                f2.SetParLimits(9, 0.5, 7)
-                                f2.SetParLimits(10, 0.5, 7)
+                                f2.SetParLimits(8, 0.2, 7)
+                                f2.SetParLimits(9, 0.2, 7)
+                                f2.SetParLimits(10, 0.2, 7)
                             
                             for j in range(5): loose_fit = h_egamma_loose.Fit(f2, '0SL', "", 0, 25)
                             chi2 = loose_fit.Chi2()
@@ -403,7 +443,7 @@ for item in plots:
 
                             loose_fit_as_hist = util.TemplateToHistogram(f2, 1000, 0, 50)
                             fitted_func = util.HistogramToFunction(loose_fit_as_hist)
-                            func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 1)
+                            func_with_poly = util.MultiplyWithPolyToTF1(fitted_func, 2)
                             h_egamma_tight.Fit(func_with_poly, '0L') 
                             tight_fit_as_hist = util.TemplateToHistogram(func_with_poly, 1000, 0, 50)
 
@@ -435,22 +475,19 @@ for item in plots:
                             # Legend creation
                             legend1 = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
                             legend1.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
-                            if not args.ratio: legend1.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
-
+                            #if not args.ratio: legend1.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
                             legend2 = ROOT.TLegend(0.65, 0.55, 0.9, 0.7)
                             legend2.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
                             legend2.AddEntry(tight_fit_as_hist, "Fitted Tight", "f")
                             
-
-                            if args.ratio: h_ratio.SetTitle("Tight / Loose")
-                            
                             # Draw plots
-                            if args.ratio: c1.cd(1)
+                            if args.fit: c1.cd(1)
                             else:
                               c1.cd()
                               pad1 = ROOT.TPad('pad1', 'pad1', 0, 0.3, 0.5, 1)
                               pad1.Draw()
                               pad1.cd()
+                            
                             h_egamma_loose.SetTitle(title)
                             h_egamma_loose.SetMaximum()
                             h_egamma_loose.Draw("e")
@@ -464,41 +501,29 @@ for item in plots:
                             legend1.Draw("same")
                             ROOT.gPad.Update()
                             
-                            if args.ratio:
-                                c1.cd(2)
-                                h_ratio.Draw("e")
-                                if bins[i] < 80: h_ratio.GetXaxis().SetRangeUser(0, 5)
-                                elif bins[i] < 120: h_ratio.GetXaxis().SetRangeUser(0, 10)
-                                elif bins[i] < 200: h_ratio.GetXaxis().SetRangeUser(0, 15)
-                                elif bins[i] < 380: h_ratio.GetXaxis().SetRangeUser(0, 20)
-                                else: h_ratio.GetXaxis().SetRangeUser(0, 26)
-                                h_ratio.GetYaxis().SetRangeUser(-2, 4)
-                                h_ratio.SetStats(0)
-                                ROOT.gPad.SetGridy(1)
-                                ROOT.gPad.Update()
-                                legend1.Draw("same")
-                            else:
-                                c1.cd()
-                                pad2 = ROOT.TPad('pad2', 'pad2', 0.5, 0.3, 1, 1)
-                                pad2.Draw()
-                                pad2.cd()
-                                h_egamma_tight.Draw("e")
-                                tight_fit_as_hist.SetLineColor(ROOT.kRed)
-                                tight_fit_as_hist.SetLineWidth(2)
-                                tight_fit_as_hist_errorbars = tight_fit_as_hist.Clone()
-                                tight_fit_as_hist_errorbars.SetFillColor(ROOT.kRed+2)
-                                tight_fit_as_hist_errorbars.Draw("same e2")
-                                tight_fit_as_hist.Draw("same hist")
-                                h_egamma_tight.Draw("e same")
-                                ROOT.gPad.SetLogy()
-                                if bins[i] < 80: h_egamma_tight.GetXaxis().SetRangeUser(0, 5)
-                                elif bins[i] < 120: h_egamma_tight.GetXaxis().SetRangeUser(0, 10)
-                                elif bins[i] < 200: h_egamma_tight.GetXaxis().SetRangeUser(0, 15)
-                                elif bins[i] < 380: h_egamma_tight.GetXaxis().SetRangeUser(0, 20)
-                                else: h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
-                                legend2.Draw("same")
-
-                            if not args.ratio:
+                            if not args.fit:
+                                if not region == "iso_sym":
+                                    c1.cd()
+                                    pad2 = ROOT.TPad('pad2', 'pad2', 0.5, 0.3, 1, 1)
+                                    pad2.Draw()
+                                    pad2.cd()
+                                    h_egamma_tight.Draw("e")
+                                    tight_fit_as_hist.SetLineColor(ROOT.kRed)
+                                    tight_fit_as_hist.SetLineWidth(2)
+                                    tight_fit_as_hist_errorbars = tight_fit_as_hist.Clone()
+                                    tight_fit_as_hist_errorbars.SetFillColor(ROOT.kRed+2)
+                                    tight_fit_as_hist_errorbars.Draw("same e2")
+                                    tight_fit_as_hist.Draw("same hist")
+                                    h_egamma_tight.Draw("e same")
+                                    ROOT.gPad.SetLogy()
+                                    if bins[i] < 80: h_egamma_tight.GetXaxis().SetRangeUser(0, 5)
+                                    elif bins[i] < 120: h_egamma_tight.GetXaxis().SetRangeUser(0, 10)
+                                    elif bins[i] < 200: h_egamma_tight.GetXaxis().SetRangeUser(0, 15)
+                                    elif bins[i] < 380: h_egamma_tight.GetXaxis().SetRangeUser(0, 20)
+                                    else: h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
+                                    legend2.Draw("same")
+                            
+                            if not args.fit:
                                 c1.cd()
                                 pad3 = ROOT.TPad('pad3', 'pad3', 0, 0, 0.5, 0.3)
                                 pad3.Draw()
@@ -514,26 +539,26 @@ for item in plots:
                                 elif bins[i] < 200: h_loose_residual.GetXaxis().SetRangeUser(0, 15)
                                 elif bins[i] < 380: h_loose_residual.GetXaxis().SetRangeUser(0, 20)
                                 else: h_loose_residual.GetXaxis().SetRangeUser(0, 26)
+                                
+                                if not region == "iso_sym":
+                                    c1.cd()
+                                    pad4 = ROOT.TPad('pad4', 'pad4', 0.5, 0, 1, 0.3)
+                                    pad4.Draw()
+                                    pad4.cd()
+                                    h_tight_residual.SetTitle("(Tight - Fit) / Fit")
+                                    h_tight_residual.SetLineColor(ROOT.kBlack)
+                                    h_tight_residual.Draw('p')
+                                    h_tight_residual.SetMarkerStyle(8)
+                                    h_tight_residual.SetMarkerSize(0.25)
+                                    h_tight_residual.GetYaxis().SetRangeUser(-2, 2)
+                                    if bins[i] < 80: h_tight_residual.GetXaxis().SetRangeUser(0, 5)
+                                    elif bins[i] < 120: h_tight_residual.GetXaxis().SetRangeUser(0, 10)
+                                    elif bins[i] < 200: h_tight_residual.GetXaxis().SetRangeUser(0, 15)
+                                    elif bins[i] < 380: h_tight_residual.GetXaxis().SetRangeUser(0, 20)
+                                    else: h_tight_residual.GetXaxis().SetRangeUser(0, 26)
 
-                                c1.cd()
-                                pad4 = ROOT.TPad('pad4', 'pad4', 0.5, 0, 1, 0.3)
-                                pad4.Draw()
-                                pad4.cd()
-                                h_tight_residual.SetTitle("(Tight - Fit) / Fit")
-                                h_tight_residual.SetLineColor(ROOT.kBlack)
-                                h_tight_residual.Draw('p')
-                                h_tight_residual.SetMarkerStyle(8)
-                                h_tight_residual.SetMarkerSize(0.25)
-                                h_tight_residual.GetYaxis().SetRangeUser(-2, 2)
-                                if bins[i] < 80: h_tight_residual.GetXaxis().SetRangeUser(0, 5)
-                                elif bins[i] < 120: h_tight_residual.GetXaxis().SetRangeUser(0, 10)
-                                elif bins[i] < 200: h_tight_residual.GetXaxis().SetRangeUser(0, 15)
-                                elif bins[i] < 380: h_tight_residual.GetXaxis().SetRangeUser(0, 20)
-                                else: h_tight_residual.GetXaxis().SetRangeUser(0, 26)
-
-                            #raw_input()
-
-                            c1.Print("plots.pdf")    
+                        c1.Print(args.name + ".pdf")    
+                        """
                         # after loop on fits
                         rss1 = rss[0]
                         rss2 = rss[1]
@@ -571,8 +596,8 @@ for item in plots:
                         #print (rss4, rss3)
                         print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
                         if args.testBin is not None: raw_input()
-                        
-
+                        """
+                    
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
@@ -716,133 +741,8 @@ for item in plots:
                 legend.Draw("same")
                 f_iso_asym.GetYaxis().SetRangeUser(-3, 3)
                 ROOT.gPad.Update()
-                c1.Print("plots.pdf")    
-    elif item == "overlay":
-        for i in range(len(bins)):
-            for eta_reg in eta_regions:
-                if not eta_reg == "barrel" and not eta_reg == "endcap": continue
-                else:
-                    egamma_iso_sym_tight = "plots/twoprong_masspi0_iso_sym_" + eta_reg
-                    egamma_iso_asym_tight = "plots/twoprong_masspi0_iso_asym_" + eta_reg
-                    egamma_noniso_sym_tight = "plots/twoprong_masspi0_noniso_sym_" + eta_reg
-                    egamma_noniso_asym_tight = "plots/twoprong_masspi0_noniso_asym_" + eta_reg
-                    egamma_iso_sym_loose = "plots/twoprong_masspi0_iso_sym_" + eta_reg
-                    egamma_iso_asym_loose = "plots/twoprong_masspi0_iso_asym_" + eta_reg
-                    egamma_noniso_sym_loose = "plots/twoprong_masspi0_noniso_sym_" + eta_reg
-                    egamma_noniso_asym_loose = "plots/twoprong_masspi0_noniso_asym_" + eta_reg
-            
-                if i == len(bins) - 1:
-                    egamma_iso_sym_tight += "_" + str(bins[i]) + "+"
-                    egamma_iso_asym_tight += "_" + str(bins[i]) + "+"
-                    egamma_noniso_sym_tight += "_" + str(bins[i]) + "+" 
-                    egamma_noniso_asym_tight += "_" + str(bins[i]) + "+"  
-                    egamma_iso_sym_loose += "_" + str(bins[i]) + "+"
-                    egamma_iso_asym_loose += "_" + str(bins[i]) + "+"
-                    egamma_noniso_sym_loose += "_" + str(bins[i]) + "+" 
-                    egamma_noniso_asym_loose += "_" + str(bins[i]) + "+"  
-                else:
-                    egamma_iso_sym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_iso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_sym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_asym_tight += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_iso_sym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_iso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_sym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-                    egamma_noniso_asym_loose += "_" + str(bins[i]) + "_" + str(bins[i+1])
-              
-                h_egamma_iso_sym_tight = infile1.Get(egamma_iso_sym_tight + "_tight")
-                h_egamma_iso_asym_tight = infile1.Get(egamma_iso_asym_tight + "_tight")
-                h_egamma_noniso_sym_tight = infile1.Get(egamma_noniso_sym_tight + "_tight")
-                h_egamma_noniso_asym_tight = infile1.Get(egamma_noniso_asym_tight + "_tight")
-                h_egamma_iso_sym_loose = infile1.Get(egamma_iso_sym_loose + "_loose")
-                h_egamma_iso_asym_loose = infile1.Get(egamma_iso_asym_loose + "_loose")
-                h_egamma_noniso_sym_loose = infile1.Get(egamma_noniso_sym_loose + "_loose")
-                h_egamma_noniso_asym_loose = infile1.Get(egamma_noniso_asym_loose + "_loose")
+                c1.Print(args.name + ".pdf")    
 
-                h_egamma_tight = h_egamma_iso_sym_tight.Clone()
-                h_egamma_tight.Add(h_egamma_iso_asym_tight)
-                h_egamma_tight.Add(h_egamma_noniso_sym_tight)
-                h_egamma_tight.Add(h_egamma_noniso_asym_tight)
-                h_egamma_tight.SetLineColor(ROOT.kBlack)
-                h_egamma_loose = h_egamma_iso_sym_loose.Clone()
-                h_egamma_loose.Add(h_egamma_iso_asym_loose)
-                h_egamma_loose.Add(h_egamma_noniso_sym_loose)
-                h_egamma_loose.Add(h_egamma_noniso_asym_loose)
-                h_egamma_loose.SetLineColor(ROOT.kGreen+2)
-                h_egamma_loose.SetFillColor(ROOT.kGreen+2)
-                
-                if not h_egamma_iso_sym_tight.Integral() == 0: h_egamma_iso_sym_tight.Scale(1.0/h_egamma_iso_sym_tight.Integral())
-                if not h_egamma_iso_asym_tight.Integral() == 0: h_egamma_iso_asym_tight.Scale(1.0/h_egamma_iso_asym_tight.Integral())
-                if not h_egamma_noniso_sym_tight.Integral() == 0: h_egamma_noniso_sym_tight.Scale(1.0/h_egamma_noniso_sym_tight.Integral())
-                if not h_egamma_noniso_asym_tight.Integral() == 0: h_egamma_noniso_asym_tight.Scale(1.0/h_egamma_noniso_asym_tight.Integral())
-                if not h_egamma_tight.Integral() == 0: h_egamma_tight.Scale(1.0/h_egamma_tight.Integral())
-
-                if not h_egamma_iso_sym_loose.Integral() == 0: h_egamma_iso_sym_loose.Scale(1.0/h_egamma_iso_sym_loose.Integral())
-                if not h_egamma_iso_asym_loose.Integral() == 0: h_egamma_iso_asym_loose.Scale(1.0/h_egamma_iso_asym_loose.Integral())
-                if not h_egamma_noniso_sym_loose.Integral() == 0: h_egamma_noniso_sym_loose.Scale(1.0/h_egamma_noniso_sym_loose.Integral())
-                if not h_egamma_noniso_asym_loose.Integral() == 0: h_egamma_noniso_asym_loose.Scale(1.0/h_egamma_noniso_asym_loose.Integral())
-                if not h_egamma_loose.Integral() == 0: h_egamma_loose.Scale(1.0/h_egamma_loose.Integral())
-                
-                h_ratio_iso_sym = h_egamma_tight.Clone()
-                h_ratio_iso_sym.Reset()
-                h_ratio_iso_sym.SetLineColor(ROOT.kBlack)
-                h_ratio_iso_sym.Divide(h_egamma_iso_sym_tight, h_egamma_iso_sym_loose)
-                h_ratio_iso_asym = h_egamma_tight.Clone()
-                h_ratio_iso_asym.Reset()
-                h_ratio_iso_asym.SetLineColor(ROOT.kGreen+1)
-                h_ratio_iso_asym.Divide(h_egamma_iso_asym_tight, h_egamma_iso_asym_loose)
-                h_ratio_noniso_sym = h_egamma_tight.Clone()
-                h_ratio_noniso_sym.Reset()
-                h_ratio_noniso_sym.SetLineColor(ROOT.kBlue)
-                h_ratio_noniso_sym.Divide(h_egamma_noniso_sym_tight, h_egamma_noniso_sym_loose)
-                h_ratio_noniso_asym = h_egamma_tight.Clone()
-                h_ratio_noniso_asym.Reset()
-                h_ratio_noniso_asym.SetLineColor(ROOT.kRed)
-                h_ratio_noniso_asym.Divide(h_egamma_noniso_asym_tight, h_egamma_noniso_asym_loose)
-               
-                # Create title for plot 
-                title = ""
-                if eta_reg == "barrel": title += "Barrel"
-                elif eta_reg == "endcap": title += "Endcap"
-                if i == len(bins) - 1: title += ", pt > " + str(bins[i])
-                else: title += ", " + str(bins[i]) + " < pt < " + str(bins[i+1])
-               
-                # Legend creation
-                legend1 = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
-                legend1.AddEntry(h_egamma_tight, "Tight Photon, " + str(h_egamma_tight.GetEntries()), "l")
-                legend1.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "f")
-                
-                legend2 = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
-                legend2.AddEntry(h_ratio_iso_sym, "Iso_Sym TwoProng", "l")
-                legend2.AddEntry(h_ratio_iso_asym, "Iso_Asym TwoProng", "l")
-                legend2.AddEntry(h_ratio_noniso_sym, "NonIso_Sym TwoProng", "l")
-                legend2.AddEntry(h_ratio_noniso_asym, "NonIso_Asym TwoProng", "l")
-
-                h_egamma_tight.SetTitle(title)
-                h_ratio_iso_sym.SetTitle("Tight / Loose Photon")  
-                
-                # Draw plots
-                c1.cd(1)
-                h_egamma_tight.Draw()
-                stack = ROOT.THStack('hs', 'hs')
-                stack.Add(h_egamma_loose)
-                stack.Draw("hist same")
-                h_egamma_tight.Draw("samee")
-                ROOT.gPad.SetLogy()
-                h_egamma_tight.GetXaxis().SetRangeUser(0, 26)
-                legend1.Draw("same")
-                c1.cd(2) # draw ratio plots
-                h_ratio_iso_sym.Draw("e")
-                h_ratio_iso_asym.Draw("samee")
-                h_ratio_noniso_sym.Draw("samee")
-                h_ratio_noniso_asym.Draw("same")
-                h_ratio_iso_sym.GetXaxis().SetRangeUser(0, 26)
-                h_ratio_iso_sym.GetYaxis().SetRangeUser(-2, 4)
-                legend2.Draw("same")
-                ROOT.gPad.SetGridy(1)
-                ROOT.gPad.Update()
-                c1.Print("plots.pdf")    
-
-c1.Print("plots.pdf]")
+c1.Print(args.name + ".pdf]")
 infile1.Close()
 if args.testBin is not None: raw_input()
