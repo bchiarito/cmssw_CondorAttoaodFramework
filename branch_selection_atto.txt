@@ -5,6 +5,8 @@ keep nTwoProng
 keep TwoProng*
 keep RecoPhi*
 keep CutBased*
+keep CBL*
+keep HPID*
 keep Region
 keep GenPart*
 keep nGenPart*
