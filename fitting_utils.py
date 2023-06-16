@@ -3,7 +3,7 @@ import sys
 import math
 
 RANGE_LOW = 0 
-RANGE_HIGH = 10
+RANGE_HIGH = 20
 BINS = 20
 
 NAME_COUNT = 0
@@ -42,38 +42,63 @@ def HistogramToFunction(hist):
     return hist.GetBinContent(hist.FindBin(x[0])) 
   return histfunc
 
-def MultiplyWithPolyToTF1(func, degree):
+def MultiplyWithPolyToTF1(func, degree, range_low=0, range_high=10, cheb=0, parameters=None):
   '''
   Takes a python function
 
-  Returns a TF1 object representing the input function times a polynomial
+  Returns a TF1 object representing the input function times a polynomial, and the returns resulting function as well
+
+  when cheb=0 (default) use regular polynomials (1, x^2, x^3, etc)
+  when cheb=1 use Chebyshev polynomials of the first kind
+  when cheb=2 use Chebyshev polynomials of the second kind
   '''
-  if degree == 0:
-    def multPol1(x, p):
+  if degree == 0 and cheb==0:
+    def func_after_mult(x, p):
       return func(x) * (p[0])
-    f = ROOT.TF1(getname(), multPol1, RANGE_LOW, RANGE_HIGH, 1)
-    f.SetParNames('Constant')
-    f.SetParameter(0, 1.0)
-  if degree == 1:
-    def multPol1(x, p):
+  if degree == 1 and cheb==0:
+    def func_after_mult(x, p):
       return func(x) * (p[0] + p[1]*x[0])
-    f = ROOT.TF1(getname(), multPol1, RANGE_LOW, RANGE_HIGH, 2)
-    f.SetParNames('Constant', 'Linear')
-    f.SetParameters(1.0, 1.0)
-  if degree == 2:
-    def multPol2(x, p):
-      return func(x) * (p[0] + p[1]*x[0] + p[2]*x[0])
-    f = ROOT.TF1(getname(), multPol2, RANGE_LOW, RANGE_HIGH, 3)
-    f.SetParNames('Constant', 'Linear', 'Quadratic')
-    f.SetParameters(1.0, 1.0, 1.0)
-  if degree == 3:
-    def multPol3(x, p):
-      return func(x) * (p[0] + p[1]*x[0] + p[2]*x[0] + p[3]*x[0])
-    f = ROOT.TF1(getname(), multPol2, RANGE_LOW, RANGE_HIGH, 4)
-    f.SetParNames('Constant', 'Linear', 'Quadratic', 'Cubic')
-    f.SetParameters(1.0, 1.0, 1.0, 1.0)
-  
-  return f
+  if degree == 2 and cheb==0:
+    def func_after_mult(x, p):
+      return func(x) * (p[0] + p[1]*x[0] + p[2]*(x[0]**2))
+  if degree == 3 and cheb==0:
+    def func_after_mult(x, p):
+      return func(x) * (p[0] + p[1]*x[0] + p[2]*(x[0]**2) + p[3]*(x[0]**3))
+  if degree == 4 and cheb==0:
+    def func_after_mult(x, p):
+      return func(x) * (p[0] + p[1]*x[0] + p[2]*(x[0]**2) + p[3]*(x[0]**3) + p[4]*(x[0]**4))
+
+  if degree == 0 and cheb==1:
+    def func_after_mult(x, p):
+      return func(x) * (p[0])
+  if degree == 1 and cheb==1:
+    def func_after_mult(x, p):
+      return func(x) * (p[0] + p[1]*(x[0]))
+  if degree == 2 and cheb==1:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1))
+  if degree == 3 and cheb==1:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1) + p[3]*(4*X**3 - 3*X))
+  if degree == 4 and cheb==1:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1) + p[3]*(4*X**3 - 3*X) + p[4]*(8*X**4 - 8*X**2 + 1))
+
+  tf1 = ROOT.TF1(getname(), func_after_mult, range_low, range_high, degree+1)
+  if degree>=0: tf1.SetParNames('Constant') if cheb==0 else tf1.SetParNames('Zero')
+  if degree>=1: tf1.SetParNames('Linear') if cheb==0 else tf1.SetParNames('One')
+  if degree>=2: tf1.SetParNames('Quadratic') if cheb==0 else tf1.SetParNames('Two')
+  if degree>=3: tf1.SetParNames('Cubic') if cheb==0 else tf1.SetParNames('Three')
+  if degree>=4: tf1.SetParNames('Quartic') if cheb==0 else tf1.SetParNames('Four')
+  if not parameters:
+    for i in range(degree+1): tf1.SetParameter(i, 1.0)
+  else:
+    tf1.SetParameters(*parameters)
+  return tf1, func_after_mult
+
 
 if __name__ == '__main__':
   print('define a function')
