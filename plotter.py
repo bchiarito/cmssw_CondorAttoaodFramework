@@ -7,23 +7,27 @@ import array
 import fitting_utils as util
 
 
-def count_nonzero_bins(hist):
+def count_nonzero_bins(hist, bound):
   count = 0
   for i in range(hist.GetNbinsX()):
+    if hist.GetBinLowEdge(i+1) < bound: continue
     if not hist.GetBinContent(i+1) == 0: count += 1
   return count
 
 
-def RSS(func, hist, integral=False):
+def RSS(func, hist, bound, integral=False):
   rss = 0
+  by_bin = []
   for i in range(hist.GetNbinsX()):
     if hist.GetBinContent(i+1) == 0: continue
-    if not integral: rss += (hist.GetBinContent(i+1) - func.Eval(hist.GetBinCenter(i+1)))**2
-    else: rss += ( hist.GetBinContent(i+1) - (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1) )**2
-    #print(hist.GetBinContent(i+1), (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1))
-    #print(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))
-    #print(rss)
-  return rss
+    if hist.GetBinLowEdge(i+1) < bound: continue
+    if not integral:
+      val = (hist.GetBinContent(i+1) - func.Eval(hist.GetBinCenter(i+1)))**2
+    else:
+      val = ( hist.GetBinContent(i+1) - (func.Integral(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1)))/hist.GetBinWidth(i+1) )**2
+    by_bin.append(val)
+    rss += val
+  return rss, by_bin
 
 
 def binConverter(test_bin):
@@ -396,9 +400,13 @@ for item in plots:
                     else:
                         if i == len(bins) - 1: print("############### PT BIN: " + str(bins[i]) + "+, " + eta_reg.upper() + " ###############")
                         else: print("############### PT BIN: " + str(bins[i]) + "-" + str(bins[i+1]) + ", " + eta_reg.upper() + " ###############")
-                        # Fit loose histogram to a curve
-                        rss = []
+                        
+                        # varibles for f-test
+                        fits = []
+                        histo = ''
                         num_param = []
+                        by_bins = []
+                        bound1s = []
                         for k in range(4):
                             nEntries = h_egamma_loose.GetEntries()
                             mean = h_egamma_loose.GetMean()
@@ -450,8 +458,28 @@ for item in plots:
                             
                             chi2 = loose_fit.Chi2()
                             ndf = loose_fit.Ndf()
+
+                            cov = loose_fit.GetCovarianceMatrix()
+                            cov.Print()
+                            '''
+                            if k == 0:
+                              import numpy as np
+                              rng = np.random.default_rng(1)
+                              matrix = np.zeros(7,7)
+                              params = [loose_fit.Parameter(i) for i in range(7)]
+                              for i in range(7):
+                                for j in range(7):
+                                  matrix[i,j] = cov[i][j]
+                              par_b = rng.multivariate_normal(params, matrix, size=10)
+                            '''
                             
-                            rss.append(RSS(f2, h_egamma_loose))
+                            # save fit info for f-test  
+                            saved_loose_histo = h_egamma_loose.Clone()
+                            fits.append(f2.Clone())
+                            if k == 0: bound1s.append(loose_fit.Parameter(5-1))
+                            if k == 1: bound1s.append(loose_fit.Parameter(6-1))
+                            if k == 2: bound1s.append(loose_fit.Parameter(7-1))
+                            if k == 3: bound1s.append(loose_fit.Parameter(8-1))
                             num_param.append(f2.GetNpar())
 
                             loose_fit_as_hist = util.TemplateToHistogram(f2, 1000, 0, 50)
@@ -557,6 +585,7 @@ for item in plots:
                                 h_loose_pull.SetMarkerStyle(8)
                                 h_loose_pull.SetMarkerSize(0.25)
                                 h_loose_pull.GetYaxis().SetRangeUser(-15, 15)
+                                h_loose_pull.SetStats(0)
                                 if bins[i] < 80: h_loose_pull.GetXaxis().SetRangeUser(0, 5)
                                 elif bins[i] < 120: h_loose_pull.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_loose_pull.GetXaxis().SetRangeUser(0, 15)
@@ -618,6 +647,7 @@ for item in plots:
                                     h_tight_pull.SetMarkerStyle(8)
                                     h_tight_pull.SetMarkerSize(0.25)
                                     h_tight_pull.GetYaxis().SetRangeUser(-15, 15)
+                                    h_tight_pull.SetStats(0)
                                     if bins[i] < 80: h_tight_pull.GetXaxis().SetRangeUser(0, 5)
                                     elif bins[i] < 120: h_tight_pull.GetXaxis().SetRangeUser(0, 10)
                                     elif bins[i] < 200: h_tight_pull.GetXaxis().SetRangeUser(0, 15)
@@ -669,47 +699,49 @@ for item in plots:
                                         vert_line4_tight.Draw("same")
 
                             c1.Print(args.name + ".pdf")    
+                        # after loop on fits, do f-test
+                        lower_bound = min(*bound1s)
+                        print(bound1s)
+                        rss1, by_bin = RSS(fits[0], saved_loose_histo, lower_bound); by_bins.append(by_bin)
+                        rss2, by_bin = RSS(fits[1], saved_loose_histo, lower_bound); by_bins.append(by_bin)
+                        rss3, by_bin = RSS(fits[2], saved_loose_histo, lower_bound); by_bins.append(by_bin)
+                        rss4, by_bin = RSS(fits[3], saved_loose_histo, lower_bound); by_bins.append(by_bin)
+                        p1 = num_param[0]
+                        p2 = num_param[1]
+                        p3 = num_param[2]
+                        p4 = num_param[3]
+                        n = count_nonzero_bins(h_egamma_loose, lower_bound)
+                        F21 = ((rss1 - rss2)/(p2 - p1)) / (rss2/(n - p2))
+                        F31 = ((rss1 - rss3)/(p3 - p1)) / (rss3/(n - p3))
+                        F32 = ((rss2 - rss3)/(p3 - p2)) / (rss3/(n - p3))
+                        F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
+                        F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
+                        F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
+                        print str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)
+                        print str(rss1)+" "+str(rss2)+" "+str(rss3)+" "+str(rss4)
+                        print str(n)
+                        print str(lower_bound)
+                        print ""
+                        for b in range(len(by_bins[0])):
+                          s = str(b)+": "
+                          for array in by_bins:
+                            s = s+" "+"{:.3}".format(array[b])
+                          print s
+                        print ""
+                        print "F21: "+ str(F21)
+                        print "  ({}, {}) degrees of freedom".format(p2-p1, n-p2)
+                        print "F31: "+ str(F21)
+                        print "  ({}, {}) degrees of freedom".format(p3-p1, n-p3)
+                        print "F32: "+ str(F32)
+                        print "  ({}, {}) degrees of freedom".format(p3-p2, n-p3)
+                        print "F41: "+ str(F41)
+                        print "  ({}, {}) degrees of freedom".format(p4-p1, n-p4)
+                        print "F42: "+ str(F42)
+                        print "  ({}, {}) degrees of freedom".format(p4-p2, n-p4)
+                        print "F43: "+ str(F43)
+                        print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
+                        raw_input()
                             
-                            """
-                            # after loop on fits
-                            rss1 = rss[0]
-                            rss2 = rss[1]
-                            rss3 = rss[2]
-                            rss4 = rss[3]
-                            p1 = num_param[0]
-                            p2 = num_param[1]
-                            p3 = num_param[2]
-                            p4 = num_param[3]
-                            n = count_nonzero_bins(h_egamma_loose)
-                            F21 = ((rss1 - rss2)/(p2 - p1)) / (rss2/(n - p2))
-                            F31 = ((rss1 - rss3)/(p3 - p1)) / (rss3/(n - p3))
-                            F32 = ((rss2 - rss3)/(p3 - p2)) / (rss3/(n - p3))
-                            F41 = ((rss1 - rss4)/(p4 - p1)) / (rss4/(n - p4))
-                            F42 = ((rss2 - rss4)/(p4 - p2)) / (rss4/(n - p4))
-                            F43 = ((rss3 - rss4)/(p4 - p3)) / (rss4/(n - p4))
-                            #print(rss1, rss2)
-                            #print(p1, p2, n)
-                            print "F21: "+ str(F21)
-                            #print (rss2, rss1)
-                            print "  ({}, {}) degrees of freedom".format(p2-p1, n-p2)
-                            print "F31: "+ str(F21)
-                            #print (rss3, rss1)
-                            print "  ({}, {}) degrees of freedom".format(p3-p1, n-p3)
-                            print "F32: "+ str(F32)
-                            #print (rss3, rss2)
-                            print "  ({}, {}) degrees of freedom".format(p3-p2, n-p3)
-                            print "F41: "+ str(F41)
-                            #print (rss4, rss1)
-                            print "  ({}, {}) degrees of freedom".format(p4-p1, n-p4)
-                            print "F42: "+ str(F42)
-                            #print (rss4, rss2)
-                            print "  ({}, {}) degrees of freedom".format(p4-p2, n-p4)
-                            print "F43: "+ str(F43)
-                            #print (rss4, rss3)
-                            print "  ({}, {}) degrees of freedom".format(p4-p3, n-p4)
-                            if args.testBin is not None: raw_input()
-                            """
-                        
     elif item == "poly":
         for i in range(len(bins)):  # loop through twoprong sideband regions
             for eta_reg in eta_regions:  # loop through pt bins for a fixed twoprong sideband
@@ -857,4 +889,4 @@ for item in plots:
 
 c1.Print(args.name + ".pdf]")
 infile1.Close()
-if args.testBin is not None: raw_input()
+#if args.testBin is not None: raw_input()
