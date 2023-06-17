@@ -6,11 +6,13 @@ import argparse
 import array
 import fitting_utils as util
 
+
 def count_nonzero_bins(hist):
   count = 0
   for i in range(hist.GetNbinsX()):
     if not hist.GetBinContent(i+1) == 0: count += 1
   return count
+
 
 def RSS(func, hist, integral=False):
   rss = 0
@@ -22,6 +24,7 @@ def RSS(func, hist, integral=False):
     #print(hist.GetBinLowEdge(i+1), hist.GetBinLowEdge(i+1) + hist.GetBinWidth(i+1))
     #print(rss)
   return rss
+
 
 def binConverter(test_bin):
     bin_list = test_bin.split(" ")
@@ -38,8 +41,8 @@ def fitfunc1(x, p):
    
     if bound1 < 0: bound1 = 0
 
-    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)
-  
+    land = norm * ROOT.TMath.Landau(x[0], mpv, sigma)  
+    
     y11=norm*ROOT.TMath.Landau(bound1, mpv, sigma)
     y12=ROOT.TMath.Exp(C1*bound1)
     exp1 = ROOT.TMath.Exp(C1*x[0])*y11/y12
@@ -198,6 +201,7 @@ if args.test: regions = test_regions
 photon_regions = ["tight", "loose"]
 bins = [20,40,60,70,80,100,120,140,160,180,200,240,300,380,460]
 
+
 for item in plots:
     if item == "pfRelIso03_chg" or item == "sieie" or item == "hoe" or item == "hadTow":  # sanity plots
         for region in photon_regions:
@@ -307,6 +311,7 @@ for item in plots:
     elif item == "pi0_bins":
         if args.ratio: ROOT.TPad.Divide(c1, 1, 2)
         if args.testBin is not None: test_bin = binConverter(args.testBin)
+        
         for region in regions:  # loop through twoprong sideband regions
             if args.testBin is not None: 
                 if not region == test_bin[0]: continue
@@ -332,7 +337,6 @@ for item in plots:
                     # Reference name of the histogram created in the backend 
                     egamma_tight_plots += "_tight"
                     egamma_loose_plots += "_loose"
-                    if args.ratio: egamma_loose_plots += "_reweighted"
                     
                     # Get the histograms from the input file
                     h_egamma_tight = infile1.Get(egamma_tight_plots)
@@ -390,7 +394,8 @@ for item in plots:
                         ROOT.gPad.Update()
                         c1.Print(args.name + ".pdf")
                     else:
-                        print("########## BEGINNING OF PT BIN: " + str(bins[i]) + ", " + eta_reg.upper() + " ##########")
+                        if i == len(bins) - 1: print("############### PT BIN: " + str(bins[i]) + "+, " + eta_reg.upper() + " ###############")
+                        else: print("############### PT BIN: " + str(bins[i]) + "-" + str(bins[i+1]) + ", " + eta_reg.upper() + " ###############")
                         # Fit loose histogram to a curve
                         rss = []
                         num_param = []
@@ -434,7 +439,15 @@ for item in plots:
                                 f2.SetParLimits(9, 0.2, 7)
                                 f2.SetParLimits(10, 0.2, 7)
                             
-                            for j in range(5): loose_fit = h_egamma_loose.Fit(f2, '0SL', "", 0, 25)
+                            for j in range(5): 
+                                if j == 0:
+                                    if region == "noniso_sym" and eta_reg == "barrel" and bins[i] == 100:
+                                        if k == 0: f2.SetParameters(178800, 1.394, 0.3468, -2.045, 1.471)
+                                        if k == 1: f2.SetParameters(178800, 1.394, 0.3468, -2.045, -1.551, 1.471, 2)
+                                        if k == 2: f2.SetParameters(178800, 1.394, 0.3468, -2.045, -1.551, -2.692, 1.471, 2, 1.5)
+                                        if k == 3: f2.SetParameters(178800, 1.394, 0.3468, -2.045, -1.551, -2.692, -8.812, 1.471, 2, 1.5, 0.8)
+                                loose_fit = h_egamma_loose.Fit(f2, '0SL', "", 0.35, 25)
+                            
                             chi2 = loose_fit.Chi2()
                             ndf = loose_fit.Ndf()
                             
@@ -452,21 +465,25 @@ for item in plots:
                             h_loose_pull = h_egamma_loose.Clone()
                             h_loose_pull.Reset()
                             h_loose_pull_num.Add(h_egamma_loose, loose_fit_as_hist, 1, -1)  # Numerator of pull hist is data - fit
+
                             for j in range(h_loose_pull_num.GetNbinsX()): 
                                 if h_egamma_loose.GetBinContent(j+1) == 0: sqrt_err = 1.8
                                 else: sqrt_err = h_egamma_loose.GetBinError(j+1)
                                 h_loose_pull.SetBinContent(j+1, h_loose_pull_num.GetBinContent(j+1)/sqrt_err)
-
+                                h_loose_pull.SetBinError(j+1, 1)
+                            
                             h_tight_pull_num = h_egamma_tight.Clone()
                             h_tight_pull_num.Reset()
                             h_tight_pull = h_egamma_tight.Clone()
                             h_tight_pull.Reset()
                             h_tight_pull_num.Add(h_egamma_tight, tight_fit_as_hist, 1, -1)  # Numerator of pull hist is data - fit
+                            
                             for j in range(h_tight_pull_num.GetNbinsX()): 
                                 if h_egamma_tight.GetBinContent(j+1) == 0: sqrt_err = 1.8
                                 else: sqrt_err = h_egamma_tight.GetBinError(j+1)
                                 h_tight_pull.SetBinContent(j+1, h_tight_pull_num.GetBinContent(j+1)/sqrt_err)
-
+                                h_tight_pull.SetBinError(j+1, 1)
+                            
                             # Create title for plot 
                             title = region + " Twoprong"
                             if eta_reg == "barrel": title += ", Barrel"
@@ -479,7 +496,7 @@ for item in plots:
                             else: title += ", 4 exp"
                            
                             # Legend creation
-                            legend1 = ROOT.TLegend(0.65, 0.45, 0.9, 0.6)
+                            legend1 = ROOT.TLegend(0.65, 0.5, 0.9, 0.6)
                             legend1.AddEntry(h_egamma_loose, "Loose Photon, " + str(h_egamma_loose.GetEntries()), "l")
                             #if not args.ratio: legend1.AddEntry(0, "Chi2/NDF: " + str(chi2 / ndf), "")
                             legend2 = ROOT.TLegend(0.65, 0.55, 0.9, 0.7)
@@ -536,16 +553,60 @@ for item in plots:
                                 pad3.cd()
                                 h_loose_pull.SetTitle("(Loose - Fit) / Error")
                                 h_loose_pull.SetLineColor(ROOT.kBlack)
-                                h_loose_pull.Draw('p')
+                                h_loose_pull.Draw('pe')
                                 h_loose_pull.SetMarkerStyle(8)
                                 h_loose_pull.SetMarkerSize(0.25)
-                                h_loose_pull.GetYaxis().SetRangeUser(-3, 3)
+                                h_loose_pull.GetYaxis().SetRangeUser(-15, 15)
                                 if bins[i] < 80: h_loose_pull.GetXaxis().SetRangeUser(0, 5)
                                 elif bins[i] < 120: h_loose_pull.GetXaxis().SetRangeUser(0, 10)
                                 elif bins[i] < 200: h_loose_pull.GetXaxis().SetRangeUser(0, 15)
                                 elif bins[i] < 380: h_loose_pull.GetXaxis().SetRangeUser(0, 20)
                                 else: h_loose_pull.GetXaxis().SetRangeUser(0, 26)
-                                
+                                if k == 0:
+                                    pos1 = f2.GetParameter("Boundary1")
+                                    vert_line1_loose = ROOT.TLine(pos1, 0, pos1, h_loose_pull.GetMaximum())
+                                    vert_line1_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line1_loose.Draw("same")
+                                elif k == 1:
+                                    pos1 = f2.GetParameter("Boundary1")
+                                    pos2 = f2.GetParameter("BoundDiff12")
+                                    vert_line1_loose = ROOT.TLine(pos1, 0, pos1, h_loose_pull.GetMaximum())
+                                    vert_line2_loose = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_loose_pull.GetMaximum())
+                                    vert_line1_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line2_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line1_loose.Draw("same")
+                                    vert_line2_loose.Draw("same")
+                                elif k == 2:
+                                    pos1 = f2.GetParameter("Boundary1")
+                                    pos2 = f2.GetParameter("BoundDiff12")
+                                    pos3 = f2.GetParameter("BoundDiff23")
+                                    vert_line1_loose = ROOT.TLine(pos1, 0, pos1, h_loose_pull.GetMaximum())
+                                    vert_line2_loose = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_loose_pull.GetMaximum())
+                                    vert_line3_loose = ROOT.TLine(pos1+pos2+pos3, 0, pos1+pos2+pos3, h_loose_pull.GetMaximum())
+                                    vert_line1_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line2_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line3_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line1_loose.Draw("same")
+                                    vert_line2_loose.Draw("same")
+                                    vert_line3_loose.Draw("same")
+                                elif k == 3:
+                                    pos1 = f2.GetParameter("Boundary1")
+                                    pos2 = f2.GetParameter("BoundDiff12")
+                                    pos3 = f2.GetParameter("BoundDiff23")
+                                    pos4 = f2.GetParameter("BoundDiff34")
+                                    vert_line1_loose = ROOT.TLine(pos1, 0, pos1, h_loose_pull.GetMaximum())
+                                    vert_line2_loose = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_loose_pull.GetMaximum())
+                                    vert_line3_loose = ROOT.TLine(pos1+pos2+pos3, 0, pos1+pos2+pos3, h_loose_pull.GetMaximum())
+                                    vert_line4_loose = ROOT.TLine(pos1+pos2+pos3+pos4, 0, pos1+pos2+pos3+pos4, h_loose_pull.GetMaximum())
+                                    vert_line1_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line2_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line3_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line4_loose.SetLineColor(ROOT.kBlue)
+                                    vert_line1_loose.Draw("same")
+                                    vert_line2_loose.Draw("same")
+                                    vert_line3_loose.Draw("same")
+                                    vert_line4_loose.Draw("same")
+
                                 if not region == "iso_sym":
                                     c1.cd()
                                     pad4 = ROOT.TPad('pad4', 'pad4', 0.5, 0, 1, 0.3)
@@ -553,15 +614,59 @@ for item in plots:
                                     pad4.cd()
                                     h_tight_pull.SetTitle("(Tight - Fit) / Error")
                                     h_tight_pull.SetLineColor(ROOT.kBlack)
-                                    h_tight_pull.Draw('p')
+                                    h_tight_pull.Draw('pe')
                                     h_tight_pull.SetMarkerStyle(8)
                                     h_tight_pull.SetMarkerSize(0.25)
-                                    h_tight_pull.GetYaxis().SetRangeUser(-3, 3)
+                                    h_tight_pull.GetYaxis().SetRangeUser(-15, 15)
                                     if bins[i] < 80: h_tight_pull.GetXaxis().SetRangeUser(0, 5)
                                     elif bins[i] < 120: h_tight_pull.GetXaxis().SetRangeUser(0, 10)
                                     elif bins[i] < 200: h_tight_pull.GetXaxis().SetRangeUser(0, 15)
                                     elif bins[i] < 380: h_tight_pull.GetXaxis().SetRangeUser(0, 20)
                                     else: h_tight_pull.GetXaxis().SetRangeUser(0, 26)
+                                    if k == 0:
+                                        pos1 = f2.GetParameter("Boundary1")
+                                        vert_line1_tight = ROOT.TLine(pos1, 0, pos1, h_tight_pull.GetMaximum())
+                                        vert_line1_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line1_tight.Draw("same")
+                                    elif k == 1:
+                                        pos1 = f2.GetParameter("Boundary1")
+                                        pos2 = f2.GetParameter("BoundDiff12")
+                                        vert_line1_tight = ROOT.TLine(pos1, 0, pos1, h_tight_pull.GetMaximum())
+                                        vert_line2_tight = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_tight_pull.GetMaximum())
+                                        vert_line1_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line2_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line1_tight.Draw("same")
+                                        vert_line2_tight.Draw("same")
+                                    elif k == 2:
+                                        pos1 = f2.GetParameter("Boundary1")
+                                        pos2 = f2.GetParameter("BoundDiff12")
+                                        pos3 = f2.GetParameter("BoundDiff23")
+                                        vert_line1_tight = ROOT.TLine(pos1, 0, pos1, h_tight_pull.GetMaximum())
+                                        vert_line2_tight = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_tight_pull.GetMaximum())
+                                        vert_line3_tight = ROOT.TLine(pos1+pos2+pos3, 0, pos1+pos2+pos3, h_tight_pull.GetMaximum())
+                                        vert_line1_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line2_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line3_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line1_tight.Draw("same")
+                                        vert_line2_tight.Draw("same")
+                                        vert_line3_tight.Draw("same")
+                                    elif k == 3:
+                                        pos1 = f2.GetParameter("Boundary1")
+                                        pos2 = f2.GetParameter("BoundDiff12")
+                                        pos3 = f2.GetParameter("BoundDiff23")
+                                        pos4 = f2.GetParameter("BoundDiff34")
+                                        vert_line1_tight = ROOT.TLine(pos1, 0, pos1, h_tight_pull.GetMaximum())
+                                        vert_line2_tight = ROOT.TLine(pos1+pos2, 0, pos1+pos2, h_tight_pull.GetMaximum())
+                                        vert_line3_tight = ROOT.TLine(pos1+pos2+pos3, 0, pos1+pos2+pos3, h_tight_pull.GetMaximum())
+                                        vert_line4_tight = ROOT.TLine(pos1+pos2+pos3+pos4, 0, pos1+pos2+pos3+pos4, h_tight_pull.GetMaximum())
+                                        vert_line1_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line2_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line3_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line4_tight.SetLineColor(ROOT.kBlue)
+                                        vert_line1_tight.Draw("same")
+                                        vert_line2_tight.Draw("same")
+                                        vert_line3_tight.Draw("same")
+                                        vert_line4_tight.Draw("same")
 
                             c1.Print(args.name + ".pdf")    
                             
