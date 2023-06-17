@@ -68,24 +68,43 @@ def MultiplyWithPolyToTF1(func, degree, range_low=0, range_high=10, cheb=0, para
     def func_after_mult(x, p):
       return func(x) * (p[0] + p[1]*x[0] + p[2]*(x[0]**2) + p[3]*(x[0]**3) + p[4]*(x[0]**4))
 
-  if degree == 0 and cheb==1:
+  if degree == 0 and cheb == 1:
     def func_after_mult(x, p):
       return func(x) * (p[0])
-  if degree == 1 and cheb==1:
+  if degree == 1 and cheb == 1:
     def func_after_mult(x, p):
       return func(x) * (p[0] + p[1]*(x[0]))
-  if degree == 2 and cheb==1:
+  if degree == 2 and cheb == 1:
     def func_after_mult(x, p):
       X = x[0]
       return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1))
-  if degree == 3 and cheb==1:
+  if degree == 3 and cheb == 1:
     def func_after_mult(x, p):
       X = x[0]
       return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1) + p[3]*(4*X**3 - 3*X))
-  if degree == 4 and cheb==1:
+  if degree == 4 and cheb == 1:
     def func_after_mult(x, p):
       X = x[0]
       return func(x) * (p[0] + p[1]*(X) + p[2]*(2*X**2 - 1) + p[3]*(4*X**3 - 3*X) + p[4]*(8*X**4 - 8*X**2 + 1))
+
+  if degree == 0 and cheb == 2:
+    def func_after_mult(x, p):
+      return func(x) * (p[0])
+  if degree == 1 and cheb == 2:
+    def func_after_mult(x, p):
+      return func(x) * (p[0] + p[1]*(2*x[0]))
+  if degree == 2 and cheb == 2:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(2*X) + p[2]*(4*X**2 - 1))
+  if degree == 3 and cheb == 2:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(2*X) + p[2]*(4*X**2 - 1) + p[3]*(8*X**3 - 4*X))
+  if degree == 4 and cheb == 3:
+    def func_after_mult(x, p):
+      X = x[0]
+      return func(x) * (p[0] + p[1]*(2*X) + p[2]*(4*X**2 - 1) + p[3]*(8*X**3 - 4*X) + p[4]*(16*X**4 - 12*X**2 + 1))
 
   tf1 = ROOT.TF1(getname(), func_after_mult, range_low, range_high, degree+1)
   if degree>=0: tf1.SetParNames('Constant') if cheb==0 else tf1.SetParNames('Zero')
