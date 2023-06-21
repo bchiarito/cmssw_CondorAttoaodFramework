@@ -353,6 +353,8 @@ if 'atto_job_dir' in globals():
   if args.dir.startswith('condor_'):
     job_dir = atto_job_dir+'/plotting_jobs/'
     job_dir = os.path.normpath(job_dir)
+  else:
+    job_dir = args.dir
 else:
   if args.test: job_dir = 'TestJob_' + args.dir
   else: job_dir = 'Job_' + args.dir
