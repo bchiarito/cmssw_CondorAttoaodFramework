@@ -66,7 +66,7 @@ def get_flat_histo_collection(dir_list):
   '''
   col_histos = []
   for dir in dir_list:
-    file = get_hadd(dir)
+    file = get_hadd(os.path.join(os.path.normpath(dir),""))
     files.append(file)
     col_histos.append( [key.ReadObj() for key in (file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()])
   return reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
