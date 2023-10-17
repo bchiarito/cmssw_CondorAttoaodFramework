@@ -113,8 +113,10 @@ atto_args.add_argument("--datasetname", default='MyDatasetName', metavar='NAME',
 help="dataset name for metadata tree")
 atto_args.add_argument("--xs", default=1.0, type=float,
 help="cross section for metadata tree")
-atto_args.add_argument("--branches", default="branch_selection_atto.txt", metavar='FILE',
-help="filename for branch selection (default: branch_selection_atto.txt)")
+atto_args.add_argument("--branches", default="", metavar='FILE',
+help="filename for branch selection")
+atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt'], metavar='CHOICE',
+help="choice for analyzer code: main, ztt")
 
 # plotting execution specification
 plotting_args = parser.add_argument_group('plotting mode execution')
@@ -171,7 +173,16 @@ args = parser.parse_args()
 
 # get mode
 mode = args.mode
+
 if mode=='plotting' and args.plotter=='None': raise SystemExit("Configuration Error: Must specify option --plotter in plotting mode.")
+if mode=='atto' and args.analyzer=='None': raise SystemExit("Configuration Error: Must specify option --analyzer in atto mode.")
+
+if mode=='plotting':
+  backend_option = args.plotter
+  if args.branches == "": args.branches = "branch_selection_atto.txt"
+if mode=='atto':
+  backend_option = args.analyzer
+  if args.branches == "": args.branches = "branch_selection_ztt.txt"
 
 # get grid id / username
 if site == 'hexcms':
@@ -438,7 +449,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+args.plotter
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
