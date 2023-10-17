@@ -79,7 +79,7 @@ def get_effs(dir_list):
   '''
   effs = []
   for dir in dir_list:
-    metadata = get_meta(os.path.join(os.path.dirname(os.path.dirname(dir)),''))
+    metadata = get_meta(os.path.join(os.path.dirname(os.path.dirname(os.path.join(dir,''))),''))
     total = float(metadata['evtProcessed']); passfilter = float(metadata['evtPassDatafilter'])
     effs.append(passfilter/total)
   return effs
