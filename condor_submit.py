@@ -122,8 +122,8 @@ plotting_args.add_argument("--lumi", default=1.0,
 help="integrated luminosity")
 plotting_args.add_argument("--cut", default='None',
 help="optional cut string")
-plotting_args.add_argument("--photon", default="HPID", choices=['HPID', "CBL"], metavar='CHOICE',
-help="choice for photon: HPID (default), CBL")
+plotting_args.add_argument("--photon", default="CBL", choices=['HPID', "CBL"], metavar='CHOICE',
+help="choice for photon: HPID, CBL (default)")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg")
 
