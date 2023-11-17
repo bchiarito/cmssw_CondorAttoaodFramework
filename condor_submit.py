@@ -128,6 +128,8 @@ plotting_args.add_argument("--photon", default="CBL", choices=['HPID', "CBL"], m
 help="choice for photon: HPID, CBL (default)")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg")
+plotting_args.add_argument("--phislice", default=0,
+help="parameter for slicing in Phi mass")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -177,12 +179,10 @@ mode = args.mode
 if mode=='plotting' and args.plotter=='None': raise SystemExit("Configuration Error: Must specify option --plotter in plotting mode.")
 if mode=='atto' and args.analyzer=='None': raise SystemExit("Configuration Error: Must specify option --analyzer in atto mode.")
 
-if mode=='plotting':
-  backend_option = args.plotter
-  if args.branches == "": args.branches = "branch_selection_atto.txt"
 if mode=='atto':
   backend_option = args.analyzer
-  if args.branches == "": args.branches = "branch_selection_ztt.txt"
+  if args.branches == "" and args.analyzer == "ztt": args.branches = "branch_selection_ztt.txt"
+  if args.branches == "" and args.analyzer == "main": args.branches = "branch_selection_atto.txt"
 
 # get grid id / username
 if site == 'hexcms':
@@ -449,7 +449,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option+' '+str(args.phislice)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
