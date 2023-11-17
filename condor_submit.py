@@ -130,6 +130,8 @@ plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity',
 help="choice for plotter code: sanity, bkg")
 plotting_args.add_argument("--phislice", default=0,
 help="parameter for slicing in Phi mass")
+plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'None'], metavar='CHOICE',
+help="choice for plotter code: sanity, bkg, sigeff")
 
 # run specification
 run_args = parser.add_argument_group('run options')
