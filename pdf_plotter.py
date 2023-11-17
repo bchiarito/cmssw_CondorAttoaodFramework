@@ -34,8 +34,9 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetLegendFillColor(ROOT.TColor.GetColorTransparent(ROOT.kRed, 0.01));
 ROOT.gStyle.SetLegendBorderSize(0)
 leg_x1, leg_x2, leg_y1, leg_y2 = 0.7, 0.60, 0.9, 0.9
-main = args.out+'.pdf'
-cutflow = args.out+'_cutflow.pdf'
+main_pdf = args.out+'.pdf'
+cutflow_pdf = args.out+'_cutflow.pdf'
+signal_pdf = args.out+'_signal.pdf'
 
 # data config
 data_legend = 'Data'
@@ -48,12 +49,24 @@ data_dirs = [
 ]
 
 # mc config (order is order of appearance)
-GJETS_POSITION = 3 # record gjets position in list for purpose of scaling gjets
+GJETS_POSITION = 5 # starting from 1, record gjets position in list for purpose of scaling gjets
 mc_legend.append('DY')
 mc_hat_tag.append(False)
 mc_color.append(ROOT.kViolet)
 mc_dirs_list.append([
   args.prefix+'dy50/'+plotting_jobs,
+])
+mc_legend.append('TTbar')
+mc_hat_tag.append(False)
+mc_color.append(ROOT.kPink+10)
+mc_dirs_list.append([
+  args.prefix+'ttbar/'+plotting_jobs,
+])
+mc_legend.append('WJets')
+mc_hat_tag.append(False)
+mc_color.append(ROOT.kYellow+1)
+mc_dirs_list.append([
+  args.prefix+'wjets/'+plotting_jobs,
 ])
 mc_legend.append('QCD')
 mc_hat_tag.append('QCD_')
@@ -81,15 +94,18 @@ mc_dirs_list.append([
 ])
 
 # signal config
-signal_legend.append('Signal 125,0.7')
-signal_color.append(ROOT.kYellow+1)
-signal_dirs_list.append([args.prefix+'signalM125m0p7/'+plotting_jobs])
-signal_legend.append('Signal 500,eta')
+signal_legend.append('Signal 125,0.55')
+signal_dirs_list.append([args.prefix+'signalM125m0p55/'+plotting_jobs])
 signal_color.append(ROOT.kRed)
-signal_dirs_list.append([args.prefix+'signalM500meta/'+plotting_jobs])
-signal_legend.append('Signal 1200,0.5')
+signal_legend.append('Signal 690,1.225')
+signal_dirs_list.append([args.prefix+'signalM690m1p225/'+plotting_jobs])
+signal_color.append(ROOT.kRed+2)
+signal_legend.append('Signal 1280,2.2')
+signal_dirs_list.append([args.prefix+'signalM1280m2p2/'+plotting_jobs])
 signal_color.append(ROOT.kBlue)
-signal_dirs_list.append([args.prefix+'signalM1200m0p5/'+plotting_jobs])
+signal_legend.append('Signal 3050,3.175')
+signal_dirs_list.append([args.prefix+'signalM3050m3p175/'+plotting_jobs])
+signal_color.append(ROOT.kBlue+2)
 signal_tag = 'SIGNAL_'
 
 ############################
@@ -139,29 +155,31 @@ if args.filter_eff:
     print(dir, eff)
   print('')
 
+# signal plots
+c.Print(signal_pdf+'[')
+c.SetLogy(0)
+for i, coll in enumerate(signal_hist_collections):
+  numer_plots = []
+  denom_plots = []
+  for hist in coll:
+    if not (hist.GetName()).startswith(signal_tag): continue
+    if 'NUMER' in hist.GetName(): numer_plots.append(hist)
+    if 'DENOM' in hist.GetName(): denom_plots.append(hist)
+    hist.SetLineColor(signal_color[i])
+    hist.Draw('hist')
+    c.Print(signal_pdf)
+  for numer, denom in zip(numer_plots, denom_plots):
+    eff = ROOT.TEfficiency(numer, denom)
+    eff.SetLineColor(signal_color[i])
+    eff.SetMarkerColor(signal_color[i])
+    eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
+    eff.Draw('AP')
+    c.Print(signal_pdf)
+c.Print(signal_pdf+']')
+
 # sanity plots
 if not args.nosanity:
-  c.Print(main+'[')
-
-  # signal plots
-  c.SetLogy(0)
-  for i, coll in enumerate(signal_hist_collections):
-    numer_plots = []
-    denom_plots = []
-    for hist in coll:
-      if not (hist.GetName()).startswith(signal_tag): continue
-      if 'NUMER' in hist.GetName(): numer_plots.append(hist)
-      if 'DENOM' in hist.GetName(): denom_plots.append(hist)
-      hist.SetLineColor(signal_color[i])
-      hist.Draw('hist')
-      c.Print(main)
-    for numer, denom in zip(numer_plots, denom_plots):
-      eff = ROOT.TEfficiency(numer, denom)
-      eff.SetLineColor(signal_color[i])
-      eff.SetMarkerColor(signal_color[i])
-      eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
-      eff.Draw('AP')
-      c.Print(main)
+  c.Print(main_pdf+'[')
 
   # mc hat plots
   c.SetLogy()
@@ -179,7 +197,7 @@ if not args.nosanity:
         hist.SetLineColor(mc_color[i]+(j+1))
         hist.SetFillColor(mc_color[i]+(j+1))
         hist.Draw('hist same')
-      c.Print(main)
+      c.Print(main_pdf)
 
   # rest of plots
   for i in range(len(data_hist_collection)):
@@ -219,7 +237,7 @@ if not args.nosanity:
     for signal_hist in signal_hists: signal_hist.Draw('hist same')
     data_hist.Draw("same")
     leg.Draw('same')
-    c.Print(main)
+    c.Print(main_pdf)
     # draw log
     c.SetLogy(1)
     data_hist.SetMinimum(1e-1)
@@ -228,18 +246,18 @@ if not args.nosanity:
     for signal_hist in signal_hists: signal_hist.Draw('hist same')
     data_hist.Draw("same")
     leg.Draw('same')
-    c.Print(main)
-  c.Print(main+']')
+    c.Print(main_pdf)
+  c.Print(main_pdf+']')
 
 # cutflows
 if not args.nocutflow:
-  c.Print(cutflow+'[')
+  c.Print(cutflow_pdf+'[')
   c.SetLogy()
   for hist in data_hist_collection:
     if not (hist.GetName()).startswith('cutflow'): continue
     hist.SetLineColor(data_color)
     hist.Draw('hist')
-    c.Print(cutflow)
+    c.Print(cutflow_pdf)
   for i, hists_collection in enumerate(mc_hists_collections):
     for hists in zip(*hists_collection):
       if not (hists[0].GetName()).startswith('cutflow'): continue
@@ -247,11 +265,11 @@ if not args.nocutflow:
         hist.SetLineColor(mc_color[i]+j)
         hist.SetFillColor(mc_color[i]+j)
         hist.Draw('hist')
-        c.Print(cutflow)
+        c.Print(cutflow_pdf)
   for i, hist_collection in enumerate(signal_hist_collections):
     for hist in hist_collection:
       if not (hist.GetName()).startswith('cutflow'): continue
       hist.SetLineColor(signal_color[i])
       hist.Draw('hist')
-      c.Print(cutflow)
-  c.Print(cutflow+']')
+      c.Print(cutflow_pdf)
+  c.Print(cutflow_pdf+']')
