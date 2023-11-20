@@ -126,8 +126,6 @@ plotting_args.add_argument("--cut", default='None',
 help="optional cut string")
 plotting_args.add_argument("--photon", default="CBL", choices=['HPID', "CBL"], metavar='CHOICE',
 help="choice for photon: HPID, CBL (default)")
-plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'None'], metavar='CHOICE',
-help="choice for plotter code: sanity, bkg")
 plotting_args.add_argument("--phislice", default=0,
 help="parameter for slicing in Phi mass")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'None'], metavar='CHOICE',
