@@ -183,6 +183,9 @@ if mode=='atto':
   backend_option = args.analyzer
   if args.branches == "" and args.analyzer == "ztt": args.branches = "branch_selection_ztt.txt"
   if args.branches == "" and args.analyzer == "main": args.branches = "branch_selection_atto.txt"
+if mode=='plotting':
+  backend_option = args.plotter
+  if args.branches == "": args.branches = "branch_selection_atto.txt" # placeholder
 
 # get grid id / username
 if site == 'hexcms':
