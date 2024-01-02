@@ -124,12 +124,14 @@ plotting_args.add_argument("--lumi", default=1.0,
 help="integrated luminosity")
 plotting_args.add_argument("--cut", default='None',
 help="optional cut string")
-plotting_args.add_argument("--photon", default="CBL", choices=['HPID', "CBL"], metavar='CHOICE',
-help="choice for photon: HPID, CBL (default)")
+plotting_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
+help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
 plotting_args.add_argument("--phislice", default=0,
 help="parameter for slicing in Phi mass")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg, sigeff")
+plotting_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
+help="specify which year the input data/mc is")
 
 # run specification
 run_args = parser.add_argument_group('run options')
@@ -199,9 +201,6 @@ elif args.data: datamc = "data"
 elif args.sigRes: datamc = "sigRes"
 elif args.sigNonRes: datamc = "sigNonRes"
 else: raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
-
-# check year
-args.year = 'UL18'
 
 # define max files
 maxfiles = args.files
