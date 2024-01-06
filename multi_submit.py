@@ -55,10 +55,11 @@ if args.mode == 'atto':
   locs['egamma17f'] = '/cms/twoprong/chiarito/nano/egamma/egamma_17f/fv1p6-1-f947_bv1p4-0-e2f2/'
   locs['gjets40to100'] = '/cms/twoprong/chiarito/nano/gjets/gjets40to100/'  # for 2018
   locs['gjets100to200'] = '/cms/twoprong/chiarito/nano/gjets/gjets100to200/fv1p4-23-d5d2_bv1p1-2-3aa0/'
-  locs['gjets200to400'] = '/cms/twoprong/chiarito/nano/gjets/gjets200to400/'
+  locs['gjets200to400'] = '/cms/twoprong/chiarito/nano/gjets/gjets200to400/fv1p6-6-4e52_bv1p4-1-6649/'
   locs['gjets400to600'] = '/cms/twoprong/chiarito/nano/gjets/gjets400to600/fv1p4-15-f8f9_bv1p1-1-331c/'
   locs['gjets600toInf'] = '/cms/twoprong/chiarito/nano/gjets/gjets600toInf/fv1p4-15-f8f9_bv1p1-1-331c/'
   locs['gjets2017_40to100'] = '/cms/twoprong/chiarito/nano/gjets/gjets2017/gjets40to100/fv1p6-4-29dc_bv1p4-1-db96/'
+  locs['gjets2017_100to200'] = '/cms/twoprong/chiarito/nano/gjets/gjets2017/gjets100to200/fv1p6-6-4e52_bv1p4-1-6649/'
   locs['gjets2017_200to400'] = '/cms/twoprong/chiarito/nano/gjets/gjets2017/gjets200to400/fv1p6-5-47d5_bv1p4-1-6649/'
   locs['gjets2017_400to600'] = '/cms/twoprong/chiarito/nano/gjets/gjets2017/gjets400to600/fv1p6-5-47d5_bv1p4-1-6649/'
   locs['gjets2017_600toInf'] = '/cms/twoprong/chiarito/nano/gjets/gjets2017/gjets600toInf/fv1p6-7-db01_bv1p4-1-6649/'
@@ -120,10 +121,11 @@ if args.mode == 'atto':
         add_job(tag='egamma17d', options='--data --datasetname=egamma17d', loc=locs['egamma17d'])
         add_job(tag='egamma17e', options='--data --datasetname=egamma17e', loc=locs['egamma17e'])
         add_job(tag='egamma17f', options='--data --datasetname=egamma17f', loc=locs['egamma17f'])
-        add_job(tag='gjets2017_40to100', options='--mc --datasetname=gjets2017_40to100', loc=locs['gjets2017_40to100'])
-        add_job(tag='gjets2017_200to400', options='--mc --datasetname=gjets2017_200to400', loc=locs['gjets2017_200to400'])
-        add_job(tag='gjets2017_400to600', options='--mc --datasetname=gjets2017_400to600', loc=locs['gjets2017_400to600'])
-        add_job(tag='gjets2017_600toInf', options='--mc --datasetname=gjets2017_600toInf', loc=locs['gjets2017_600toInf'])
+        add_job(tag='gjets2017_40to100', options='--mc --datasetname=gjets2017_40to100 --xs=18650', loc=locs['gjets2017_40to100'])
+        add_job(tag='gjets2017_100to200', options='--mc --datasetname=gjets2017_100to200 --xs=18650', loc=locs['gjets2017_100to200'])
+        add_job(tag='gjets2017_200to400', options='--mc --datasetname=gjets2017_200to400 --xs=18650', loc=locs['gjets2017_200to400'])
+        add_job(tag='gjets2017_400to600', options='--mc --datasetname=gjets2017_400to600 --xs=18650', loc=locs['gjets2017_400to600'])
+        add_job(tag='gjets2017_600toInf', options='--mc --datasetname=gjets2017_600toInf --xs=18650', loc=locs['gjets2017_600toInf'])
 
 for job in jobs:
   command = './condor_submit.py ' + args.mode
