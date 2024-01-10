@@ -60,7 +60,7 @@ if (args.input).startswith("Job_MultiJob") and os.path.exists(args.input):
       print('')
 
   if args.hadd:
-    summed_job = "sum_{}.root".format(os.path.dirname(args.input)[13:])
+    summed_job = "sum_{}.root".format(os.path.dirname(args.input+'/')[13:])
     command = " ".join(["hadd -f", summed_job, " ".join(summed_files)])
     os.system(command)
     for temp in summed_files:
