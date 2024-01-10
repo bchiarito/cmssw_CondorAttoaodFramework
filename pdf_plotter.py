@@ -27,6 +27,7 @@ parser.add_argument("--nosanity", action='store_true', help='omit sanity plots')
 parser.add_argument("--trigger_eff", action='store_true', help='display trigger efficiencies')
 parser.add_argument("--filter_eff", action='store_true', help='display data filter efficiencies')
 parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
+parser.add_argument("--saveroot", default=False, action='store_true', help='store .root and .cpp files for plots')
 args = parser.parse_args()
 
 # other config
@@ -97,9 +98,9 @@ mc_dirs_list.append([
 signal_legend.append('Signal 125,0.55')
 signal_dirs_list.append([args.prefix+'signalM125m0p55/'+plotting_jobs])
 signal_color.append(ROOT.kRed)
-signal_legend.append('Signal 690,1.225')
-signal_dirs_list.append([args.prefix+'signalM690m1p225/'+plotting_jobs])
-signal_color.append(ROOT.kRed+2)
+#signal_legend.append('Signal 690,1.225')
+#signal_dirs_list.append([args.prefix+'signalM690m1p225/'+plotting_jobs])
+#signal_color.append(ROOT.kRed+2)
 signal_legend.append('Signal 1280,2.2')
 signal_dirs_list.append([args.prefix+'signalM1280m2p2/'+plotting_jobs])
 signal_color.append(ROOT.kBlue)
@@ -175,6 +176,8 @@ for i, coll in enumerate(signal_hist_collections):
     eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
     eff.Draw('AP')
     c.Print(signal_pdf)
+    if args.saveroot: c.SaveSource("source_"+str(eff.GetName())+".cpp")
+    if args.saveroot: c.SaveAs("rootplots_"+str(eff.GetName())+".root")
 c.Print(signal_pdf+']')
 
 # sanity plots
@@ -247,6 +250,8 @@ if not args.nosanity:
     data_hist.Draw("same")
     leg.Draw('same')
     c.Print(main_pdf)
+    if args.saveroot: c.SaveSource("source_"+str(data_hist.GetName())+".cpp")
+    if args.saveroot: c.SaveAs("rootplots_"+str(data_hist.GetName())+".root")
   c.Print(main_pdf+']')
 
 # cutflows
