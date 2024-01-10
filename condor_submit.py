@@ -126,8 +126,8 @@ plotting_args.add_argument("--cut", default='None',
 help="optional cut string")
 plotting_args.add_argument("--photon", default="CBL", choices=['HPID', "CBL"], metavar='CHOICE',
 help="choice for photon: HPID, CBL (default)")
-plotting_args.add_argument("--phislice", default=0,
-help="parameter for slicing in Phi mass")
+plotting_args.add_argument("--phislice", default=False, action="store_true",
+help="turn on phi binned histograms for bkg analysis")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg, sigeff")
 
@@ -467,7 +467,6 @@ for i in range(len(infile_tranches)):
     "helper/" + plotting_util_filename
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
-  #sub['JobBatchName'] = args.dir if args.batch is None else args.batch
   sub['JobBatchName'] = job_dir.replace('/','-') if args.batch is None else args.batch
   sub['output'] = job_dir+'/stdout/$(Cluster)_$(Process)_out.txt'
   if args.noErr:
@@ -488,9 +487,9 @@ for i in range(len(infile_tranches)):
     raise SystemExit("ERROR: Directory " + job_dir + " already exists. Use option -f to overwrite")
   if os.path.isdir("./"+job_dir) and args.force:
     os.system('rm -rf ./' + job_dir)
-  os.system('mkdir ' + job_dir)
-  os.system('mkdir ' + job_dir + '/infiles')
-  os.system('mkdir ' + job_dir + '/stdout')
+  os.system('mkdir -p ' + job_dir)
+  os.system('mkdir -p ' + job_dir + '/infiles')
+  os.system('mkdir -p ' + job_dir + '/stdout')
 
 # copy files to job directory
 for i in range(len(infile_tranches)):

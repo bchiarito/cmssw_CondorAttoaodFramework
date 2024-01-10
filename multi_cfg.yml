@@ -1,0 +1,46 @@
+---
+
+name: egamma_bkg_jobs
+
+command: condor_submit.py
+
+inputs:
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/egamma18a/2023-06-01-21-05-37/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/egamma18b/2023-06-01-21-05-38/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/egamma18c/2023-06-01-21-05-40/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/egamma18d/2023-06-01-21-05-42/v1p0-55-5011/
+
+dests:
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/egamma18a/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/egamma18b/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/egamma18c/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/egamma18d/
+
+mode: plotting
+
+common_options: [--lumi=59830, --photon=CBL, -p=bkg, --phislice, --data]
+
+...
+---
+
+name: gjets_bkg_jobs
+
+command: condor_submit.py
+
+inputs:
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/gjets200to400/2023-06-01-21-05-46/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/gjets100to200/2023-06-01-21-05-45/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/gjets40to100/2023-06-01-21-05-44/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/gjets400to600/2023-06-01-21-05-47/v1p0-55-5011/
+  - /cms/chiarito/eos/twoprong/sanity_plots/atto/Fullrun8-Jun2023/gjets600toInf/2023-06-01-21-05-47/v1p0-55-5011/
+
+dests:
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/gjets200/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/gjets100/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/gjets40/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/gjets400/
+  - /cms/chiarito/eos/twoprong/dev/atto/Fullrun8-Jun2023/gjets600/
+
+mode: plotting
+
+common_options: [--lumi=59830, --photon=CBL, -p=bkg, --phislice, --mc]
