@@ -11,6 +11,10 @@ import yaml
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
 parser.add_argument('input', help='input YAML file to submit, or Job_MultiJob_ directory to check')
 parser.add_argument('--test', default=False, action='store_true', help="just print commands, don't execute")
+submit_args = parser.add_argument_group("submitting")
+submit_args.add_argument('--tag', default="", help="append to 'name' parameter from .yml file")
+submit_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
+submit_args.add_argument('--manual', default=False, action='store_true', help="manually confirm all submissions")
 status_args = parser.add_argument_group("status checking")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 status_args.add_argument('--hadd', default=False, action='store_true', help="hadd all outputs")
@@ -73,17 +77,22 @@ if (args.input).startswith("Job_MultiJob") and os.path.exists(args.input):
 with open(args.input) as yaml_input:
 
   try:
-    jobs = yaml.load_all(yaml_input)
+    jobs = yaml.safe_load_all(yaml_input)
   except yaml.YAMLError as err:
     print(err)
 
   for config in jobs:
-  
+    if not config: continue
     try:
-      parent_dir = "_".join(["MultiJob", config["name"]])
+      parent_dir = "_".join(["MultiJob", args.tag, config["name"]])
       N_subjobs = len(config["inputs"])
       assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
-      print("Job", config["name"], "has", N_subjobs, "subjobs:\n")
+      print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
+      if args.partial:
+        choice = ""
+        while (choice != "y" and choice != "n"):
+          choice = input("Process? [y/n] ")
+        if choice == "n": continue
       if os.path.exists(parent_dir):
         raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
       else:
@@ -94,9 +103,10 @@ with open(args.input) as yaml_input:
           job_input = config["inputs"][i]
           job_output = config["dests"][i]
           options = " ".join((config["common_options"]))
-          options += " --auto -x"
+          if not args.manual: options += " --auto"
+          options += " -x "
           job_dir = "--dir " + "/".join([parent_dir, "subjob_"+str(i+1)])
-          command = " ".join([script, mode, job_input, job_output, options, job_dir, "--auto"])
+          command = " ".join([script, mode, job_input, job_output, options, job_dir])
           print(command)
           if not args.test: os.system(command)
           print('')
