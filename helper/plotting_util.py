@@ -28,6 +28,8 @@ def get_meta(path, jobdir=True):
   for fi in os.listdir(path):
     if fi.endswith('.root') and fi.startswith('ATTOAOD'): metadata_chain.Add(path+'/'+fi)
   evtWritten, evtProcessed, evtPassDatafilter = 0, 0, 0
+  print(path)
+  print(metadata_chain.GetEntries())
   for entry in metadata_chain:
     dataset_id = entry.dataset_id
     evtWritten += entry.evtWritten

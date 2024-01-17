@@ -264,6 +264,7 @@ elif args.input_local:
         input_files.append(os.path.abspath(line))
         if len(input_files) == maxfiles: break
     if len(input_files) == 0: raise SystemExit("ERROR: check input directory, might be too many levels above rootfiles.")
+    args.input = d
 
 # input is eos area on cmslc
 elif args.input_cmslpc:

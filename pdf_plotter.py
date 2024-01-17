@@ -43,14 +43,16 @@ signal_pdf = args.out+'_signal.pdf'
 data_legend = 'Data'
 data_color = ROOT.kBlack
 data_dirs = [
-  args.prefix+'egamma18a/'+plotting_jobs,
-  args.prefix+'egamma18b/'+plotting_jobs,
-  args.prefix+'egamma18c/'+plotting_jobs,
-  args.prefix+'egamma18d/'+plotting_jobs,
+#  args.prefix+'egamma18a/'+plotting_jobs,
+#  args.prefix+'egamma18b/'+plotting_jobs,
+#  args.prefix+'egamma18c/'+plotting_jobs,
+#  args.prefix+'egamma18d/'+plotting_jobs,
+'Job_MultiJob_FullRun9_Jan13_histograms_egamma_fullrun/subjob_1/'
 ]
 
 # mc config (order is order of appearance)
-GJETS_POSITION = 5 # starting from 1, record gjets position in list for purpose of scaling gjets
+GJETS_POSITION = 1 # starting from 1, record gjets position in list for purpose of scaling gjets
+'''
 mc_legend.append('DY')
 mc_hat_tag.append(False)
 mc_color.append(ROOT.kViolet)
@@ -83,18 +85,21 @@ mc_dirs_list.append([
   args.prefix+'qcd1500to2000/'+plotting_jobs,
   args.prefix+'qcd2000toInf/'+plotting_jobs,
 ])
+'''
 mc_legend.append('GJets')
 mc_hat_tag.append('GJETS_')
 mc_color.append(ROOT.kGreen)
 mc_dirs_list.append([
-  args.prefix+'gjets40to100/'+plotting_jobs,
-  args.prefix+'gjets100to200/'+plotting_jobs,
-  args.prefix+'gjets200to400/'+plotting_jobs,
-  args.prefix+'gjets400to600/'+plotting_jobs,
-  args.prefix+'gjets600toInf/'+plotting_jobs,
+'Job_MultiJob_FullRun9_Jan13_histograms_gjets_fullrun/subjob_1/'
+#  args.prefix+'gjets40to100/'+plotting_jobs,
+#  args.prefix+'gjets100to200/'+plotting_jobs,
+#  args.prefix+'gjets200to400/'+plotting_jobs,
+#  args.prefix+'gjets400to600/'+plotting_jobs,
+#  args.prefix+'gjets600toInf/'+plotting_jobs,
 ])
 
 # signal config
+'''
 signal_legend.append('Signal 125,0.55')
 signal_dirs_list.append([args.prefix+'signalM125m0p55/'+plotting_jobs])
 signal_color.append(ROOT.kRed)
@@ -108,6 +113,7 @@ signal_legend.append('Signal 3050,3.175')
 signal_dirs_list.append([args.prefix+'signalM3050m3p175/'+plotting_jobs])
 signal_color.append(ROOT.kBlue+2)
 signal_tag = 'SIGNAL_'
+'''
 
 ############################
 c = ROOT.TCanvas()
