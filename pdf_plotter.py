@@ -10,7 +10,7 @@ import helper.plotting_util as util
 
 # init
 plotting_jobs = 'plotting_jobs/'
-mc_dirs_list = []
+mc_filenames_list = []
 mc_color = []
 mc_legend = []
 mc_hat_tag = []
@@ -39,16 +39,59 @@ main_pdf = args.out+'.pdf'
 cutflow_pdf = args.out+'_cutflow.pdf'
 signal_pdf = args.out+'_signal.pdf'
 
+prefix = args.prefix
+hadd_dir = "hadd_"+prefix
+if hadd_dir[-1] == '_': hadd_dir = hadd_dir[:-1]
+multijob_dirs = [d for d in os.listdir(".") if d.startswith(prefix)]
+
+# make hadds
+if not os.path.isdir(hadd_dir):
+  if not os.path.isdir(hadd_dir): os.mkdir(hadd_dir)
+  for multijob_dir in multijob_dirs:
+    #print("#######################")
+    #print("#######################")
+    #print(multijob_dir)
+    multijob_subdirs = os.listdir(multijob_dir)
+    summed_files = []
+    for subdir in multijob_subdirs:
+      if not os.path.isdir(os.path.join(multijob_dir, subdir)): continue
+      job_dir = os.path.join(multijob_dir, subdir)
+      sys.path.append(os.path.join(multijob_dir, subdir))
+      import job_info as job
+      output_area = job.output
+      sys.path.pop()
+      sys.modules.pop("job_info")
+      output_list = os.listdir(output_area)
+      rootfiles = []
+      for item in output_list:
+        if not os.path.isfile(os.path.join(output_area, item)): continue
+        if not item.endswith(".root"): continue
+        rootfiles.append(os.path.join(output_area, item))
+      summed_file = os.path.join(hadd_dir, "sum_{}_{}.root".format(os.path.dirname(multijob_dir+'/')[13:], subdir))
+      summed_files.append(summed_file)
+      command = " ".join(["hadd -f", summed_file," ".join(rootfiles)])
+      #print(command)
+      os.system(command)
+      #print("")
+    summed_multijob = "sum_{}.root".format(os.path.dirname(multijob_dir+'/')[13:])
+    command = " ".join(["hadd -f", os.path.join(hadd_dir, summed_multijob), " ".join(summed_files)])
+    #print(command)
+    os.system(command)
+    #print("")
+
+hadd_rootfiles = [os.path.join(hadd_dir, filename) for filename in os.listdir(hadd_dir)]
+  
 # data config
 data_legend = 'Data'
 data_color = ROOT.kBlack
-data_dirs = [
+data_filenames = [
 #  args.prefix+'egamma18a/'+plotting_jobs,
 #  args.prefix+'egamma18b/'+plotting_jobs,
 #  args.prefix+'egamma18c/'+plotting_jobs,
 #  args.prefix+'egamma18d/'+plotting_jobs,
-'Job_MultiJob_FullRun9_Jan13_histograms_egamma_fullrun/subjob_1/'
+#'sum_FullRun9_Jan13_histograms_egamma_fullrun.root'
 ]
+data_filenames.extend([filename for filename in hadd_rootfiles if 'egamma' in filename])
 
 # mc config (order is order of appearance)
 GJETS_POSITION = 1 # starting from 1, record gjets position in list for purpose of scaling gjets
@@ -89,14 +132,17 @@ mc_dirs_list.append([
 mc_legend.append('GJets')
 mc_hat_tag.append('GJETS_')
 mc_color.append(ROOT.kGreen)
-mc_dirs_list.append([
-'Job_MultiJob_FullRun9_Jan13_histograms_gjets_fullrun/subjob_1/'
+gjets_filenames = [filename for filename in hadd_rootfiles if 'egamma' in filename]
+mc_filenames_list.append(
+#'Job_MultiJob_FullRun9_Jan13_histograms_gjets_fullrun/subjob_1/'
 #  args.prefix+'gjets40to100/'+plotting_jobs,
 #  args.prefix+'gjets100to200/'+plotting_jobs,
 #  args.prefix+'gjets200to400/'+plotting_jobs,
 #  args.prefix+'gjets400to600/'+plotting_jobs,
 #  args.prefix+'gjets600toInf/'+plotting_jobs,
-])
+#'sum_FullRun9_Jan13_histograms_gjets_fullrun_gjets100to200.root'
+gjets_filenames
+)
 
 # signal config
 '''
@@ -115,13 +161,53 @@ signal_color.append(ROOT.kBlue+2)
 signal_tag = 'SIGNAL_'
 '''
 
+print(data_filenames)
+print(mc_filenames_list)
 ############################
 c = ROOT.TCanvas()
 
-data_hist_collection = util.get_flat_histo_collection(data_dirs)
-mc_hist_collections = [util.get_flat_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
-mc_hists_collections = [util.get_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
-signal_hist_collections = [util.get_flat_histo_collection(signal_dirs) for signal_dirs in signal_dirs_list]
+#data_hist_collection = util.get_flat_histo_collection(data_dirs)
+#mc_hist_collections = [util.get_flat_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
+#mc_hists_collections = [util.get_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
+#signal_hist_collections = [util.get_flat_histo_collection(signal_dirs) for signal_dirs in signal_dirs_list]
+
+data_files = [ ROOT.TFile(filename) for filename in data_filenames]
+col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in data_files]
+data_hist_collection = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+#master_mc_files = [ [ROOT.TFile(filename) for filename in mc_filenames] for mc_filenames in mc_filenames_list]
+
+mc_hist_collections = []
+mc_hists_collections = []
+for mc_filenames in mc_filenames_list:
+  mc_files = [ ROOT.TFile(filename) for filename in mc_filenames]
+  col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in mc_files]
+
+  mc_hists_collection = col_histos
+  mc_hist_collection = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+  mc_hists_collections.append(mc_hists_collection)
+  mc_hist_collections.append(mc_hist_collection)
+
+"""
+mc_hists_collections = []
+for mc_filenames in mc_filenames_list:
+  mc_files = [ ROOT.TFile(filename) for filename in mc_filenames]
+  col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in mc_files]
+  mc_hists_collection = col_histos
+  mc_hists_collections.append(mc_hists_collection)
+"""
+print(data_hist_collection)
+print(mc_hist_collections[0])
+print(mc_hists_collections[0])
+'''
+  col_histos = []
+  for dir in dir_list:
+    file = get_hadd(dir)
+    files.append(file)
+    col_histos.append( [key.ReadObj() for key in (file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()])
+  return col_histos
+'''
 
 # gjets scale factor
 if args.gjets_scale_up:
@@ -162,6 +248,7 @@ if args.filter_eff:
     print(dir, eff)
   print('')
 
+"""
 # signal plots
 c.Print(signal_pdf+'[')
 c.SetLogy(0)
@@ -185,6 +272,7 @@ for i, coll in enumerate(signal_hist_collections):
     if args.saveroot: c.SaveSource("source_"+str(eff.GetName())+".cpp")
     if args.saveroot: c.SaveAs("rootplots_"+str(eff.GetName())+".root")
 c.Print(signal_pdf+']')
+"""
 
 # sanity plots
 if not args.nosanity:
@@ -221,7 +309,7 @@ if not args.nosanity:
     data_hist.Sumw2()
     mc_hists = [coll[i] for coll in mc_hist_collections]
     if args.gjets_scale_up: mc_hists[k].Scale(GJETS_SCALE_FACTOR)
-    signal_hists = [coll[i] for coll in signal_hist_collections]
+#    signal_hists = [coll[i] for coll in signal_hist_collections]
     mc_stack = ROOT.THStack('hs', 'hs')
     for mc_hist in mc_hists: mc_stack.Add(mc_hist)
     # color
@@ -229,21 +317,21 @@ if not args.nosanity:
     for j, mc_hist in enumerate(mc_hists):
       mc_hist.SetLineColor(mc_color[j])
       mc_hist.SetFillColor(mc_color[j])
-    for j, signal_hist in enumerate(signal_hists):
-      signal_hist.SetLineColor(signal_color[j])
+#    for j, signal_hist in enumerate(signal_hists):
+#      signal_hist.SetLineColor(signal_color[j])
     # legend
     leg = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
     leg.AddEntry(data_hist, data_legend+' ({:,.0f})'.format(data_hist.Integral()), 'l')
     for j, mc_hist in enumerate(mc_hists):
       leg.AddEntry(mc_hist, mc_legend[j]+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
-    for j, signal_hist in enumerate(signal_hists):
-      leg.AddEntry(signal_hist, signal_legend[j]+' ({:,.0f})'.format(signal_hist.Integral()), 'f')
+#    for j, signal_hist in enumerate(signal_hists):
+#      leg.AddEntry(signal_hist, signal_legend[j]+' ({:,.0f})'.format(signal_hist.Integral()), 'f')
     # draw linear
     c.SetLogy(0)
     data_hist.SetMinimum(0)
     data_hist.Draw()
     mc_stack.Draw('hist same')
-    for signal_hist in signal_hists: signal_hist.Draw('hist same')
+#    for signal_hist in signal_hists: signal_hist.Draw('hist same')
     data_hist.Draw("same")
     leg.Draw('same')
     c.Print(main_pdf)
@@ -252,7 +340,7 @@ if not args.nosanity:
     data_hist.SetMinimum(1e-1)
     data_hist.Draw()
     mc_stack.Draw('hist same')
-    for signal_hist in signal_hists: signal_hist.Draw('hist same')
+#    for signal_hist in signal_hists: signal_hist.Draw('hist same')
     data_hist.Draw("same")
     leg.Draw('same')
     c.Print(main_pdf)
@@ -277,10 +365,12 @@ if not args.nocutflow:
         hist.SetFillColor(mc_color[i]+j)
         hist.Draw('hist')
         c.Print(cutflow_pdf)
+  """
   for i, hist_collection in enumerate(signal_hist_collections):
     for hist in hist_collection:
       if not (hist.GetName()).startswith('cutflow'): continue
       hist.SetLineColor(signal_color[i])
       hist.Draw('hist')
       c.Print(cutflow_pdf)
+  """
   c.Print(cutflow_pdf+']')

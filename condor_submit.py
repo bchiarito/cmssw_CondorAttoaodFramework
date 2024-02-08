@@ -291,7 +291,7 @@ elif args.input_cmslpc:
         
 # finish checking input
 if len(input_files)==0:
-  raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --indput_dataset, etc.')
+  raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --indput_dataset, etc, and run voms-proxy-init.')
 example_inputfile = str(input_files[0].strip())
 ex_in = example_inputfile
 if args.verbose:

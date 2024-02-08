@@ -8,14 +8,23 @@ import argparse
 from datetime import datetime, timedelta, date
 import yaml
 
+def get_hadd(jobdir):
+  job = imp.load_source("job", jobdir+"job_info.py")
+  output_path = job.output
+  if not os.path.isfile(output_path+'/summed.root'):
+    os.system('hadddir '+output_path+' '+output_path+'/summed.root')
+  fi = ROOT.TFile(output_path+'/summed.root')
+  return fi
+
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('input', nargs='+', help='input YAML file to submit, or Job_MultiJob_ directory to check')
-parser.add_argument('--test', default=False, action='store_true', help="just print commands, don't execute")
+parser.add_argument('input', nargs='+', help='input YAML file, or Job_MultiJob_XXX directory')
+parser.add_argument('-t', '--test', default=False, action='store_true', help="just print commands, don't execute")
 submit_args = parser.add_argument_group("submitting")
 submit_args.add_argument('--tag', default=None, help="append to 'name' parameter from .yml file")
 submit_args.add_argument('--intag', default=None, help="use in place of IN_TAG in .yml file")
-submit_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
-submit_args.add_argument('--manual', default=False, action='store_true', help="manually confirm all submissions")
+submit_args.add_argument('--manual', default=False, action='store_true', help="ask before processing each section of the input")
+submit_args.add_argument('--fullmanual', default=False, action='store_true', help="manually confirm all submissions")
+submit_args.add_argument('-f', '--force', default=False, action='store_true', help="add -f option")
 status_args = parser.add_argument_group("status checking")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 status_args.add_argument('--hadd', default=False, action='store_true', help="hadd all outputs")
@@ -64,7 +73,7 @@ if (args.input[0]).startswith("Job_MultiJob"): # check status
             if not os.path.isfile(os.path.join(output_area, item)): continue
             if not item.endswith(".root"): continue
             rootfiles.append(os.path.join(output_area, item))
-          summed_file = "tempsum_{}.root".format(subdir)
+          summed_file = "sum_{}_{}.root".format(os.path.dirname(in_dir+'/')[13:], subdir)
           summed_files.append(summed_file)
           command = " ".join(["hadd -f", summed_file," ".join(rootfiles)])
           os.system(command)
@@ -74,8 +83,8 @@ if (args.input[0]).startswith("Job_MultiJob"): # check status
       summed_job = "sum_{}.root".format(os.path.dirname(in_dir+'/')[13:])
       command = " ".join(["hadd -f", summed_job, " ".join(summed_files)])
       os.system(command)
-      for temp in summed_files:
-        os.remove(temp)
+      #for temp in summed_files:
+      #  os.remove(temp)
     
 elif len(args.input) == 1: # submit jobs
   with open(args.input[0]) as yaml_input:
@@ -92,7 +101,7 @@ elif len(args.input) == 1: # submit jobs
         N_subjobs = len(config["inputs"])
         assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
         print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
-        if args.partial:
+        if args.manual:
           choice = ""
           while (choice != "y" and choice != "n" and choice != "q"):
             choice = input("Process? [y/n/q] ")
@@ -116,9 +125,13 @@ elif len(args.input) == 1: # submit jobs
             options = " ".join((config["common_options"]))
             if "options" in config:
               options += " " + " ".join(config["options"][i])
-            if not args.manual: options += " --auto"
+            if not args.fullmanual: options += " --auto"
+            if args.force: options += " --force"
             options += " -x"
-            job_dir = "--dir " + "/".join([parent_dir, "subjob_"+str(i+1)])
+
+            #job_dir = "--dir " + "/".join([parent_dir, "subjob_"+str(i+1)])
+            job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
+
             command = " ".join([script, mode, job_input, job_output, options, job_dir])
             print(command)
             if not args.test: os.system(command)
