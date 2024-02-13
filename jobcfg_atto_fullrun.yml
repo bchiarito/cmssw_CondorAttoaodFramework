@@ -56,7 +56,7 @@ options:
   - [--datasetname=gjets400to600, --xs=260.7]
   - [--datasetname=gjets600toInf, --xs=86.55]
 
-common_options: [--mc, --filesPerJob=60, --scheddLimit=20, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+common_options: [--mc, --filesPerJob=12, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
 
 ...
 ---

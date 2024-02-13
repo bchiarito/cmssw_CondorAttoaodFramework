@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from __future__ import print_function
 import os
 import sys
@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/s
 parser.add_argument('input', nargs='+', help='input YAML file, or Job_MultiJob_XXX directory')
 parser.add_argument('-t', '--test', default=False, action='store_true', help="just print commands, don't execute")
 submit_args = parser.add_argument_group("submitting")
-submit_args.add_argument('--tag', default=None, help="append to 'name' parameter from .yml file")
+submit_args.add_argument('--name', default=None, help="append to 'name' parameter from .yml file")
 submit_args.add_argument('--intag', default=None, help="use in place of IN_TAG in .yml file")
 submit_args.add_argument('--manual', default=False, action='store_true', help="ask before processing each section of the input")
 submit_args.add_argument('--fullmanual', default=False, action='store_true', help="manually confirm all submissions")
@@ -32,6 +32,7 @@ args = parser.parse_args()
 
 # constants
 IN_TAG = "<IN_TAG>"
+hadd_dir_name = "hadd"
 
 # get site
 hostname = socket.gethostname()
@@ -41,7 +42,7 @@ elif 'cern.ch' in hostname: site = 'lxplus'
 else: raise SystemExit('ERROR: Unrecognized site: not hexcms, cmslpc, or lxplus')
 
 # other config
-if not args.tag and args.intag: args.tag = args.intag
+if not args.name and args.intag: args.name = args.intag
 
 if (args.input[0]).startswith("Job_MultiJob"): # check status
   for in_dir in args.input:
@@ -49,6 +50,7 @@ if (args.input[0]).startswith("Job_MultiJob"): # check status
     if args.hadd: summed_files = []
     for subdir in dir_list:
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
+      if subdir == hadd_dir_name: continue
       script = "./condor_status.py"
       job_dir = os.path.join(in_dir, subdir)
       options = "-s" if not args.full else ""
@@ -96,7 +98,7 @@ elif len(args.input) == 1: # submit jobs
     for config in jobs:
       if not config: continue
       try:
-        if args.tag: parent_dir = "_".join(["MultiJob", args.tag, config["name"]])
+        if args.name: parent_dir = "_".join(["MultiJob", args.name, config["name"]])
         else: parent_dir = "_".join(["MultiJob", config["name"]])
         N_subjobs = len(config["inputs"])
         assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
@@ -104,7 +106,7 @@ elif len(args.input) == 1: # submit jobs
         if args.manual:
           choice = ""
           while (choice != "y" and choice != "n" and choice != "q"):
-            choice = input("Process? [y/n/q] ")
+            choice = raw_input("Process? [y/n/q] ")
           if choice == "q": exit()
           if choice == "n": continue
         if os.path.exists(parent_dir):
@@ -118,8 +120,8 @@ elif len(args.input) == 1: # submit jobs
             if IN_TAG in job_input:
               if args.intag: job_input = job_input.replace(IN_TAG, args.intag)
               else: raise SystemExit("ERROR: yaml contains {} but no option --intag specified!".format(IN_TAG))
-            job_output = config["dest"] + (args.tag if args.tag else "") + config["dests"][i]
-            if args.tag: job_output = "/".join([config["dest"], args.tag, config["dests"][i]])
+            job_output = config["dest"] + (args.name if args.name else "") + config["dests"][i]
+            if args.name: job_output = "/".join([config["dest"], args.name, config["dests"][i]])
             else: job_output = "/".join([config["dest"], config["dests"][i]])
             job_output = os.path.normpath(job_output)
             options = " ".join((config["common_options"]))
