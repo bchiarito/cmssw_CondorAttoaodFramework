@@ -74,7 +74,8 @@ parser.add_argument("mode", choices=['atto','plotting'], metavar='MODE', help="c
 # input/output
 parser.add_argument("input", metavar='INPUT',
 help="Absolute path to local directory/file, cmslpc eos storage (/store/user/...), \
-text file (end in .txt) with one file location per line, or dataset name (/*/*/MINIAOD(SIM)).")
+text file (end in .txt) with one file location per line, atto Job_XXX directory, \
+or dataset name (/*/*/MINIAOD(SIM)).")
 input_options = parser.add_mutually_exclusive_group()
 input_options.add_argument("--input_local", action="store_true",
 help=argparse.SUPPRESS)
