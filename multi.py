@@ -8,24 +8,17 @@ import argparse
 from datetime import datetime, timedelta, date
 import yaml
 
-def get_hadd(jobdir):
-  job = imp.load_source("job", jobdir+"job_info.py")
-  output_path = job.output
-  if not os.path.isfile(output_path+'/summed.root'):
-    os.system('hadddir '+output_path+' '+output_path+'/summed.root')
-  fi = ROOT.TFile(output_path+'/summed.root')
-  return fi
-
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('input', nargs='+', help='input YAML file, or Job_MultiJob_XXX directory')
+parser.add_argument('mode', choices=['atto', 'histo', 'status'], help='')
+parser.add_argument('-i', '--input', nargs='+', help='any number of input YAML files or Job_MultiJob_XXX directories')
 parser.add_argument('-t', '--test', default=False, action='store_true', help="just print commands, don't execute")
-submit_args = parser.add_argument_group("submitting")
+submit_args = parser.add_argument_group("atto mode")
 submit_args.add_argument('--name', default=None, help="append to 'name' parameter from .yml file")
 submit_args.add_argument('--intag', default=None, help="use in place of IN_TAG in .yml file")
 submit_args.add_argument('--manual', default=False, action='store_true', help="ask before processing each section of the input")
 submit_args.add_argument('--fullmanual', default=False, action='store_true', help="manually confirm all submissions")
 submit_args.add_argument('-f', '--force', default=False, action='store_true', help="add -f option")
-status_args = parser.add_argument_group("status checking")
+status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 status_args.add_argument('--hadd', default=False, action='store_true', help="hadd all outputs")
 args = parser.parse_args()
@@ -41,11 +34,13 @@ elif 'fnal.gov' in hostname: site = 'cmslpc'
 elif 'cern.ch' in hostname: site = 'lxplus'
 else: raise SystemExit('ERROR: Unrecognized site: not hexcms, cmslpc, or lxplus')
 
-# other config
+# init
 if not args.name and args.intag: args.name = args.intag
 
-if (args.input[0]).startswith("Job_MultiJob"): # check status
+# main
+if args.mode == 'status':
   for in_dir in args.input:
+    if not in_dir.startswith("Job_MultiJob"): continue
     dir_list = os.listdir(in_dir)
     if args.hadd: summed_files = []
     for subdir in dir_list:
@@ -88,7 +83,50 @@ if (args.input[0]).startswith("Job_MultiJob"): # check status
       #for temp in summed_files:
       #  os.remove(temp)
     
-elif len(args.input) == 1: # submit jobs
+if args.mode == 'histo':
+  for in_dir in args.input:
+    if not in_dir.startswith("Job_MultiJob"): continue
+
+    #if args.name: parent_dir = "_".join(["MultiJob", args.name, ""])
+    #else: parent_dir = "_".join(["MultiJob", config["name"]])
+    parent_dir = in_dir.replace("atto", "histo")[4:]
+    if os.path.exists(parent_dir):
+      raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
+
+    # loop over jobdirs inside multijob
+    dir_list = os.listdir(in_dir)
+    for subdir in dir_list:
+      print(subdir)
+      if not os.path.isdir(os.path.join(in_dir, subdir)): continue
+      if subdir == hadd_dir_name: continue
+
+      # get output area of atto input from jobdir
+      sys.path.append(os.path.join(in_dir, subdir))
+      import job_info as job
+      output_area = job.output
+      output_eos = True if output_area[0:7] == '/store/' else False
+      if output_eos: pass
+      sys.path.pop()
+      sys.modules.pop("job_info")
+
+      script = "./condor_submit.py"
+      mode = "plotting"
+      job_input = output_area
+      job_output = "-" #config["dest"] + (args.name if args.name else "") + config["dests"][i]
+      datamc = "--mc"
+      lumi = "--lumi=59830"
+      year = "--year=UL18"
+      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon=CBL220", "--filesPerJob=4", year])
+      if not args.fullmanual: options += " --auto"
+      if args.force: options += " --force"
+      options += " -x"
+      job_dir = "--dir " + "/".join([parent_dir, subdir])
+      command = " ".join([script, mode, job_input, job_output, options, job_dir])
+      print(command)
+      if not args.test: os.system(command)
+      print('')
+
+if args.mode == 'atto':
   with open(args.input[0]) as yaml_input:
     try:
       jobs = yaml.safe_load_all(yaml_input)
@@ -131,7 +169,6 @@ elif len(args.input) == 1: # submit jobs
             if args.force: options += " --force"
             options += " -x"
 
-            #job_dir = "--dir " + "/".join([parent_dir, "subjob_"+str(i+1)])
             job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
 
             command = " ".join([script, mode, job_input, job_output, options, job_dir])
