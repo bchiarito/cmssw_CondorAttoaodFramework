@@ -19,11 +19,14 @@ atto_args.add_argument('--manual', default=False, action='store_true', help="ask
 atto_args.add_argument('--fullmanual', default=False, action='store_true', help="manually confirm all submissions")
 histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('--datamc', default='data', choices=['data', 'mc', 'sigRes', 'sigNonRes'], help='')
-histo_args.add_argument('--year', default='UL17', choices=['UL18', 'UL17', 'UL16'], help='')
+histo_args.add_argument('--year', default='UL18', choices=['UL18', 'UL17', 'UL16'], help='')
 histo_args.add_argument('--lumi', default=59830, help='')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 args = parser.parse_args()
+
+# constants
+hadd_dir_name = "hadd"
 
 # init
 hostname = socket.gethostname()
@@ -39,6 +42,7 @@ if args.mode == 'status':
     dir_list = os.listdir(in_dir)
     for subdir in dir_list:
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
+      if subdir == hadd_dir_name: continue
       script = "./condor_status.py"
       job_dir = os.path.join(in_dir, subdir)
       options = "-s" if not args.full else ""
@@ -50,6 +54,7 @@ if args.mode == 'status':
 if args.mode == 'histo':
   for in_dir in args.input:
     if not in_dir.startswith("Job_MultiJob"): continue
+    if not "atto" in in_dir: raise SystemExit('ERROR: source directories must contain pattern "atto"')
     parent_dir = in_dir.replace("atto", "histo")[4:]
     if os.path.exists(parent_dir):
       raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
@@ -57,6 +62,7 @@ if args.mode == 'histo':
     dir_list = os.listdir(in_dir)
     for subdir in dir_list:
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
+      if subdir == hadd_dir_name: continue
       # get output area of atto input from jobdir
       sys.path.append(os.path.join(in_dir, subdir))
       import job_info as job
@@ -70,7 +76,7 @@ if args.mode == 'histo':
       mode = "plotting"
       job_input = output_area
       job_output = "-"
-      lumi = "--lumi=" + args.lumi
+      lumi = "--lumi=" + str(args.lumi)
       year = "--year=" + args.year
       datamc = "--" + args.datamc
       options = " ".join([datamc, lumi, "--plotter=sanity", "--photon=CBL220", "--filesPerJob=4", year])
