@@ -13,6 +13,7 @@ import imp
 from datetime import datetime, timedelta, date
 from itertools import zip_longest
 sys.path.append(os.path.join(sys.path[0],'include'))
+import dataset_management as dm
 if hasattr(__builtins__, 'raw_input'):
     input = raw_input
 
@@ -25,6 +26,7 @@ input_file_filename_base = 'infiles'
 unpacker_filename = 'unpacker.py'
 stageout_filename = 'stageout.py'
 jobinfo_filename = 'job_info.py'
+dataset_cache = 'datasets'
 fix_condor_hexcms_script = 'hexcms_fix_python.sh'
 hexcms_proxy_script = 'hexcms_proxy_setup.sh'
 hexcms_proxy_script_timeleft = 'hexcms_proxy_timeleft.sh'
@@ -214,8 +216,8 @@ if args.scheddLimit == -1:
 
 # check input
 input_not_set = False
-if re.match("(?:" + "/.*/.*/MINIAOD" + r")\Z", args.input) or \
-   re.match("(?:" + "/.*/.*/MINIAODSIM" + r")\Z", args.input): args.input_dataset = True
+if re.match("(?:" + "/.*/.*/NANOAOD" + r")\Z", args.input) or \
+   re.match("(?:" + "/.*/.*/NANOAODSIM" + r")\Z", args.input): args.input_dataset = True
 if (args.input).startswith('Job_'):
   if not args.input[-1] == '/': args.input += '/'
   job = imp.load_source("job", args.input+"job_info.py")
@@ -276,10 +278,18 @@ elif args.input_cmslpc:
         for line in list_of_files:
           input_files.append(line)
           if len(input_files) == maxfiles: break
+
+# input is dataset name
+elif args.input_dataset:
+  dataset_name = args.input
+  if not dm.isCached(dataset_name, dataset_cache): dm.process(dataset_name, dataset_cache)
+  input_files = dm.getFiles(dataset_name, dataset_cache, args.files)
+else:
+  raise SystemExit('ERROR: Checking input failed! Could not determine input type.')
         
 # finish checking input
 if len(input_files)==0:
-  raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --indput_dataset, etc.')
+  raise SystemExit('ERROR: No input files found! Try adding input location, --input_cmslpc, --input_dataset, etc.')
 example_inputfile = str(input_files[0].strip())
 ex_in = example_inputfile
 if args.verbose:
