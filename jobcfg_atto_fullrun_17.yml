@@ -1,0 +1,62 @@
+---
+
+name: atto_egamma_fullrun
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/nano/egamma/egamma_17b/
+  - /cms/twoprong/chiarito/nano/egamma/egamma_17c/
+  - /cms/twoprong/chiarito/nano/egamma/egamma_17d/
+  - /cms/twoprong/chiarito/nano/egamma/egamma_17e/
+  - /cms/twoprong/chiarito/nano/egamma/egamma_17f/
+
+dest: /cms/chiarito/eos/twoprong/atto/fullruns_17/
+
+dests:
+  - egamma_17b/
+  - egamma_17c/
+  - egamma_17d/
+  - egamma_17e/
+  - egamma_17f/
+
+options:
+  - [--datasetname=egamma17b]
+  - [--datasetname=egamma17c]
+  - [--datasetname=egamma17d]
+  - [--datasetname=egamma17e]
+  - [--datasetname=egamma17f]
+
+common_options: [--data, --year=UL17, --filesPerJob=10, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name: atto_gjets_fullrun
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets40to100/
+  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets100to200/
+  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets200to400/
+  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets400to600/
+  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets600toInf/
+
+dest: /cms/chiarito/eos/twoprong/atto/fullruns_17/
+
+dests:
+  - gjets40to100/
+  - gjets100to200/
+  - gjets200to400/
+  - gjets400to600/
+  - gjets600toInf/
+
+options:
+  - [--datasetname=gjets40to100, --xs=18650]
+  - [--datasetname=gjets100to200, --xs=8639]
+  - [--datasetname=gjets200to400, --xs=2173]
+  - [--datasetname=gjets400to600, --xs=260.7]
+  - [--datasetname=gjets600toInf, --xs=86.55]
+
+common_options: [--mc, --year=UL17, --filesPerJob=10, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]

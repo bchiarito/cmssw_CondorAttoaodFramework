@@ -37,6 +37,7 @@ keep HLT_Photon175
 keep HLT_Photon200
 keep HLT_Photon35_TwoProngs35
 keep HLT_Muon35_TwoProngs35
+keep weight_*
 
 #notably dropping:
 #jet

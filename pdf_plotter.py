@@ -5,117 +5,202 @@ import sys
 import imp
 import argparse
 from functools import reduce
+import shutil
 import ROOT
 import helper.plotting_util as util
 
-# init
-plotting_jobs = 'plotting_jobs/'
-mc_dirs_list = []
-mc_color = []
-mc_legend = []
-mc_hat_tag = []
-signal_dirs_list = []
-signal_color = []
-signal_legend = []
-
 # command line options
-parser = argparse.ArgumentParser(description="Makes pdf from atto+nano job directories")
-parser.add_argument("prefix", help='prefix of job directories, include "Job_" part')
+parser = argparse.ArgumentParser(description="Makes pdf from histo job directories")
+parser.add_argument("--ask", default=False, action='store_true', help='')
+parser.add_argument("--data", nargs='+', default=[], help='')
+parser.add_argument("--mc", nargs='+', default=[], help='')
+parser.add_argument("--othermc", nargs='+', default=[], help='')
+parser.add_argument("--signal", nargs='+', default=[], help='')
+
+parser.add_argument("-r", "--rehadd", action='store_true', help='rebuild hadds')
+
+parser.add_argument("-p", "--prefix", help='prefix of job directories including "Job_Multijob_"')
 parser.add_argument("-g", "--gjets_scale_up", action='store_true', help='scale gjets up to data')
-parser.add_argument("--nocutflow", action='store_true', help='omit cutflow plots')
 parser.add_argument("--nosanity", action='store_true', help='omit sanity plots')
 parser.add_argument("--trigger_eff", action='store_true', help='display trigger efficiencies')
-parser.add_argument("--filter_eff", action='store_true', help='display data filter efficiencies')
+parser.add_argument("--signalplots", action='store_true', help='add signal plots')
+parser.add_argument("--cutflow", action='store_true', help='add cutflow plots')
 parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
 parser.add_argument("--saveroot", default=False, action='store_true', help='store .root and .cpp files for plots')
 args = parser.parse_args()
 
-# other config
+# constants
+hadd_dir_name = "hadd"
+main_pdf = args.out+'_main.pdf'
+cutflow_pdf = args.out+'_cutflow.pdf'
+signal_pdf = args.out+'_signal.pdf'
+leg_x1, leg_y1, leg_x2, leg_y2 = 0.7, 0.60, 0.89, 0.9
+data_legend = 'Data'
+signal_tag = 'SIGNAL_'
+data_color = ROOT.kBlack
+signalcolors = [ROOT.kRed, ROOT.kRed+1, ROOT.kBlue, ROOT.kBlue+1, ROOT.kPink, ROOT.kPink+1]
+mccolors = [ROOT.kOrange, ROOT.kGreen]
+othermccolors = [ROOT.kYellow+1, ROOT.kViolet, ROOT.kTeal]
+
+# config
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetLegendFillColor(ROOT.TColor.GetColorTransparent(ROOT.kRed, 0.01));
 ROOT.gStyle.SetLegendBorderSize(0)
-leg_x1, leg_x2, leg_y1, leg_y2 = 0.7, 0.60, 0.9, 0.9
-main_pdf = args.out+'.pdf'
-cutflow_pdf = args.out+'_cutflow.pdf'
-signal_pdf = args.out+'_signal.pdf'
 
-# data config
-data_legend = 'Data'
-data_color = ROOT.kBlack
-data_dirs = [
-  args.prefix+'egamma18a/'+plotting_jobs,
-  args.prefix+'egamma18b/'+plotting_jobs,
-  args.prefix+'egamma18c/'+plotting_jobs,
-  args.prefix+'egamma18d/'+plotting_jobs,
-]
+# init
+othermcnames = []
+mcnames = []
+signalnames = []
+mc_filenames_list = []
+mc_color = []
+mc_legend = []
+mc_hat_tag = []
+mc_hist_collections = []
+mc_hists_collections = []
+mc_tfiles_collection = []
+signal_legend = []
+signal_color = []
+signal_hist_collections = []
+signal_hists_collections = []
+signal_tfiles_collection = []
+GJETS_POSITION = 1
 
-# mc config (order is order of appearance)
-GJETS_POSITION = 5 # starting from 1, record gjets position in list for purpose of scaling gjets
-mc_legend.append('DY')
-mc_hat_tag.append(False)
-mc_color.append(ROOT.kViolet)
-mc_dirs_list.append([
-  args.prefix+'dy50/'+plotting_jobs,
-])
-mc_legend.append('TTbar')
-mc_hat_tag.append(False)
-mc_color.append(ROOT.kPink+10)
-mc_dirs_list.append([
-  args.prefix+'ttbar/'+plotting_jobs,
-])
-mc_legend.append('WJets')
-mc_hat_tag.append(False)
-mc_color.append(ROOT.kYellow+1)
-mc_dirs_list.append([
-  args.prefix+'wjets/'+plotting_jobs,
-])
-mc_legend.append('QCD')
-mc_hat_tag.append('QCD_')
-mc_color.append(ROOT.kOrange)
-mc_dirs_list.append([
-  args.prefix+'qcd50to100/'+plotting_jobs,
-  args.prefix+'qcd100to200/'+plotting_jobs,
-  args.prefix+'qcd200to300/'+plotting_jobs,
-  args.prefix+'qcd300to500/'+plotting_jobs,
-  args.prefix+'qcd500to700/'+plotting_jobs,
-  args.prefix+'qcd700to1000/'+plotting_jobs,
-  args.prefix+'qcd1000to1500/'+plotting_jobs,
-  args.prefix+'qcd1500to2000/'+plotting_jobs,
-  args.prefix+'qcd2000toInf/'+plotting_jobs,
-])
-mc_legend.append('GJets')
-mc_hat_tag.append('GJETS_')
-mc_color.append(ROOT.kGreen)
-mc_dirs_list.append([
-  args.prefix+'gjets40to100/'+plotting_jobs,
-  args.prefix+'gjets100to200/'+plotting_jobs,
-  args.prefix+'gjets200to400/'+plotting_jobs,
-  args.prefix+'gjets400to600/'+plotting_jobs,
-  args.prefix+'gjets600toInf/'+plotting_jobs,
-])
+# ask for names
+print()
+for multidir in args.othermc:
+  othermcnames.append(raw_input("Input name for {}: ".format(multidir)))
+for multidir in args.mc:
+  mcnames.append(raw_input("Input name for {}: ".format(multidir)))
+for multidir in args.signal:
+  for subdir in os.listdir(multidir):
+    if subdir == hadd_dir_name: continue
+    signalnames.append(raw_input("Input name for {}/{}: ".format(multidir, subdir)))
 
-# signal config
-signal_legend.append('Signal 125,0.55')
-signal_dirs_list.append([args.prefix+'signalM125m0p55/'+plotting_jobs])
-signal_color.append(ROOT.kRed)
-#signal_legend.append('Signal 690,1.225')
-#signal_dirs_list.append([args.prefix+'signalM690m1p225/'+plotting_jobs])
-#signal_color.append(ROOT.kRed+2)
-signal_legend.append('Signal 1280,2.2')
-signal_dirs_list.append([args.prefix+'signalM1280m2p2/'+plotting_jobs])
-signal_color.append(ROOT.kBlue)
-signal_legend.append('Signal 3050,3.175')
-signal_dirs_list.append([args.prefix+'signalM3050m3p175/'+plotting_jobs])
-signal_color.append(ROOT.kBlue+2)
-signal_tag = 'SIGNAL_'
+# get directories to use
+if args.ask:
+  data_multijob_dir = raw_input("Enter MultiJob for data: ")
+  othermc_multijob_dir = raw_input("Enter MultiJob for othermc: ")
+  qcd_multijob_dir = raw_input("Enter MultiJob for qcd: ")
+  gjets_multijob_dir = raw_input("Enter MultiJob for gjets: ")
+  signal_multijob_dir = raw_input("Enter MultiJob for signal: ")
+  multijob_dirs = [data_multijob_dir, othermc_multijob_dir, qcd_multijob_dir, gjets_multijob_dir, signal_multijob_dir]
+else:
+  #prefix = args.prefix
+  #if not 'histograms_' in prefix: prefix = args.prefix + 'histograms_'
+  #multijob_dirs = [d for d in os.listdir(".") if d.startswith(prefix)]
+  multijob_dirs = []
+  multijob_dirs.extend(args.data)
+  multijob_dirs.extend(args.mc)
+  multijob_dirs.extend(args.othermc)
+  multijob_dirs.extend(args.signal)
 
-############################
+# hadd
+hadd_dirs = set()
+for multijob_dir in multijob_dirs:
+  if not os.path.isdir(multijob_dir): continue
+  hadd_dir = os.path.join(multijob_dir, hadd_dir_name)
+  hadd_dirs.add(hadd_dir)
+  if args.rehadd: shutil.rmtree(hadd_dir)
+  if not os.path.isdir(hadd_dir): os.mkdir(hadd_dir)
+  summed_multijob = os.path.join(hadd_dir, "fullsum_{}.root".format(os.path.dirname(multijob_dir+'/')[13:]))
+  multijob_subdirs = os.listdir(multijob_dir)
+  summed_files = []
+  for subdir in multijob_subdirs:
+    if not os.path.isdir(os.path.join(multijob_dir, subdir)): continue
+    if subdir == hadd_dir_name: continue
+    job_dir = os.path.join(multijob_dir, subdir)
+    sys.path.append(os.path.join(multijob_dir, subdir))
+    import job_info as job
+    output_area = job.output
+    sys.path.pop()
+    sys.modules.pop("job_info")
+    output_list = os.listdir(output_area)
+    rootfiles = []
+    for item in output_list:
+      if not os.path.isfile(os.path.join(output_area, item)): continue
+      if not item.endswith(".root"): continue
+      rootfiles.append(os.path.join(output_area, item))
+    summed_file = os.path.join(hadd_dir, "sum_{}_{}.root".format(os.path.dirname(multijob_dir+'/')[13:], subdir))
+    summed_files.append(summed_file)
+    command = " ".join(["hadd -f", summed_file," ".join(rootfiles)])
+    if os.path.isfile(summed_file): continue
+    os.system(command)
+  command = " ".join(["hadd -f", summed_multijob, " ".join(summed_files)])
+  if os.path.isfile(summed_multijob): continue
+  os.system(command)
+
+# retreive list of rootfiles
+if args.ask:
+  data_hadd_rootfiles = [os.path.join(data_multijob_dir, hadd_dir_name, filename) for filename in os.listdir(os.path.join(data_multijob_dir, hadd_dir_name))]
+  othermc_hadd_rootfiles = [os.path.join(othermc_multijob_dir, hadd_dir_name, filename) for filename in os.listdir(os.path.join(othermc_multijob_dir, hadd_dir_name))]
+  qcd_hadd_rootfiles = [os.path.join(qcd_multijob_dir, hadd_dir_name, filename) for filename in os.listdir(os.path.join(qcd_multijob_dir, hadd_dir_name))]
+  gjets_hadd_rootfiles = [os.path.join(gjets_multijob_dir, hadd_dir_name, filename) for filename in os.listdir(os.path.join(gjets_multijob_dir, hadd_dir_name))]
+  signal_hadd_rootfiles = [os.path.join(signal_multijob_dir, hadd_dir_name, filename) for filename in os.listdir(os.path.join(signal_multijob_dir, hadd_dir_name))]
+  data_filenames = [filename for filename in data_hadd_rootfiles if not 'fullsum' in filename]
+  mc_filenames_list.append([filename for filename in othermc_hadd_rootfiles if not 'fullsum' in filename])
+  mc_filenames_list.append([filename for filename in qcd_hadd_rootfiles if not 'fullsum' in filename])
+  mc_filenames_list.append([filename for filename in gjets_hadd_rootfiles if not 'fullsum' in filename])
+  signal_filenames_list = [[filename] for filename in signal_hadd_rootfiles if not 'fullsum' in filename]
+else:
+  hadd_rootfiles = []
+  for hadd_dir in hadd_dirs:
+    hadd_rootfiles.extend([os.path.join(hadd_dir, filename) for filename in os.listdir(hadd_dir) if not filename.startswith('fullsum')])
+  for multidir in args.data:
+    data_filenames = [filename for filename in hadd_rootfiles if multidir[13:] in filename]
+  for n, multidir in enumerate(args.othermc):
+    mc_filenames_list.append([filename for filename in hadd_rootfiles if multidir[13:] in filename])
+    mc_hat_tag.append(False)
+    mc_color.append(othermccolors[n])
+    mc_legend.append(othermcnames[n])
+    GJETS_POSITION += 1
+  for n, multidir in enumerate(args.mc):
+    mc_filenames_list.append([filename for filename in hadd_rootfiles if multidir[13:] in filename])
+    if 'qcd' in multidir: mc_hat_tag.append('QCD_')
+    elif 'gjets' in multidir: mc_hat_tag.append('GJETS_')
+    else: mc_hat_tag.append('UNKNOWN_')
+    mc_color.append(mccolors[n])
+    mc_legend.append(mcnames[n])
+    if 'gjets' in multidir: GJETS_POSITION += n
+  counter = 0
+  signal_filenames_list = []
+  for multidir in args.signal:
+    signal_filenames_list.extend([[filename] for filename in hadd_rootfiles if multidir[13:] in filename])
+    for subdir in os.listdir(multidir):
+      if subdir == hadd_dir_name: continue
+      signal_color.append(signalcolors[counter])
+      signal_legend.append(signalnames[counter])
+      counter += 1
+
+# build histogram collections
+
+data_tfiles = [ ROOT.TFile(filename) for filename in data_filenames]
+col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in data_tfiles]
+data_hist_collection = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+for signal_filenames in signal_filenames_list:
+  signal_tfiles = [ ROOT.TFile(filename) for filename in signal_filenames]
+  signal_tfiles_collection.append(signal_tfiles)
+  col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in signal_tfiles]
+
+  signal_hists_collection = col_histos
+  signal_hist_collection = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+  signal_hists_collections.append(signal_hists_collection)
+  signal_hist_collections.append(signal_hist_collection)
+
+for mc_filenames in mc_filenames_list:
+  mc_tfiles = [ ROOT.TFile(filename) for filename in mc_filenames]
+  mc_tfiles_collection.append(mc_tfiles)
+  col_histos = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in mc_tfiles]
+
+  mc_hists_collection = col_histos
+  mc_hist_collection = reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
+
+  mc_hists_collections.append(mc_hists_collection)
+  mc_hist_collections.append(mc_hist_collection)
+
+# start plotting
 c = ROOT.TCanvas()
-
-data_hist_collection = util.get_flat_histo_collection(data_dirs)
-mc_hist_collections = [util.get_flat_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
-mc_hists_collections = [util.get_histo_collection(mc_dirs) for mc_dirs in mc_dirs_list]
-signal_hist_collections = [util.get_flat_histo_collection(signal_dirs) for signal_dirs in signal_dirs_list]
 
 # gjets scale factor
 if args.gjets_scale_up:
@@ -147,38 +232,30 @@ if args.trigger_eff:
         if not hist.GetBinContent(3)==0: print(signal_legend[i]+" trigger eff", float(hist.GetBinContent(4))/float(hist.GetBinContent(3)))
   print('')
 
-# data filter efficiency
-if args.filter_eff:
-  print('')
-  print('Data Filter efficiencies:')
-  effs = util.get_effs(data_dirs)
-  for dir, eff in zip(data_dirs, effs):
-    print(dir, eff)
-  print('')
-
 # signal plots
-c.Print(signal_pdf+'[')
-c.SetLogy(0)
-for i, coll in enumerate(signal_hist_collections):
-  numer_plots = []
-  denom_plots = []
-  for hist in coll:
-    if not (hist.GetName()).startswith(signal_tag): continue
-    if 'NUMER' in hist.GetName(): numer_plots.append(hist)
-    if 'DENOM' in hist.GetName(): denom_plots.append(hist)
-    hist.SetLineColor(signal_color[i])
-    hist.Draw('hist')
-    c.Print(signal_pdf)
-  for numer, denom in zip(numer_plots, denom_plots):
-    eff = ROOT.TEfficiency(numer, denom)
-    eff.SetLineColor(signal_color[i])
-    eff.SetMarkerColor(signal_color[i])
-    eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
-    eff.Draw('AP')
-    c.Print(signal_pdf)
-    if args.saveroot: c.SaveSource("source_"+str(eff.GetName())+".cpp")
-    if args.saveroot: c.SaveAs("rootplots_"+str(eff.GetName())+".root")
-c.Print(signal_pdf+']')
+if args.signalplots:
+  c.Print(signal_pdf+'[')
+  c.SetLogy(0)
+  for i, coll in enumerate(signal_hist_collections):
+    numer_plots = []
+    denom_plots = []
+    for hist in coll:
+      if not (hist.GetName()).startswith(signal_tag): continue
+      if 'NUMER' in hist.GetName(): numer_plots.append(hist)
+      if 'DENOM' in hist.GetName(): denom_plots.append(hist)
+      hist.SetLineColor(signal_color[i])
+      hist.Draw('hist')
+      c.Print(signal_pdf)
+    for numer, denom in zip(numer_plots, denom_plots):
+      eff = ROOT.TEfficiency(numer, denom)
+      eff.SetLineColor(signal_color[i])
+      eff.SetMarkerColor(signal_color[i])
+      eff.SetTitle(numer.GetTitle()[:-5]+'efficiency')
+      eff.Draw('AP')
+      c.Print(signal_pdf)
+      if args.saveroot: c.SaveSource("source_"+str(eff.GetName())+".cpp")
+      if args.saveroot: c.SaveAs("rootplots_"+str(eff.GetName())+".root")
+  c.Print(signal_pdf+']')
 
 # sanity plots
 if not args.nosanity:
@@ -194,7 +271,6 @@ if not args.nosanity:
       hists[0].SetFillColor(mc_color[i])
       hists[0].SetMinimum(1.0)
       hists[0].SetMaximum(1e10)
-      #hists[0].GetYaxis().SetRangeUser(1e3, 1e9)
       hists[0].Draw('hist')
       for j, hist in enumerate(hists[1:]):
         hist.SetLineColor(mc_color[i]+(j+1))
@@ -204,6 +280,7 @@ if not args.nosanity:
 
   # rest of plots
   for i in range(len(data_hist_collection)):
+    #if i >= 2: continue
     data_hist = data_hist_collection[i]
     # skip cutflow and mchat
     if (data_hist.GetName()).startswith('cutflow'): continue
@@ -226,7 +303,7 @@ if not args.nosanity:
     for j, signal_hist in enumerate(signal_hists):
       signal_hist.SetLineColor(signal_color[j])
     # legend
-    leg = ROOT.TLegend(leg_x1, leg_x2, leg_y1, leg_y2)
+    leg = ROOT.TLegend(leg_x1, leg_y1, leg_x2, leg_y2)
     leg.AddEntry(data_hist, data_legend+' ({:,.0f})'.format(data_hist.Integral()), 'l')
     for j, mc_hist in enumerate(mc_hists):
       leg.AddEntry(mc_hist, mc_legend[j]+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
@@ -255,7 +332,7 @@ if not args.nosanity:
   c.Print(main_pdf+']')
 
 # cutflows
-if not args.nocutflow:
+if args.cutflow:
   c.Print(cutflow_pdf+'[')
   c.SetLogy()
   for hist in data_hist_collection:

@@ -20,7 +20,7 @@ def get_hadd(jobdir):
 # return metadata dictionary from jobdir
 def get_meta(path, jobdir=True):
   if jobdir:
-    job = imp.load_source("job", path+"job_info.py")
+    job = imp.load_source("job", path+"/job_info.py")
     output_path = job.output
     path = output_path
   d = {}
@@ -28,6 +28,8 @@ def get_meta(path, jobdir=True):
   for fi in os.listdir(path):
     if fi.endswith('.root') and fi.startswith('ATTOAOD'): metadata_chain.Add(path+'/'+fi)
   evtWritten, evtProcessed, evtPassDatafilter = 0, 0, 0
+  print(path)
+  print(metadata_chain.GetEntries())
   for entry in metadata_chain:
     dataset_id = entry.dataset_id
     evtWritten += entry.evtWritten
@@ -71,7 +73,7 @@ def get_flat_histo_collection(dir_list):
     col_histos.append( [key.ReadObj() for key in (file.GetListOfKeys()[0].ReadObj()).GetListOfKeys()])
   return reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], col_histos)
 
-def get_effs(dir_list):
+def get_effs(dir_list, jobdir=True):
   '''
   Takes a list of directories with atto-level rootfiles (incl metadata)
   
@@ -79,7 +81,8 @@ def get_effs(dir_list):
   '''
   effs = []
   for dir in dir_list:
-    metadata = get_meta(os.path.join(os.path.dirname(os.path.dirname(os.path.join(dir,''))),''))
-    total = float(metadata['evtProcessed']); passfilter = float(metadata['evtPassDatafilter'])
+    metadata = get_meta(dir, jobdir)
+    total = float(metadata['evtProcessed'])
+    passfilter = float(metadata['evtPassDatafilter'])
     effs.append(passfilter/total)
   return effs
