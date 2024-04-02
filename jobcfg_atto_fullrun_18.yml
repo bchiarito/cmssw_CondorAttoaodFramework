@@ -1,6 +1,6 @@
 ---
 
-name: atto_egamma_fullrun
+name: atto_egamma
 
 mode: atto
 
@@ -29,7 +29,7 @@ common_options: [--data, --filesPerJob=60, --scheddLimit=30, --filter=one_either
 ...
 ---
 
-name: atto_gjets_fullrun
+name: atto_gjets
 
 mode: atto
 
@@ -61,7 +61,7 @@ common_options: [--mc, --filesPerJob=12, --scheddLimit=30, --filter=one_either_p
 ...
 ---
 
-name: atto_qcd_fullrun
+name: atto_qcd
 
 mode: atto
 
@@ -105,7 +105,7 @@ common_options: [--mc, --filesPerJob=60, --scheddLimit=20, --filter=one_either_p
 ...
 ---
 
-name: atto_othermc_fullrun
+name: atto_othermc
 
 mode: atto
 
@@ -131,7 +131,7 @@ common_options: [--mc, --filesPerJob=60, --scheddLimit=30, --filter=one_either_p
 ...
 ---
 
-name: atto_signal_fullrun
+name: atto_signal
 
 mode: atto
 

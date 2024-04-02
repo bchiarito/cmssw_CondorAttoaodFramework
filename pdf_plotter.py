@@ -5,6 +5,7 @@ import sys
 import imp
 import argparse
 from functools import reduce
+import shutil
 import ROOT
 import helper.plotting_util as util
 
@@ -15,6 +16,8 @@ parser.add_argument("--data", nargs='+', default=[], help='')
 parser.add_argument("--mc", nargs='+', default=[], help='')
 parser.add_argument("--othermc", nargs='+', default=[], help='')
 parser.add_argument("--signal", nargs='+', default=[], help='')
+
+parser.add_argument("-r", "--rehadd", action='store_true', help='rebuild hadds')
 
 parser.add_argument("-p", "--prefix", help='prefix of job directories including "Job_Multijob_"')
 parser.add_argument("-g", "--gjets_scale_up", action='store_true', help='scale gjets up to data')
@@ -97,6 +100,7 @@ for multijob_dir in multijob_dirs:
   if not os.path.isdir(multijob_dir): continue
   hadd_dir = os.path.join(multijob_dir, hadd_dir_name)
   hadd_dirs.add(hadd_dir)
+  if args.rehadd: shutil.rmtree(hadd_dir)
   if not os.path.isdir(hadd_dir): os.mkdir(hadd_dir)
   summed_multijob = os.path.join(hadd_dir, "fullsum_{}.root".format(os.path.dirname(multijob_dir+'/')[13:]))
   multijob_subdirs = os.listdir(multijob_dir)
@@ -276,7 +280,7 @@ if not args.nosanity:
 
   # rest of plots
   for i in range(len(data_hist_collection)):
-    if i >= 2: continue
+    #if i >= 2: continue
     data_hist = data_hist_collection[i]
     # skip cutflow and mchat
     if (data_hist.GetName()).startswith('cutflow'): continue

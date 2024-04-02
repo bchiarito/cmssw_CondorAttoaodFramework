@@ -9,21 +9,24 @@ from datetime import datetime, timedelta, date
 import yaml
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('mode', choices=['atto', 'histo', 'status'], help='operation mode')
+parser.add_argument('mode', choices=['yaml', 'histo', 'status'], help='operation mode')
 parser.add_argument('input', nargs='+', help='any number of input YAML files or Job_MultiJob_XXX directories')
-parser.add_argument('-t', '--test', default=False, action='store_true', help="just print commands, don't execute")
+parser.add_argument('--manual', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
 atto_args = parser.add_argument_group("atto mode")
 atto_args.add_argument('--name', default='RUNNAME', help="append to 'name' parameter from .yml file")
-atto_args.add_argument('--manual', default=False, action='store_true', help="ask before processing each section of the input")
-atto_args.add_argument('--fullmanual', default=False, action='store_true', help="manually confirm all submissions")
+atto_args.add_argument('--skipsections', default=False, action='store_true', help="ask before processing each section of the input")
 histo_args = parser.add_argument_group("histo mode")
-histo_args.add_argument('--datamc', default='data', choices=['data', 'mc', 'sigRes', 'sigNonRes'], help='')
+histo_args.add_argument('--datamc', choices=['data', 'mc', 'sigRes', 'sigNonRes'], help='')
 histo_args.add_argument('--year', default='UL18', choices=['UL18', 'UL17', 'UL16'], help='')
 histo_args.add_argument('--lumi', default=59830, help='')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 args = parser.parse_args()
+if not args.mode == 'histo': args.datamc = 'data'
+else:
+  if not args.datamc: raise SystemExit("Configuration Error: must set --datamc with mode=histo")
 
 # constants
 hadd_dir_name = "hadd"
@@ -37,6 +40,7 @@ else: raise SystemExit('ERROR: Unrecognized site: not hexcms, cmslpc, or lxplus'
 
 # main
 if args.mode == 'status':
+
   for in_dir in args.input:
     if not in_dir.startswith("Job_MultiJob"): continue
     dir_list = os.listdir(in_dir)
@@ -52,6 +56,7 @@ if args.mode == 'status':
       print('')
     
 if args.mode == 'histo':
+
   for in_dir in args.input:
     if not in_dir.startswith("Job_MultiJob"): continue
     if not "atto" in in_dir: raise SystemExit('ERROR: source directories must contain pattern "atto"')
@@ -79,8 +84,11 @@ if args.mode == 'histo':
       lumi = "--lumi=" + str(args.lumi)
       year = "--year=" + args.year
       datamc = "--" + args.datamc
-      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon=CBL220", "--filesPerJob=4", year])
-      if not args.fullmanual: options += " --auto"
+      if args.year=="UL18": photon_str = "CBL220"
+      if args.year=="UL17": photon_str = "CBL190"
+      if args.year=="UL16": photon_str = "CBL190"
+      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=4", year])
+      if not args.manual: options += " --auto"
       if args.force: options += " --force"
       options += " -x"
       job_dir = "--dir " + "/".join([parent_dir, subdir])
@@ -89,7 +97,8 @@ if args.mode == 'histo':
       if not args.test: os.system(command)
       print('')
 
-if args.mode == 'atto':
+if args.mode == 'yaml':
+
   for yaml_file in args.input:
     with open(yaml_file) as yaml_input:
       try:
@@ -103,7 +112,7 @@ if args.mode == 'atto':
           N_subjobs = len(config["inputs"])
           assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
           print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
-          if args.manual:
+          if args.skipsections:
             choice = ""
             while (choice != "y" and choice != "n" and choice != "q"):
               choice = raw_input("Process? [y/n/q] ")
@@ -122,7 +131,7 @@ if args.mode == 'atto':
               options = " ".join((config["common_options"]))
               if "options" in config:
                 options += " " + " ".join(config["options"][i])
-              if not args.fullmanual: options += " --auto"
+              if not args.manual: options += " --auto"
               if args.force: options += " --force"
               options += " -x"
               job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
