@@ -394,6 +394,7 @@ if 'atto_job_dir' in globals():
     job_dir = args.dir
 else:
   if args.test: job_dir = 'TestJob_' + args.dir
+  elif (args.dir).startswith("MultiJob"): job_dir = args.dir
   else: job_dir = 'Job_' + args.dir
 
 # splitting

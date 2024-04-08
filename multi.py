@@ -14,19 +14,29 @@ parser.add_argument('input', nargs='+', help='any number of input YAML files or 
 parser.add_argument('--manual', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
-atto_args = parser.add_argument_group("atto mode")
-atto_args.add_argument('--name', default='RUNNAME', help="append to 'name' parameter from .yml file")
-atto_args.add_argument('--skipsections', default=False, action='store_true', help="ask before processing each section of the input")
+yaml_args = parser.add_argument_group("yaml mode")
+yaml_args.add_argument('--runname', default='RUN', help="append to 'name' parameter from .yml file")
+yaml_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
 histo_args = parser.add_argument_group("histo mode")
-histo_args.add_argument('--datamc', choices=['data', 'mc', 'sigRes', 'sigNonRes'], help='')
-histo_args.add_argument('--year', default='UL18', choices=['UL18', 'UL17', 'UL16'], help='')
-histo_args.add_argument('--lumi', default=59830, help='')
+histo_args.add_argument('--year', default='18', choices=['18', '17', '16'], help='')
+histo_args.add_argument('--lumi', default=None, help='')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
+datamc_args = parser.add_mutually_exclusive_group()
+datamc_args.add_argument("--data", action="store_true", default=False, help=argparse.SUPPRESS)
+datamc_args.add_argument("--mc", action="store_true", default=False, help=argparse.SUPPRESS)
+datamc_args.add_argument("--sigRes", action="store_true", default=False, help=argparse.SUPPRESS)
+datamc_args.add_argument("--sigNonRes", action="store_true", default=False, help=argparse.SUPPRESS)
 args = parser.parse_args()
-if not args.mode == 'histo': args.datamc = 'data'
+
+# check data/mc
+if args.mc: datamc_str = "mc"
+elif args.data: datamc_str = "data"
+elif args.sigRes: datamc_str = "sigRes"
+elif args.sigNonRes: datamc_str = "sigNonRes"
 else:
-  if not args.datamc: raise SystemExit("Configuration Error: must set --datamc with mode=histo")
+  if args.mode == "histo": raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
+  else: datamc_str = "data"
 
 # constants
 hadd_dir_name = "hadd"
@@ -42,7 +52,7 @@ else: raise SystemExit('ERROR: Unrecognized site: not hexcms, cmslpc, or lxplus'
 if args.mode == 'status':
 
   for in_dir in args.input:
-    if not in_dir.startswith("Job_MultiJob"): continue
+    if not in_dir.startswith("MultiJob"): continue
     dir_list = os.listdir(in_dir)
     for subdir in dir_list:
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
@@ -58,11 +68,11 @@ if args.mode == 'status':
 if args.mode == 'histo':
 
   for in_dir in args.input:
-    if not in_dir.startswith("Job_MultiJob"): continue
+    if not in_dir.startswith("MultiJob"): continue
     if not "atto" in in_dir: raise SystemExit('ERROR: source directories must contain pattern "atto"')
-    parent_dir = in_dir.replace("atto", "histo")[4:]
-    if os.path.exists(parent_dir):
-      raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
+    parent_dir = in_dir.replace("atto", "histo")
+    #if os.path.exists(parent_dir):
+    #  raise SystemExit("ERROR: directory {} already exists!".format(parent_dir)) # I think this is a bug, delete this check
     # loop over jobdirs inside multijob
     dir_list = os.listdir(in_dir)
     for subdir in dir_list:
@@ -81,12 +91,22 @@ if args.mode == 'histo':
       mode = "plotting"
       job_input = output_area
       job_output = "-"
-      lumi = "--lumi=" + str(args.lumi)
-      year = "--year=" + args.year
-      datamc = "--" + args.datamc
-      if args.year=="UL18": photon_str = "CBL220"
-      if args.year=="UL17": photon_str = "CBL190"
-      if args.year=="UL16": photon_str = "CBL190"
+      if args.year=="18":
+        photon_str = "CBL220"
+        lumi_str = "59830" # https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2
+      elif args.year=="17":
+        photon_str = "CBL220"
+        lumi_str = "41480"
+      elif args.year=="16":
+        photon_str = "CBL185"
+        lumi_str = "36310"
+      else:
+        photon_str = "CBL"
+        lumi_str = "1"
+      if args.lumi: lumi_str = str(args.lumi)
+      lumi = "--lumi=" + lumi_str
+      year = "--year=UL" + args.year
+      datamc = "--" + datamc_str
       options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=4", year])
       if not args.manual: options += " --auto"
       if args.force: options += " --force"
@@ -108,11 +128,11 @@ if args.mode == 'yaml':
       for config in jobs:
         if not config: continue
         try:
-          parent_dir = "_".join(["MultiJob", args.name, config["name"]])
+          parent_dir = "_".join(["MultiJob", config["name"], args.runname])
           N_subjobs = len(config["inputs"])
           assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
           print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
-          if args.skipsections:
+          if args.partial:
             choice = ""
             while (choice != "y" and choice != "n" and choice != "q"):
               choice = raw_input("Process? [y/n/q] ")
@@ -126,7 +146,7 @@ if args.mode == 'yaml':
               script = "./condor_submit.py"
               mode = config["mode"]
               job_input = config["inputs"][i]
-              job_output = "/".join([config["dest"], args.name, config["dests"][i]])
+              job_output = "/".join([config["dest"], args.runname, config["dests"][i]])
               job_output = os.path.normpath(job_output)
               options = " ".join((config["common_options"]))
               if "options" in config:
