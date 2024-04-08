@@ -19,7 +19,7 @@ parser.add_argument("--signal", nargs='+', default=[], help='')
 
 parser.add_argument("-r", "--rehadd", action='store_true', help='rebuild hadds')
 
-parser.add_argument("-p", "--prefix", help='prefix of job directories including "Job_Multijob_"')
+parser.add_argument("-p", "--prefix", help='prefix of job directories including "Job/Multijob_"')
 parser.add_argument("-g", "--gjets_scale_up", action='store_true', help='scale gjets up to data')
 parser.add_argument("--nosanity", action='store_true', help='omit sanity plots')
 parser.add_argument("--trigger_eff", action='store_true', help='display trigger efficiencies')
@@ -35,7 +35,7 @@ main_pdf = args.out+'_main.pdf'
 cutflow_pdf = args.out+'_cutflow.pdf'
 signal_pdf = args.out+'_signal.pdf'
 leg_x1, leg_y1, leg_x2, leg_y2 = 0.7, 0.60, 0.89, 0.9
-data_legend = 'Data'
+data_legend = 'SinglePhoton 2017'
 signal_tag = 'SIGNAL_'
 data_color = ROOT.kBlack
 signalcolors = [ROOT.kRed, ROOT.kRed+1, ROOT.kBlue, ROOT.kBlue+1, ROOT.kPink, ROOT.kPink+1]

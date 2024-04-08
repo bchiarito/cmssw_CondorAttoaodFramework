@@ -1,17 +1,17 @@
 ---
 
-name: atto_egamma_fullrun
+name: atto_egamma17
 
 mode: atto
 
 inputs:
-  - /cms/twoprong/chiarito/nano/egamma/egamma_17b/
-  - /cms/twoprong/chiarito/nano/egamma/egamma_17c/
-  - /cms/twoprong/chiarito/nano/egamma/egamma_17d/
-  - /cms/twoprong/chiarito/nano/egamma/egamma_17e/
-  - /cms/twoprong/chiarito/nano/egamma/egamma_17f/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17b/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17c/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17d/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17e/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17f/
 
-dest: /cms/chiarito/eos/twoprong/atto/fullruns_17/
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL17/
 
 dests:
   - egamma_17b/
@@ -27,23 +27,23 @@ options:
   - [--datasetname=egamma17e]
   - [--datasetname=egamma17f]
 
-common_options: [--data, --year=UL17, --filesPerJob=10, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+common_options: [--data, --year=UL17, --filesPerJob=10, --scheddLimit=15, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
 
 ...
 ---
 
-name: atto_gjets_fullrun
+name: atto_gjets17
 
 mode: atto
 
 inputs:
-  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets40to100/
-  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets100to200/
-  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets200to400/
-  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets400to600/
-  - /cms/twoprong/chiarito/nano/gjets/gjets2017/gjets600toInf/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets40to100/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets100to200/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets200to400/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets400to600/
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets600toInf/
 
-dest: /cms/chiarito/eos/twoprong/atto/fullruns_17/
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL17/
 
 dests:
   - gjets40to100/
