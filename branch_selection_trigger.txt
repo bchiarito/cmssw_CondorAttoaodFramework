@@ -1,0 +1,17 @@
+drop *
+keep TwoProng*
+keep event
+keep run
+keep dataset_id
+keep Photon*
+keep HLT_Photon175
+keep HLT_Photon200
+keep Flag_HBHENoiseFilter
+keep Flag_HBHENoiseIsoFilter
+keep Flag_EcalDeadCellTriggerPrimitiveFilter
+keep Flag_BadPFMuonFilter
+keep Flag_BadChargedCandidateFilter
+keep Flag_ecalBadCalibFilter
+keep Flag_globalSuperTightHalo2016Filter
+keep Flag_eeBadScFilter
+
