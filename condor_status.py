@@ -62,10 +62,13 @@ else: output_eos = False
 if args.verbose: print("DEBUG: Get Schedd")
 coll = htcondor.Collector()
 schedd_query = coll.query(htcondor.AdTypes.Schedd, projection=["Name", "MyAddress"])
+#print(schedd_query)
+#print(schedd_name)
 for s in schedd_query:
   if str(s["Name"]) == str(schedd_name):
     schedd_ad = s
-schedd = htcondor.Schedd(schedd_ad)
+#schedd = htcondor.Schedd(schedd_ad)
+schedd = htcondor.Schedd(schedd_query[0])
 if args.verbose: print("DEBUG:", schedd_ad["Name"])
 
 # discover subjob jobNums
