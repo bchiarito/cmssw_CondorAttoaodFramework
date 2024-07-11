@@ -1,0 +1,155 @@
+---
+
+name: atto_egamma18
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18a/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18b/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18c/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18d/
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL18/
+
+dests:
+  - egamma_18a/
+  - egamma_18b/
+  - egamma_18c/
+  - egamma_18d/
+
+options:
+  - [--datasetname=egamma18a]
+  - [--datasetname=egamma18b]
+  - [--datasetname=egamma18c]
+  - [--datasetname=egamma18d]
+
+common_options: [--data, --year=UL18, --filesPerJob=60, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name: atto_gjets18
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets40to100/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets100to200/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets200to400/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets400to600/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets600toInf/
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL18/
+
+dests:
+  - gjets40to100/
+  - gjets100to200/
+  - gjets200to400/
+  - gjets400to600/
+  - gjets600toInf/
+
+options:
+  - [--datasetname=gjets40to100, --xs=18650]
+  - [--datasetname=gjets100to200, --xs=8639]
+  - [--datasetname=gjets200to400, --xs=2173]
+  - [--datasetname=gjets400to600, --xs=260.7]
+  - [--datasetname=gjets600toInf, --xs=86.55]
+
+common_options: [--mc, --filesPerJob=12, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name: atto_qcd18
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd50to100/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd100to200/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd200to300/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd300to500/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd500to700/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd700to1000/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd1000to1500/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd1500to2000/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd2000toInf/
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL18/
+
+dests:
+  - qcd50to100/
+  - qcd100to200/
+  - qcd200to300/
+  - qcd300to500/
+  - qcd500to700/
+  - qcd700to1000/
+  - qcd1000to1500/
+  - qcd1500to2000/
+  - qcd2000toInf/
+
+options:
+  - [--datasetname=qcd50to100, --xs=187700000]
+  - [--datasetname=qcd100to200, --xs=23500000]
+  - [--datasetname=qcd200to300, --xs=1552000]
+  - [--datasetname=qcd300to500, --xs=321100]
+  - [--datasetname=qcd500to700, --xs=30250]
+  - [--datasetname=qcd700to1000, --xs=6398]
+  - [--datasetname=qcd1000to1500, --xs=1122]
+  - [--datasetname=qcd1500to2000, --xs=109.4]
+  - [--datasetname=qcd2000toInf, --xs=21.74]
+
+common_options: [--mc, --filesPerJob=60, --scheddLimit=20, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name: atto_othermc18
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/datamc/nano/UL18//dy/dy_m50/
+  - /cms/twoprong/chiarito/datamc/nano/UL18//wjets/
+  - /cms/twoprong/chiarito/datamc/nano/UL18/ttbar/ttjets2018/
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL18/
+
+dests:
+  - dy50
+  - wjets
+  - ttbar_semilep
+
+options:
+  - [--datasetname=dy50, --xs=6077]
+  - [--datasetname=wjets, --xs=61526.7]
+  - [--datasetname=ttbar_semilep, --xs=888]
+
+common_options: [--mc, --filesPerJob=60, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name: atto_signal18
+
+mode: atto
+
+inputs:
+  - /cms/twoprong/chiarito/signal/resonant_no_matching/nanoaod/NANOAOD_phi_125_omega_0p7.root
+  - /cms/twoprong/chiarito/signal/resonant_no_matching/nanoaod/NANOAOD_phi_500_omega_eta.root
+  - /cms/twoprong/chiarito/signal/resonant_no_matching/nanoaod/NANOAOD_phi_1200_omega_0p5.root
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL18/
+
+dests:
+  - signalM125m0p7
+  - signalM500meta
+  - signalM1200m0p5
+
+options:
+  - [--datasetname=signalM125m0p55, --xs=202.315]
+  - [--datasetname=signalM690m1p225, --xs=80.292484]
+  - [--datasetname=signalM1280m2p2, --xs=2.3405524]
+
+common_options: [--mc, --filesPerJob=1, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]

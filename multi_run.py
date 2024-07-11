@@ -9,19 +9,21 @@ from datetime import datetime, timedelta, date
 import yaml
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('mode', choices=['yaml', 'histo', 'status'], help='operation mode')
+parser.add_argument('mode', choices=['yml', 'histo', 'status', 'nano_top_dir'], help='operation mode')
 parser.add_argument('input', nargs='+', help='any number of input YAML files or Job_MultiJob_XXX directories')
 parser.add_argument('--manual', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
-yaml_args = parser.add_argument_group("yaml mode")
-yaml_args.add_argument('--runname', default='RUN', help="append to 'name' parameter from .yml file")
-yaml_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
+yml_args = parser.add_argument_group("yml mode")
+yml_args.add_argument('-r', '--runname', default='RUN', help="append to 'name' parameter from .yml file")
+yml_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
 histo_args = parser.add_argument_group("histo mode")
-histo_args.add_argument('--year', default='18', choices=['18', '17', '16'], help='')
-histo_args.add_argument('--lumi', default=None, help='')
+histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
+histo_args.add_argument('--lumi', default=None, help='if using non-official lumi')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
+dir_args = parser.add_argument_group("dir mode")
+dir_args.add_argument('-o', '--output', help="directory for output rootfiles")
 datamc_args = parser.add_mutually_exclusive_group()
 datamc_args.add_argument("--data", action="store_true", default=False, help=argparse.SUPPRESS)
 datamc_args.add_argument("--mc", action="store_true", default=False, help=argparse.SUPPRESS)
@@ -34,9 +36,8 @@ if args.mc: datamc_str = "mc"
 elif args.data: datamc_str = "data"
 elif args.sigRes: datamc_str = "sigRes"
 elif args.sigNonRes: datamc_str = "sigNonRes"
-else:
-  if args.mode == "histo": raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
-  else: datamc_str = "data"
+elif not args.mode == "status": raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
+else: pass
 
 # constants
 hadd_dir_name = "hadd"
@@ -117,7 +118,7 @@ if args.mode == 'histo':
       if not args.test: os.system(command)
       print('')
 
-if args.mode == 'yaml':
+if args.mode == 'yml':
 
   for yaml_file in args.input:
     with open(yaml_file) as yaml_input:
@@ -163,3 +164,23 @@ if args.mode == 'yaml':
           print("ERROR:", err, "expected as key but not found! dumping config:")
           for key in config:
             print("  ", key, ":", config[key])
+
+if args.mode == 'nano_top_dir':
+  parent_dir = "_".join(["MultiJob", args.runname])
+  for top_level_dir in args.input:  
+    for subdir in os.listdir(top_level_dir):
+      script = "./condor_submit.py"
+      mode = "atto"
+      job_input = "/".join([top_level_dir, subdir])
+      if args.output: job_output = "".join([args.output, subdir])
+      else: job_output = "".join(["/cms/chiarito/test/", subdir])
+      datamc = "--" + datamc_str
+      options = " ".join([datamc, "-x", "-a=main"])
+      if not args.manual: options += " --auto"
+      if args.force: options += " --force"
+      job_dir = "--dir " + "/".join([parent_dir, os.path.normpath( subdir ).replace("/","-")])
+
+      command = " ".join([script, mode, job_input, job_output, options, job_dir])
+      print(command)
+      if not args.test: os.system(command)    
+      print('')
