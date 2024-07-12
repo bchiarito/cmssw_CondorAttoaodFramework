@@ -118,8 +118,8 @@ atto_args.add_argument("--xs", default=1.0, type=float,
 help="cross section for metadata tree")
 atto_args.add_argument("--branches", default="", metavar='FILE',
 help="filename for branch selection")
-atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt'], metavar='CHOICE',
-help="choice for analyzer code: main, ztt")
+atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt', 'trigger'], metavar='CHOICE',
+help="choice for analyzer code: main, ztt, trigger")
 
 # plotting execution specification
 plotting_args = parser.add_argument_group('plotting mode execution')
@@ -131,8 +131,10 @@ plotting_args.add_argument("--phislice", default=False, action="store_true",
 help="turn on phi binned histograms for bkg analysis")
 plotting_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
 help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
-plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'None'], metavar='CHOICE',
-help="choice for plotter code: sanity, bkg, sigeff")
+plotting_args.add_argument("--phislice", default=0,
+help="parameter for slicing in Phi mass")
+plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
+help="choice for plotter code: sanity, bkg, sigeff, trig")
 plotting_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
 help="specify which year the input data/mc is")
 
@@ -188,6 +190,7 @@ if mode=='atto':
   backend_option = args.analyzer
   if args.branches == "" and args.analyzer == "ztt": args.branches = "branch_selection_ztt.txt"
   if args.branches == "" and args.analyzer == "main": args.branches = "branch_selection_atto.txt"
+  if args.branches == "" and args.analyzer == "trigger": args.branches = "branch_selection_trigger.txt"
 if mode=='plotting':
   backend_option = args.plotter
   if args.branches == "": args.branches = "branch_selection_atto.txt" # placeholder
