@@ -131,8 +131,8 @@ plotting_args.add_argument("--phislice", default=False, action="store_true",
 help="turn on phi binned histograms for bkg analysis")
 plotting_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
 help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
-plotting_args.add_argument("--phislice", default=0,
-help="parameter for slicing in Phi mass")
+#plotting_args.add_argument("--phislice", default=0,
+#help="parameter for slicing in Phi mass")
 plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg, sigeff, trig")
 plotting_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
