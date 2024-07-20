@@ -2,8 +2,6 @@
 
 name: atto_egamma18
 
-mode: atto
-
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18a/
   - /cms/twoprong/chiarito/datamc/nano/UL18//egamma/egamma_18b/
@@ -30,8 +28,6 @@ common_options: [--data, --year=UL18, --filesPerJob=60, --scheddLimit=30, --filt
 ---
 
 name: atto_gjets18
-
-mode: atto
 
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL18//gjets/gjets2018/gjets40to100/
@@ -62,8 +58,6 @@ common_options: [--mc, --filesPerJob=12, --scheddLimit=30, --filter=one_either_p
 ---
 
 name: atto_qcd18
-
-mode: atto
 
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL18//qcd/qcd50to100/
@@ -107,8 +101,6 @@ common_options: [--mc, --filesPerJob=60, --scheddLimit=20, --filter=one_either_p
 
 name: atto_othermc18
 
-mode: atto
-
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL18//dy/dy_m50/
   - /cms/twoprong/chiarito/datamc/nano/UL18//wjets/
@@ -132,8 +124,6 @@ common_options: [--mc, --filesPerJob=60, --scheddLimit=30, --filter=one_either_p
 ---
 
 name: atto_signal18
-
-mode: atto
 
 inputs:
   - /cms/twoprong/chiarito/signal/resonant_no_matching/nanoaod/NANOAOD_phi_125_omega_0p7.root

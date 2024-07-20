@@ -1,0 +1,23 @@
+---
+
+name: # attached to timestamp to identify run in output and job directories
+
+inputs: # list of input directories
+  - 
+top_level_input: /<path>/ # (optional) each directory underneath path becomes a separate job, do not use with 'inputs'
+
+dest: /cms/chiarito/eos/ # beginning of the output path for all jobs
+
+dests: # list of endings for output path
+  - 
+
+options: # (optional) list of list of options that change for each job
+  - []
+
+common_options: [] # (optional) list of options that don't change
+
+...
+---
+
+# Any number of additional blocks can optionally be included
+# delete the '...\n---' deliminter if only one block is present

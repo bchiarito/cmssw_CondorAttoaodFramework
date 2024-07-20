@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import os
 import sys
@@ -9,13 +9,13 @@ from datetime import datetime, timedelta, date
 import yaml
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('mode', choices=['yml', 'histo', 'status', 'nano_top_dir'], help='operation mode')
+parser.add_argument('mode', choices=['atto', 'histo', 'status', 'nano_top_dir'], help='operation mode')
 parser.add_argument('input', nargs='+', help='any number of input YAML files or Job_MultiJob_XXX directories')
 parser.add_argument('--manual', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
 yml_args = parser.add_argument_group("yml mode")
-yml_args.add_argument('-r', '--runname', default='RUN', help="append to 'name' parameter from .yml file")
+yml_args.add_argument('-r', '--runname', default="MultiRun_"+date.today().strftime("%b-%d-%Y"), help="append to 'name' parameter from .yml file")
 yml_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
 histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
@@ -118,7 +118,7 @@ if args.mode == 'histo':
       if not args.test: os.system(command)
       print('')
 
-if args.mode == 'yml':
+if args.mode == 'atto':
 
   for yaml_file in args.input:
     with open(yaml_file) as yaml_input:
@@ -129,8 +129,13 @@ if args.mode == 'yml':
       for config in jobs:
         if not config: continue
         try:
-          parent_dir = "_".join(["MultiJob", config["name"], args.runname])
-          N_subjobs = len(config["inputs"])
+          parent_dir = "_".join(["MultiJob", "-".join([config["name"], args.runname])])
+          if 'top_level_input' in config:
+            top_level_input = config['top_level_input']
+            inputs = []
+            for subdir in os.listdir(top_level_input): inputs.append(subdir)
+          else: inputs = config["inputs"]
+          N_subjobs = len(inputs)
           assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
           print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
           if args.partial:
@@ -145,9 +150,10 @@ if args.mode == 'yml':
             # submit
             for i in range(N_subjobs):
               script = "./condor_submit.py"
-              mode = config["mode"]
-              job_input = config["inputs"][i]
-              job_output = "/".join([config["dest"], args.runname, config["dests"][i]])
+              if "" in config: mode = config["mode"]
+              else: mode = "atto"
+              job_input = inputs[i]
+              job_output = "/".join([config["dest"], "-".join([args.runname, config["name"]]), config["dests"][i]])
               job_output = os.path.normpath(job_output)
               options = " ".join((config["common_options"]))
               if "options" in config:
@@ -164,23 +170,3 @@ if args.mode == 'yml':
           print("ERROR:", err, "expected as key but not found! dumping config:")
           for key in config:
             print("  ", key, ":", config[key])
-
-if args.mode == 'nano_top_dir':
-  parent_dir = "_".join(["MultiJob", args.runname])
-  for top_level_dir in args.input:  
-    for subdir in os.listdir(top_level_dir):
-      script = "./condor_submit.py"
-      mode = "atto"
-      job_input = "/".join([top_level_dir, subdir])
-      if args.output: job_output = "".join([args.output, subdir])
-      else: job_output = "".join(["/cms/chiarito/test/", subdir])
-      datamc = "--" + datamc_str
-      options = " ".join([datamc, "-x", "-a=main"])
-      if not args.manual: options += " --auto"
-      if args.force: options += " --force"
-      job_dir = "--dir " + "/".join([parent_dir, os.path.normpath( subdir ).replace("/","-")])
-
-      command = " ".join([script, mode, job_input, job_output, options, job_dir])
-      print(command)
-      if not args.test: os.system(command)    
-      print('')
