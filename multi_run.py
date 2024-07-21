@@ -9,21 +9,18 @@ from datetime import datetime, timedelta, date
 import yaml
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
-parser.add_argument('mode', choices=['atto', 'histo', 'status', 'nano_top_dir'], help='operation mode')
-parser.add_argument('input', nargs='+', help='any number of input YAML files or Job_MultiJob_XXX directories')
-parser.add_argument('--manual', default=False, action='store_true', help="confirm all command execution")
+parser.add_argument('mode', choices=['atto', 'histo', 'status'], help='operation mode')
+parser.add_argument('input', nargs='+', help='any number of YAML files or MultiJob_ directories')
+parser.add_argument('--askall', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
-yml_args = parser.add_argument_group("yml mode")
-yml_args.add_argument('-r', '--runname', default="MultiRun_"+date.today().strftime("%b-%d-%Y"), help="append to 'name' parameter from .yml file")
-yml_args.add_argument('--partial', default=False, action='store_true', help="ask before processing each section of the input")
+parser.add_argument('--runname', default="GenericMultirun-"+date.today().strftime("%b-%d-%Y"), help="not used in 'histo' mode if input is atto MultiJob dir")
+atto_args = parser.add_argument_group("atto mode")
 histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
 histo_args.add_argument('--lumi', default=None, help='if using non-official lumi')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
-dir_args = parser.add_argument_group("dir mode")
-dir_args.add_argument('-o', '--output', help="directory for output rootfiles")
 datamc_args = parser.add_mutually_exclusive_group()
 datamc_args.add_argument("--data", action="store_true", default=False, help=argparse.SUPPRESS)
 datamc_args.add_argument("--mc", action="store_true", default=False, help=argparse.SUPPRESS)
@@ -36,7 +33,7 @@ if args.mc: datamc_str = "mc"
 elif args.data: datamc_str = "data"
 elif args.sigRes: datamc_str = "sigRes"
 elif args.sigNonRes: datamc_str = "sigNonRes"
-elif not args.mode == "status": raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required!")
+elif args.mode == "histo": raise SystemExit("Missing Option: Specification of --data / --mc / --sigRes / --sigNonRes required for 'histo' mode!")
 else: pass
 
 # constants
@@ -69,28 +66,30 @@ if args.mode == 'status':
 if args.mode == 'histo':
 
   for in_dir in args.input:
-    if not in_dir.startswith("MultiJob"): continue
-    if not "atto" in in_dir: raise SystemExit('ERROR: source directories must contain pattern "atto"')
-    parent_dir = in_dir.replace("atto", "histo")
-    #if os.path.exists(parent_dir):
-    #  raise SystemExit("ERROR: directory {} already exists!".format(parent_dir)) # I think this is a bug, delete this check
-    # loop over jobdirs inside multijob
-    dir_list = os.listdir(in_dir)
-    for subdir in dir_list:
+    if not in_dir.startswith("MultiJob"): is_atto_multi = False
+    else: is_atto_multi = True
+    for subdir in os.listdir(in_dir):
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
       if subdir == hadd_dir_name: continue
-      # get output area of atto input from jobdir
-      sys.path.append(os.path.join(in_dir, subdir))
-      import job_info as job
-      output_area = job.output
-      output_eos = True if output_area[0:7] == '/store/' else False
-      if output_eos: pass
-      sys.path.pop()
-      sys.modules.pop("job_info")
+      if is_atto_multi:
+          # get output area of atto input from jobdir
+          sys.path.append(os.path.join(in_dir, subdir))
+          import job_info as job
+          output_area = job.output
+          output_eos = True if output_area[0:7] == '/store/' else False
+          if output_eos: pass
+          sys.path.pop()
+          sys.modules.pop("job_info")
+          job_input = output_area
+          job_dir_parent = in_dir+"_HistoMode"
+      else:
+          job_input = os.path.normpath(os.path.join(in_dir, subdir))
+          if 'GenericMultirun-' in args.runname:
+            args.runname = in_dir.replace('-','').replace('/','')+"-"+date.today().strftime("%b-%d-%Y")
+          job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
       # prepare command
       script = "./condor_submit.py"
       mode = "plotting"
-      job_input = output_area
       job_output = "-"
       if args.year=="18":
         photon_str = "CBL220"
@@ -109,10 +108,10 @@ if args.mode == 'histo':
       year = "--year=UL" + args.year
       datamc = "--" + datamc_str
       options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=4", year])
-      if not args.manual: options += " --auto"
+      if not args.askall: options += " --auto"
       if args.force: options += " --force"
       options += " -x"
-      job_dir = "--dir " + "/".join([parent_dir, subdir])
+      job_dir = "--dir " + "/".join([job_dir_parent, subdir])
       command = " ".join([script, mode, job_input, job_output, options, job_dir])
       print(command)
       if not args.test: os.system(command)
@@ -129,7 +128,7 @@ if args.mode == 'atto':
       for config in jobs:
         if not config: continue
         try:
-          parent_dir = "_".join(["MultiJob", "-".join([config["name"], args.runname])])
+          parent_dir = "_".join(["MultiJob", "-".join([args.runname, config["name"]])])
           if 'top_level_input' in config:
             top_level_input = config['top_level_input']
             inputs = []
@@ -137,13 +136,12 @@ if args.mode == 'atto':
           else: inputs = config["inputs"]
           N_subjobs = len(inputs)
           assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
-          print("Job", config["name"], "has", N_subjobs, "subjob(s):\n")
-          if args.partial:
-            choice = ""
-            while (choice != "y" and choice != "n" and choice != "q"):
-              choice = raw_input("Process? [y/n/q] ")
-            if choice == "q": exit()
-            if choice == "n": continue
+          print("Section", config["name"], " of YAML fie has", N_subjobs, "job(s):\n")
+          choice = ""
+          while (choice != "y" and choice != "n" and choice != "q"):
+            choice = raw_input("Procede? [y/n/q] ")
+          if choice == "q": exit()
+          if choice == "n": continue
           if os.path.exists(parent_dir):
             raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
           else:
@@ -158,7 +156,7 @@ if args.mode == 'atto':
               options = " ".join((config["common_options"]))
               if "options" in config:
                 options += " " + " ".join(config["options"][i])
-              if not args.manual: options += " --auto"
+              if not args.askall: options += " --auto"
               if args.force: options += " --force"
               options += " -x"
               job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
