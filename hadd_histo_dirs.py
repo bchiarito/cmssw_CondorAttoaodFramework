@@ -10,61 +10,26 @@ import ROOT
 import helper.plotting_util as util
 
 # command line options
-parser = argparse.ArgumentParser(description="Makes pdf from histo job directories")
-parser.add_argument("multidirs", nargs='+', help='DATA MC1 MC2 ...')
-parser.add_argument("--names", nargs='+', help='')
-parser.add_argument("--signal", help='multijobdir')
-parser.add_argument("--signalnames", nargs='+', help='multijobdir')
-parser.add_argument("-r", "--rehadd", action='store_true', help='rebuild hadds')
-parser.add_argument("-g", "--gjets_scale_up", action='store_true', help='scale gjets up to data')
-parser.add_argument("--nosanity", action='store_true', help='omit sanity plots')
-parser.add_argument("--trigger_eff", action='store_true', help='display trigger efficiencies')
-parser.add_argument("--signalplots", action='store_true', help='add signal plots')
-parser.add_argument("--cutflow", action='store_true', help='add cutflow plots')
-parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
-parser.add_argument("--saveroot", default=False, action='store_true', help='store .root and .cpp files for plots')
-parser.add_argument("-t", "--test", default=False, action='store_true', help='only one plot')
+parser = argparse.ArgumentParser(description="sums with hadd for atto/histo job output")
+parser.add_argument("multidirs", nargs='+', help='Job_ or MultiJob_ dir or eos area')
+parser.add_argument("--out", help='')
+parser.add_argument("--retain", action='store_true', default=False, help='')
+parser.add_argument("--rehadd", action='store_true', default=False, help='')
+parser.add_argument("--nomove", action='store_true', default=False, help='')
 args = parser.parse_args()
 
 # constants
 hadd_dir_name = "hadd"
-main_pdf = args.out+'_main.pdf'
-cutflow_pdf = args.out+'_cutflow.pdf'
-signal_pdf = args.out+'_signal.pdf'
-leg_x1, leg_y1, leg_x2, leg_y2 = 0.7, 0.60, 0.89, 0.9
-signal_tag = 'SIGNAL_'
-data_color = ROOT.kBlack
-signal_color = [ROOT.kRed, ROOT.kRed+1, ROOT.kBlue, ROOT.kBlue+1, ROOT.kPink, ROOT.kPink+1]
-mccolors = [ROOT.kOrange, ROOT.kGreen, ROOT.kYellow+1, ROOT.kViolet, ROOT.kTeal]
 
 # init
-mc_filenames_list = []
-mc_color = []
-mc_legend = []
-mc_hat_tag = []
-mc_hist_collections = []
-mc_hists_collections = []
-mc_tfiles_collection = []
-signal_legend = []
-signal_hist_collections = []
-signal_hists_collections = []
-signal_tfiles_collection = []
-GJETS_POSITION = 1
-if args.names:
-  data_legend = args.names[0]
-  mcnames = args.names[1:]
-else:
-  data_legend = 'DATA'
-  mcnames = ['MC1', 'MC2', 'MC3', 'MC4', 'MC5', 'MC6', 'MC7']
 multijob_dirs = []
 for multidir in args.multidirs: multijob_dirs.append(multidir)
-if args.signal: multijob_dirs.append(args.signal)
-signalnames = ['sig1', 'sig2', 'sig3']
 
-# hadd if necessary
+# hadd
 for multijob_dir in multijob_dirs:
   if not os.path.isdir(multijob_dir): continue
   hadd_dir = os.path.join(multijob_dir, hadd_dir_name)
+  if args.rehadd: shutil.rmtree(hadd_dir)
   if not os.path.isdir(hadd_dir): os.mkdir(hadd_dir)
   summed_multijob = os.path.join(hadd_dir, "fullsum_{}.root".format(os.path.dirname(multijob_dir+'/')[13:]))
   multijob_subdirs = os.listdir(multijob_dir)
@@ -92,5 +57,6 @@ for multijob_dir in multijob_dirs:
   command = " ".join(["hadd -f", summed_multijob, " ".join(summed_files)])
   if os.path.isfile(summed_multijob): continue
   os.system(command)
-  os.system("mv "+summed_multijob+" .")
-  shutil.rmtree(hadd_dir)
+  final_sum_filename = args.out if args.out else summed_multijob
+  if not args.nomove: os.system("mv -f "+summed_multijob+" ./"+final_sum_filename)
+  if not args.retain: shutil.rmtree(hadd_dir)
