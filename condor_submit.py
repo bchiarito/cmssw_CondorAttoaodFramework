@@ -34,8 +34,8 @@ payload_script = 'payload_mode.sh'
 plotting_util_filename = 'plotting_util.py'
 backend_copy_atto_hexcms = 'backend/atto_xrdcp_hexcms.sh'
 backend_copy_atto_cmslpc = 'backend/atto_xrdcp_cmslpc.sh'
-backend_copy_plotting_hexcms = 'backend/plotting_xrdcp_hexcms.sh'
-backend_copy_plotting_cmslpc = 'backend/plotting_xrdcp_cmslpc.sh'
+backend_copy_histo_hexcms = 'backend/histo_xrdcp_hexcms.sh'
+backend_copy_histo_cmslpc = 'backend/histo_xrdcp_cmslpc.sh'
 
 # subroutines
 def grouper(iterable, n, fillvalue=None):
@@ -71,7 +71,7 @@ except ImportError as err:
 
 # command line options
 parser = argparse.ArgumentParser(usage="./%(prog)s MODE INPUT OUTPUT [--data/mc/sigRes/sigNonRes] --datasetname datasetname -xs FLOAT -d DIR")
-parser.add_argument("mode", choices=['atto','plotting'], metavar='MODE', help="choose 'atto' or 'plotting'")
+parser.add_argument("mode", choices=['atto','histo', 'plotting'], metavar='MODE', help="choose 'atto' or 'histo'")
 
 # input/output
 parser.add_argument("input", metavar='INPUT',
@@ -86,7 +86,7 @@ help=argparse.SUPPRESS)
 input_options.add_argument("--input_dataset", action="store_true",
 help=argparse.SUPPRESS)
 parser.add_argument("output", metavar='OUTPUT',
-help="Absoulte path to local directory, or cmslpc eos storage (/store/user/...), or single hyphen '-' for plotting jobs to indicate subdirectory of attoaod location.")
+help="Absoulte path to local directory, or cmslpc eos storage (/store/user/...), or single hyphen '-' for histo jobs to indicate subdirectory of attoaod location.")
 output_options = parser.add_mutually_exclusive_group()
 output_options.add_argument("--output_local", action="store_true",
 help=argparse.SUPPRESS)
@@ -121,21 +121,21 @@ help="filename for branch selection")
 atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt', 'trigger'], metavar='CHOICE',
 help="choice for analyzer code: main, ztt, trigger")
 
-# plotting execution specification
-plotting_args = parser.add_argument_group('plotting mode execution')
-plotting_args.add_argument("--lumi", default=1.0,
+# histo execution specification
+histo_args = parser.add_argument_group('histo mode execution')
+histo_args.add_argument("--lumi", default=1.0,
 help="integrated luminosity")
-plotting_args.add_argument("--cut", default='None',
+histo_args.add_argument("--cut", default='None',
 help="optional cut string")
-plotting_args.add_argument("--phislice", default=False, action="store_true",
+histo_args.add_argument("--phislice", default=False, action="store_true",
 help="turn on phi binned histograms for bkg analysis")
-plotting_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
+histo_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
 help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
-#plotting_args.add_argument("--phislice", default=0,
+#histo_args.add_argument("--phislice", default=0,
 #help="parameter for slicing in Phi mass")
-plotting_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
+histo_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg, sigeff, trig")
-plotting_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
+histo_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
 help="specify which year the input data/mc is")
 
 # run specification
@@ -182,8 +182,9 @@ args = parser.parse_args()
 
 # get mode
 mode = args.mode
+if mode == 'plotting': mode = 'histo'
 
-if mode=='plotting' and args.plotter=='None': raise SystemExit("Configuration Error: Must specify option --plotter in plotting mode.")
+if mode=='histo' and args.plotter=='None': raise SystemExit("Configuration Error: Must specify option --plotter in histo mode.")
 if mode=='atto' and args.analyzer=='None': raise SystemExit("Configuration Error: Must specify option --analyzer in atto mode.")
 
 if mode=='atto':
@@ -191,7 +192,7 @@ if mode=='atto':
   if args.branches == "" and args.analyzer == "ztt": args.branches = "branch_selection_ztt.txt"
   if args.branches == "" and args.analyzer == "main": args.branches = "branch_selection_atto.txt"
   if args.branches == "" and args.analyzer == "trigger": args.branches = "branch_selection_trigger.txt"
-if mode=='plotting':
+if mode=='histo':
   backend_option = args.plotter
   if args.branches == "": args.branches = "branch_selection_atto.txt" # placeholder
 
@@ -392,7 +393,7 @@ if args.output_cmslpc:
 # job directory
 if 'atto_job_dir' in globals():
   if args.dir.startswith('condor_'):
-    job_dir = atto_job_dir+'/plotting_jobs/'
+    job_dir = atto_job_dir+'/histo_jobs/'
     job_dir = os.path.normpath(job_dir)
   else:
     job_dir = args.dir
@@ -456,7 +457,7 @@ use_template_to_replace(template_filename, new_unpacker_filename, to_replace)
 
 # prepare stageout script
 if mode == 'atto': finalfile_filename = 'ATTOAOD.root'
-elif mode == 'plotting': finalfile_filename = 'HISTO.root'
+elif mode == 'histo': finalfile_filename = 'HISTO.root'
 template_filename = helper_dir+"/template_"+stageout_filename
 new_stageout_filename = stageout_filename
 to_replace = {}
@@ -560,17 +561,17 @@ schedd = htcondor.Schedd(schedd_ad)
 # copy over backend tarball
 do_copy = False
 if not args.noxrdcp and mode == 'atto' and os.path.isdir('backend_atto_cmssw'): do_copy = True
-if not args.noxrdcp and mode == 'plotting' and os.path.isdir('backend_plotting_cmssw'): do_copy = True
+if not args.noxrdcp and mode == 'histo' and os.path.isdir('backend_histo_cmssw'): do_copy = True
 if do_copy:
   print("Preparing to update backend code with xrdcp copy script...")
   if site == 'cmslpc' and mode == 'atto':
     os.system('./'+backend_copy_atto_cmslpc+' '+griduser_id)
-  if site == 'cmslpc' and mode == 'plotting':
-    os.system('./'+backend_copy_plotting_cmslpc+' '+griduser_id)
+  if site == 'cmslpc' and mode == 'histo':
+    os.system('./'+backend_copy_histo_cmslpc+' '+griduser_id)
   if site == 'hexcms' and mode == 'atto':
     os.system('./'+backend_copy_atto_hexcms+' '+griduser_id)
-  if site == 'hexcms' and mode == 'plotting':
-    os.system('./'+backend_copy_plotting_hexcms+' '+griduser_id)
+  if site == 'hexcms' and mode == 'histo':
+    os.system('./'+backend_copy_histo_hexcms+' '+griduser_id)
   print("Finished updating backend code.")
 
 # print summary
@@ -592,7 +593,7 @@ if mode=='atto':
   print("Branch DatasetName  :", str(args.datasetname))
   if not args.filter=='None':
     print("Filter              : " + args.filter)
-if mode=='plotting':
+if mode=='histo':
   if not args.lumi==1.0:
     print("Lumi                : " + str(args.lumi))
 print("Total Jobs          :", str(TOTAL_JOBS))
