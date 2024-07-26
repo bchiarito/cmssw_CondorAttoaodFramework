@@ -1,7 +1,7 @@
 #! /bin/sh
-rm -rf backend_plotting_cmssw
-mkdir backend_plotting_cmssw
-cd backend_plotting_cmssw
+rm -rf backend_histo_cmssw
+mkdir backend_histo_cmssw
+cd backend_histo_cmssw
 cmsrel CMSSW_10_6_20
 cd CMSSW_10_6_20/src
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
@@ -10,13 +10,13 @@ if [[ -z "$1" ]] ; then
   echo ""
   echo "Got no argument, using default (https://github.com/bchiarito/cmssw_backend_attoplotting.git) github repo for backend"
   echo ""
-  git clone https://github.com/bchiarito/cmssw_backend_attoplotting.git fmk_plotting
+  git clone https://github.com/bchiarito/cmssw_backend_attoplotting.git fmk_histo
 else
   echo ""
   echo "Using argument as github repo"
   echo "git clone" $1 "test"
   echo ""
-  git clone $1 fmk_plotting
+  git clone $1 fmk_histo
   exitcode=$?
   if [[ exitcode -eq 0 ]] ; then
       :

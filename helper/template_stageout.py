@@ -11,8 +11,8 @@ copy_command = "__copycommand__"
 
 if sys.argv[2] == 'atto':
   tag_info_frontend = subprocess.check_output("git -C CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_atto/ describe --tags --long", shell=True)
-if sys.argv[2] == 'plotting':
-  tag_info_frontend = subprocess.check_output("git -C CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_plotting/ describe --tags --long", shell=True)
+if sys.argv[2] == 'histo':
+  tag_info_frontend = subprocess.check_output("git -C CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_histo/ describe --tags --long", shell=True)
 tag_info_frontend = tag_info_frontend.split('-')
 f_tag = tag_info_frontend[0].replace('.','p')
 f_commits = tag_info_frontend[1]
