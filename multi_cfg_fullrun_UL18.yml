@@ -17,12 +17,12 @@ dests:
   - egamma_18d/
 
 options:
-  - [--datasetname=egamma18a]
-  - [--datasetname=egamma18b]
-  - [--datasetname=egamma18c]
-  - [--datasetname=egamma18d]
+  - [--datasetname=egamma18a, --filesPerJob=60]
+  - [--datasetname=egamma18b, --filesPerJob=60]
+  - [--datasetname=egamma18c, --filesPerJob=60]
+  - [--datasetname=egamma18d, --filesPerJob=100]
 
-common_options: [--data, --year=UL18, --filesPerJob=60, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+common_options: [--data, --year=UL18, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
 
 ...
 ---
