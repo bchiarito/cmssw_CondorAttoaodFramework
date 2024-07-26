@@ -16,6 +16,7 @@ parser.add_argument('-f', '--force', default=False, action='store_true', help=ar
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--runname', default="GenericMultirun-"+date.today().strftime("%b-%d-%Y"), help="not used in 'histo' mode if input is atto MultiJob dir")
 atto_args = parser.add_argument_group("atto mode")
+atto_args.add_argument('-c', '--config', help='file for options when input is directory of nano rootfiles')
 histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
 histo_args.add_argument('--lumi', default=None, help='if using non-official lumi')
@@ -119,52 +120,80 @@ if args.mode == 'histo':
 
 if args.mode == 'atto':
 
-  for yaml_file in args.input:
-    with open(yaml_file) as yaml_input:
-      try:
-        jobs = yaml.safe_load_all(yaml_input)
-      except yaml.YAMLError as err:
-        print(err)
-      for config in jobs:
-        if not config: continue
-        try:
-          parent_dir = "_".join(["MultiJob", "-".join([args.runname, config["name"]])])
-          if 'top_level_input' in config:
-            top_level_input = config['top_level_input']
-            inputs = []
-            for subdir in os.listdir(top_level_input): inputs.append(subdir)
-          else: inputs = config["inputs"]
-          N_subjobs = len(inputs)
-          assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
-          print("Section", config["name"], " of YAML fie has", N_subjobs, "job(s):\n")
-          choice = ""
-          while (choice != "y" and choice != "n" and choice != "q"):
-            choice = raw_input("Procede? [y/n/q] ")
-          if choice == "q": exit()
-          if choice == "n": continue
-          if os.path.exists(parent_dir):
-            raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
+  for input_item in args.input:
+    if input_item.endswith(".yml"):
+
+        with open(yaml_file) as yaml_input:
+          try:
+            jobs = yaml.safe_load_all(yaml_input)
+          except yaml.YAMLError as err:
+            print(err)
+          for config in jobs:
+            if not config: continue
+            try:
+              parent_dir = "_".join(["MultiJob", "-".join([args.runname, config["name"]])])
+              if 'top_level_input' in config:
+                top_level_input = config['top_level_input']
+                inputs = []
+                for subdir in os.listdir(top_level_input): inputs.append(subdir)
+              else: inputs = config["inputs"]
+              N_subjobs = len(inputs)
+              assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
+              print("Section", config["name"], " of YAML fie has", N_subjobs, "job(s):\n")
+              choice = ""
+              while (choice != "y" and choice != "n" and choice != "q"):
+                choice = raw_input("Procede? [y/n/q] ")
+              if choice == "q": exit()
+              if choice == "n": continue
+              if os.path.exists(parent_dir):
+                raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
+              else:
+                # submit
+                for i in range(N_subjobs):
+                  script = "./condor_submit.py"
+                  if "" in config: mode = config["mode"]
+                  else: mode = "atto"
+                  job_input = inputs[i]
+                  job_output = "/".join([config["dest"], "-".join([args.runname, config["name"]]), config["dests"][i]])
+                  job_output = os.path.normpath(job_output)
+                  options = " ".join((config["common_options"]))
+                  if "options" in config:
+                    options += " " + " ".join(config["options"][i])
+                  if not args.askall: options += " --auto"
+                  if args.force: options += " --force"
+                  options += " -x"
+                  job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
+                  command = " ".join([script, mode, job_input, job_output, options, job_dir])
+                  print(command)
+                  if not args.test: os.system(command)
+                  print('')
+            except KeyError as err:
+              print("ERROR:", err, "expected as key but not found! dumping config:")
+              for key in config:
+                print("  ", key, ":", config[key])
+
+    else:
+      print("not yaml")
+      subdirs = os.listdir(input_item)
+      numjobs = len(subdirs)
+      script = "./condor_submit.py"
+      mode = 'atto'
+      for i, subdir in enumerate(subdirs):
+          if not args.config:
+            config = {}
+            config["output"] = [ "/cms/chiarito/eos/test/subjob"+str(j) for j in range(numjobs)]
+            config["jobdir"] = [ "MultiJob_PlaceHolder/subjob"+str(j) for j in range(numjobs)]
+            config["options"] = [["--files=2 --year=UL18 --sigRes -a=main"]] * numjobs
           else:
-            # submit
-            for i in range(N_subjobs):
-              script = "./condor_submit.py"
-              if "" in config: mode = config["mode"]
-              else: mode = "atto"
-              job_input = inputs[i]
-              job_output = "/".join([config["dest"], "-".join([args.runname, config["name"]]), config["dests"][i]])
-              job_output = os.path.normpath(job_output)
-              options = " ".join((config["common_options"]))
-              if "options" in config:
-                options += " " + " ".join(config["options"][i])
-              if not args.askall: options += " --auto"
-              if args.force: options += " --force"
-              options += " -x"
-              job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
-              command = " ".join([script, mode, job_input, job_output, options, job_dir])
-              print(command)
-              if not args.test: os.system(command)
-              print('')
-        except KeyError as err:
-          print("ERROR:", err, "expected as key but not found! dumping config:")
-          for key in config:
-            print("  ", key, ":", config[key])
+            print("get from config file")
+          job_input = os.path.join(input_item, subdir)
+          job_output = config["output"][i]
+          job_dir = "--dir " + config["jobdir"][i]
+          options = " ".join(config["options"][i])
+          if not args.askall: options += " --auto"
+          if args.force: options += " --force"
+          options += " -x"
+          command = " ".join([script, mode, job_input, job_output, options, job_dir])
+          print(command)
+          if not args.test: os.system(command)
+          print('')
