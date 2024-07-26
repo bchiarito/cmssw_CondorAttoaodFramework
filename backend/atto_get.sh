@@ -8,4 +8,7 @@ cmssw-el7 "--bind /condor --bind /osg --bind /cms --bind /home --bind /users" --
 elif [[ $1 == "cmslpc" ]]; then
 cmssw-el7 "--bind /uscms_data/d1/$USER/" -- backend/aux_atto_get.sh
 
+else
+echo "Please supply [hexcms] or [cmslpc] as positional argument!"
+
 fi
