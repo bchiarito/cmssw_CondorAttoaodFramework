@@ -1,3 +1,7 @@
+runs in a conda environment created to these specs:
+$ conda create -n pyroot -c conda-forge root "python<3"
+which will provide python3 at <3.11 and python at 2.7
+
 Region 1: tight
 Region 2: loose
 Region 0: neither
