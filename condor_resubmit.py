@@ -57,7 +57,7 @@ if output_area[0:7] == '/store/': output_eos = True
 else: output_eos = False
 
 # check proxy
-if site == 'hexcms':
+if (site == 'hexcms' and args.input_dataset) or (site == 'hexcms' and args.input_cmslpc):
   if args.proxy == '':
     subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)
     proxy_path = ((subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)).strip()).decode('utf-8')
