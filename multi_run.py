@@ -82,11 +82,11 @@ if args.mode == 'histo':
           sys.path.pop()
           sys.modules.pop("job_info")
           job_input = output_area
-          job_dir_parent = in_dir+"_HistoMode"
+          job_dir_parent = in_dir.replace('/','')+"_HistoMode"
       else:
           job_input = os.path.normpath(os.path.join(in_dir, subdir))
           if 'GenericMultirun-' in args.runname:
-            args.runname = in_dir.replace('-','').replace('/','')+"-"+date.today().strftime("%b-%d-%Y")
+            args.runname = (in_dir.replace('/',''))+"-"+date.today().strftime("%b-%d-%Y")
           job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
       # prepare command
       script = "./condor_submit.py"
@@ -123,7 +123,7 @@ if args.mode == 'atto':
   for input_item in args.input:
     if input_item.endswith(".yml"):
 
-        with open(yaml_file) as yaml_input:
+        with open(input_item) as yaml_input:
           try:
             jobs = yaml.safe_load_all(yaml_input)
           except yaml.YAMLError as err:
@@ -139,10 +139,10 @@ if args.mode == 'atto':
               else: inputs = config["inputs"]
               N_subjobs = len(inputs)
               assert N_subjobs == len(config["dests"]), "ERROR: lists 'inputs' and 'dests' are not the same length in yaml file!"
-              print("Section", config["name"], " of YAML fie has", N_subjobs, "job(s):\n")
+              print("Section", config["name"], "of YAML fie has", N_subjobs, "job(s):\n")
               choice = ""
               while (choice != "y" and choice != "n" and choice != "q"):
-                choice = raw_input("Procede? [y/n/q] ")
+                choice = input("Procede? [y/n/q] ")
               if choice == "q": exit()
               if choice == "n": continue
               if os.path.exists(parent_dir):
