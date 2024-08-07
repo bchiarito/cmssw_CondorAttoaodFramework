@@ -29,9 +29,9 @@ for multidir in args.multidirs: multijob_dirs.append(multidir)
 for multijob_dir in multijob_dirs:
   if not os.path.isdir(multijob_dir): continue
   hadd_dir = os.path.join(multijob_dir, hadd_dir_name)
-  if args.rehadd: shutil.rmtree(hadd_dir)
+  if args.rehadd and os.path.isdir(hadd_dir): shutil.rmtree(hadd_dir)
   if not os.path.isdir(hadd_dir): os.mkdir(hadd_dir)
-  summed_multijob = os.path.join(hadd_dir, "fullsum_{}.root".format(os.path.dirname(multijob_dir+'/')[13:]))
+  summed_multijob = os.path.join(hadd_dir, "fullsum_{}.root".format(os.path.dirname(multijob_dir+'/').replace('Multijob_', '').replace('Job_', '')))
   if multijob_dir.startswith("MultiJob_"):
       multijob_subdirs = os.listdir(multijob_dir)
       summed_files = []
@@ -50,7 +50,7 @@ for multijob_dir in multijob_dirs:
           if not os.path.isfile(os.path.join(output_area, item)): continue
           if not item.endswith(".root"): continue
           rootfiles.append(os.path.join(output_area, item))
-        summed_file = os.path.join(hadd_dir, "sum_{}_{}.root".format(os.path.dirname(multijob_dir+'/')[13:], subdir))
+        summed_file = os.path.join(hadd_dir, "sum_{}_{}.root".format(os.path.dirname(multijob_dir+'/').replace('MultiJob_', '').replace('Job_', ''), subdir))
         summed_files.append(summed_file)
         command = " ".join(["hadd -f", summed_file, " ".join(rootfiles)])
         if os.path.isfile(summed_file): continue
