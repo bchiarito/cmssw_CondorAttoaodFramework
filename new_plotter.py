@@ -4,12 +4,42 @@ import os
 import sys
 import imp
 import argparse
+import subprocess
 from functools import reduce
 import shutil
 import ROOT
 import helper.plotting_util as util
 
-# ./pdf_plotter --data <dir> <dir> --gjets <dir> --qcd <dir> --signal <dir> --mc <dir> <dir> 
+# constants
+HADD_DIR_NAME = "hadd"
+FULLSUM_PREFIX = 'fullsum'
+main_pdf = '_main.pdf'
+cutflow_pdf = '_cutflow.pdf'
+signal_pdf = '_signal.pdf'
+leg_x1, leg_y1, leg_x2, leg_y2 = 0.7, 0.60, 0.89, 0.9
+
+# helper routines
+def check_and_hadd(*paths):
+    for path in paths:
+        if not os.path.isdir(os.path.join(path, HADD_DIR_NAME)):
+            subprocess.call("./hadd_histo_dirs.py --retain --rehadd " + path, shell=True)
+
+def make_hist_collection(*jobdirs):
+    hist_collection = []
+    hist_collections = []
+    for num, jobdir in enumerate(jobdirs):
+        check_and_hadd(jobdir)
+        rootfiles = [os.path.join(jobdir, HADD_DIR_NAME, filename) for filename in os.listdir(os.path.join(jobdir, HADD_DIR_NAME))]
+        if jobdir.startswith('MultiJob_'): filenames = [filename for filename in rootfiles if not os.path.basename(filename).startswith(FULLSUM_PREFIX)]
+        elif jobdir.startswith('Job_'): filenames = [filename for filename in rootfiles if os.path.basename(filename).startswith(FULLSUM_PREFIX)]
+        else: raise SystemExit("directory "+jobdir+" does not start with MultiJob_ nor Job_!")
+        tfiles = [ROOT.TFile(filename) for filename in filenames]
+        global_var_name = jobdir.replace('/', '').replace('-','')+str(num)
+        globals()["tfiles_"+global_var_name] = tfiles
+        temp_hist_collection = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in tfiles ]
+        hist_collections.append(temp_hist_collection)
+        hist_collection.append(reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], temp_hist_collection))
+    return reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], hist_collection), reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], hist_collections)
 
 # command line options
 parser = argparse.ArgumentParser(description="Makes pdf from histo job directories")
@@ -22,18 +52,9 @@ input_arguments.add_argument("--signal", nargs='+', help='')
 parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
 parser.add_argument("-t", "--test", default=False, action='store_true', help='only one plot')
 # in progress
-parser.add_argument("-r", "--rehadd", action='store_true', help='rebuild hadds')
-parser.add_argument("-g", "--gjets_scale_up", action='store_true', help='scale gjets up to data')
+parser.add_argument("-g", "--scale_gjets", action='store_true', help='scale gjets up to data')
 parser.add_argument("-s", "--scale", action='store_true', help='scale gjets up to data')
 args = parser.parse_args()
-
-# constants
-HADD_DIR_NAME = "hadd"
-main_pdf = args.out+'_main.pdf'
-cutflow_pdf = args.out+'_cutflow.pdf'
-signal_pdf = args.out+'_signal.pdf'
-leg_x1, leg_y1, leg_x2, leg_y2 = 0.7, 0.60, 0.89, 0.9
-FULLSUM_PREFIX = 'fullsum'
 
 # color and legends
 data_legend = 'DATA'
@@ -47,29 +68,15 @@ mc_color = [ROOT.kViolet, ROOT.kViolet+2] + [ROOT.kPink]*9
 signal_color = [ROOT.kRed, ROOT.kBlue, ROOT.kYellow+1] + [ROOT.kTeal]*9
 signal_legend = ['signal']*9
 
+# init
+cutflow_pdf = args.out + cutflow_pdf
+signal_pdf = args.out + signal_pdf
+main_pdf = args.out + main_pdf
+
 # config
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetLegendFillColor(ROOT.TColor.GetColorTransparent(ROOT.kRed, 0.01));
 ROOT.gStyle.SetLegendBorderSize(0)
-
-# helper routines
-#   first: list of histograms, each one the entire sum, second: used for hthat plot
-def make_hist_collection(*multijob_dirs):
-    hist_collection = []
-    for num, multijob_dir in enumerate(multijob_dirs):
-        rootfiles = [os.path.join(multijob_dir, HADD_DIR_NAME, filename) for filename in os.listdir(os.path.join(multijob_dir, HADD_DIR_NAME))]
-        if multijob_dir.startswith('MultiJob_'): filenames = [filename for filename in rootfiles if not os.path.basename(filename).startswith(FULLSUM_PREFIX)]
-        elif multijob_dir.startswith('Job_'): filenames = [filename for filename in rootfiles if os.path.basename(filename).startswith(FULLSUM_PREFIX)]
-        else: raise SystemExit("directory "+multijob_dir+" does not start with MultiJob_ nor Job_!")
-        tfiles = [ROOT.TFile(filename) for filename in filenames]
-        global_var_name = multijob_dir.replace('/', '').replace('-','')+str(num)
-        globals()["tfiles_"+global_var_name] = tfiles
-        temp_hist_collection = [ [key.ReadObj() for key in file.GetListOfKeys()[0].ReadObj().GetListOfKeys()] for file in tfiles ]
-        hist_collection
-        hist_collection.append(reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], temp_hist_collection))
-    return reduce(lambda a,b: [x.Add(x,y) and x for x,y in zip(a,b)], hist_collection), hist_collection
-
-# check input and run hadd if needed
 
 # build histogram collections
 if args.data: data_hist_collection, _ = make_hist_collection(*args.data)
@@ -112,6 +119,17 @@ if args.qcd:
       c.SetLogy()
       c.Print(main_pdf)
 
+if args.scale_gjets:
+    if not args.data or not args.gjets: raise SystemExit("Must use --data and --gjets with --scale_gjets !")
+    data_count = data_hist_collection[0].GetEntries()
+    gjets_count = gjets_hist_collection[0].GetEntries()
+    mc_count = 0
+    if args.qcd: mc_count += qcd_hist_collection[0].GetEntries()
+    if args.mc:
+        for k, hist_collection in enumerate(mc_hist_collections):
+            mc_count+= hist_collection[0].GetEntries()
+    gjets_k_factor = (data_count - mc_count) / gjets_count
+
 for i in range(len(data_hist_collection)):
     if (data_hist_collection[i].GetName()).startswith('cutflow'): continue
 
@@ -126,8 +144,10 @@ for i in range(len(data_hist_collection)):
         mc_hist = gjets_hist_collection[i]
         mc_hist.SetLineColor(gjets_color)
         mc_hist.SetFillColor(gjets_color)
+        if args.scale_gjets: mc_hist.Scale(gjets_k_factor)
         mc_stack.Add(mc_hist)
-        leg.AddEntry(mc_hist, gjets_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
+        if args.scale_gjets: leg.AddEntry(mc_hist, gjets_legend+' (k={:.3f}) ({:,.0f})'.format(gjets_k_factor, mc_hist.Integral()), 'f')
+        else: leg.AddEntry(mc_hist, gjets_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
     if args.qcd:
         mc_hist = qcd_hist_collection[i]
         mc_hist.SetLineColor(qcd_color)
