@@ -51,7 +51,6 @@ input_arguments.add_argument("--mc", nargs='+', help='')
 input_arguments.add_argument("--signal", nargs='+', help='')
 parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
 parser.add_argument("-t", "--test", default=False, action='store_true', help='only one plot')
-# in progress
 parser.add_argument("-g", "--scale_gjets", action='store_true', help='scale gjets up to data')
 parser.add_argument("-s", "--scale", action='store_true', help='scale gjets up to data')
 args = parser.parse_args()
@@ -130,6 +129,14 @@ if args.scale_gjets:
             mc_count+= hist_collection[0].GetEntries()
     gjets_k_factor = (data_count - mc_count) / gjets_count
 
+if args.scale:
+    mc_integral = 0
+    if args.gjets: mc_integral += gjets_hist_collection[0].GetEntries()
+    if args.qcd: mc_integral += qcd_hist_collection[0].GetEntries()
+    if args.mc:
+        for k, hist_collection in enumerate(mc_hist_collections):
+            mc_integral += hist_collection[0].GetEntries()
+
 for i in range(len(data_hist_collection)):
     if (data_hist_collection[i].GetName()).startswith('cutflow'): continue
 
@@ -137,6 +144,7 @@ for i in range(len(data_hist_collection)):
     data_hist = data_hist_collection[i]
     data_hist.SetLineColor(data_color)
     data_hist.Sumw2()
+    if args.scale: data_hist.Scale(100.0 / data_hist.Integral())
     leg.AddEntry(data_hist, data_legend+' ({:,.0f})'.format(data_hist.Integral()), 'l')
 
     mc_stack = ROOT.THStack('hs', 'hs')
@@ -145,6 +153,7 @@ for i in range(len(data_hist_collection)):
         mc_hist.SetLineColor(gjets_color)
         mc_hist.SetFillColor(gjets_color)
         if args.scale_gjets: mc_hist.Scale(gjets_k_factor)
+        if args.scale: mc_hist.Scale(100.0 / mc_integral)
         mc_stack.Add(mc_hist)
         if args.scale_gjets: leg.AddEntry(mc_hist, gjets_legend+' (k={:.3f}) ({:,.0f})'.format(gjets_k_factor, mc_hist.Integral()), 'f')
         else: leg.AddEntry(mc_hist, gjets_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
@@ -152,6 +161,7 @@ for i in range(len(data_hist_collection)):
         mc_hist = qcd_hist_collection[i]
         mc_hist.SetLineColor(qcd_color)
         mc_hist.SetFillColor(qcd_color)
+        if args.scale: mc_hist.Scale(100.0 / mc_integral)
         mc_stack.Add(mc_hist)
         leg.AddEntry(mc_hist, qcd_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
     if args.mc:
@@ -159,6 +169,7 @@ for i in range(len(data_hist_collection)):
             mc_hist = hist_collection[i]
             mc_hist.SetLineColor(mc_color[k])
             mc_hist.SetFillColor(mc_color[k])
+            if args.scale: mc_hist.Scale(100.0 / mc_integral)
             mc_stack.Add(mc_hist)
             leg.AddEntry(mc_hist, mc_legend[k]+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
 
@@ -168,6 +179,7 @@ for i in range(len(data_hist_collection)):
             signal_hist = signal_hist_collections[k][i]
             signal_hist.SetLineColor(signal_color[k])
             signal_hists.append(signal_hist)
+            if args.scale: signal_hist.Scale(100.0 / signal_hist.Integral())
             leg.AddEntry(signal_hist, signal_legend[k]+' ({:,.0f})'.format(signal_hist.Integral()), 'f')
 
     c.SetLogy(0)
