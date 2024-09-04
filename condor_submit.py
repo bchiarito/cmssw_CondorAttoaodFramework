@@ -278,7 +278,8 @@ elif args.input_cmslpc:
   if s[len(s)-5:len(s)] == ".root":
     input_files.append(args.input)
   else:
-    list_of_files = subprocess.getoutput("xrdfs root://cmseos.fnal.gov ls " + args.input)
+    #list_of_files = subprocess.getoutput("xrdfs root://cmseos.fnal.gov ls " + args.input)
+    list_of_files = subprocess.getoutput("./helper/check_cmslpc_eos.sh " + args.input)
     list_of_files = list_of_files.split('\n')
     totalfiles = len(list_of_files) 
     if percentmax: maxfiles = int(args.files * totalfiles)
@@ -316,9 +317,10 @@ if args.verbose:
 
 # test input
 if args.input_cmslpc:
-  ret = os.system('xrdfs root://cmseos.fnal.gov/ ls ' + input_files[0] + ' > /dev/null')
-  if not ret == 0:
-    raise SystemExit('ERROR: Input is not a valid file on cmslpc eos area! 1) try voms-proxy-init 1) cannot do cmsenv 2) did you mean --input_dataset?')
+  #ret = os.system('xrdfs root://cmseos.fnal.gov/ ls ' + input_files[0] + ' > /dev/null')
+  #if not ret == 0:
+  #  raise SystemExit('ERROR: Input is not a valid file on cmslpc eos area! 1) try voms-proxy-init 1) cannot do cmsenv 2) did you mean --input_dataset?')
+  pass
 elif args.input_local:
   if not os.path.isfile(args.input) and not os.path.isdir(args.input):
     raise SystemExit('ERROR: Input is not a valid directory or file on hexcms!')
