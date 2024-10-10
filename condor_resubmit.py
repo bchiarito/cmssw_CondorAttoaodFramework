@@ -57,6 +57,7 @@ if output_area[0:7] == '/store/': output_eos = True
 else: output_eos = False
 
 # check proxy
+'''
 if (site == 'hexcms' and args.input_dataset) or (site == 'hexcms' and args.input_cmslpc):
   if args.proxy == '':
     subprocess.check_output("./"+helper_dir+"/"+hexcms_proxy_script, shell=True)
@@ -72,6 +73,7 @@ if (site == 'hexcms' and args.input_dataset) or (site == 'hexcms' and args.input
 if site == 'cmslpc':
   time_left = str(timedelta(seconds=int(subprocess.check_output("voms-proxy-info -timeleft", shell=True))))
   if time_left == '0:00:00': raise SystemExit("ERROR: No time left on grid proxy! Renew with voms-proxy-init -voms cms")
+'''
 
 # get the schedd
 #if args.verbose: print("DEBUG: Get Schedd")
