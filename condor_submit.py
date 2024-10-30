@@ -135,7 +135,7 @@ help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
 #help="parameter for slicing in Phi mass")
 histo_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
 help="choice for plotter code: sanity, bkg, sigeff, trig")
-histo_args.add_argument("--year", "-y", default="UL18", choices=['UL17', 'UL18'], metavar='CHOICE',
+histo_args.add_argument("--year", "-y", default="UL18", choices=['UL16', 'UL17', 'UL18'], metavar='CHOICE',
 help="specify which year the input data/mc is")
 
 # run specification
