@@ -10,6 +10,9 @@ import shutil
 import ROOT
 import helper.plotting_util as util
 
+# TODO
+# * make sig eff plots, and skip them in main
+
 # constants
 HADD_DIR_NAME = "hadd"
 FULLSUM_PREFIX = 'fullsum'
@@ -48,24 +51,36 @@ input_arguments.add_argument("--data", nargs='+', help='')
 input_arguments.add_argument("--gjets", nargs='+', help='')
 input_arguments.add_argument("--qcd", nargs='+', help='')
 input_arguments.add_argument("--mc", nargs='+', help='')
+input_arguments.add_argument("--mcleg", nargs='+', help='')
 input_arguments.add_argument("--signal", nargs='+', help='')
+input_arguments.add_argument("--signalleg", nargs='+', help='')
 parser.add_argument("--out", default='plots', help='prefix for the output pdf files')
+parser.add_argument("--year", choices=['18','17','16'], help='')
 parser.add_argument("-t", "--test", default=False, action='store_true', help='only one plot')
 parser.add_argument("-g", "--scale_gjets", action='store_true', help='scale gjets up to data')
 parser.add_argument("-s", "--scale", action='store_true', help='scale gjets up to data')
 args = parser.parse_args()
 
 # color and legends
-data_legend = 'DATA'
+data_legend = 'Data'
 data_color = ROOT.kBlack
-gjets_legend = 'GJETS'
+gjets_legend = 'GJets'
 gjets_color = ROOT.kGreen
 qcd_legend = 'QCD'
 qcd_color = ROOT.kOrange
-mc_legend = ['MC']*9
+mc_legend = args.mcleg if args.mcleg else ['MC']*9
 mc_color = [ROOT.kViolet, ROOT.kViolet+2] + [ROOT.kPink]*9
 signal_color = [ROOT.kRed, ROOT.kBlue, ROOT.kYellow+1] + [ROOT.kTeal]*9
 signal_legend = ['signal']*9
+signal_legend = args.signalleg if args.signalleg else ['MC']*9
+
+if args.year == '18': title = "UL18 {:,.0f} /pb".format(59830)
+if args.year == '17': title = "UL17 {:,.0f} /pb".format(41480)
+else: title = ""
+
+#lumi_str = "59830" # https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2
+#lumi_str = "41480"
+#lumi_str = "36310"
 
 # init
 cutflow_pdf = args.out + cutflow_pdf
@@ -84,10 +99,43 @@ if args.qcd: qcd_hist_collection, qcd_hist_collections = make_hist_collection(*a
 if args.mc: mc_hist_collection, mc_hist_collections = make_hist_collection(*args.mc)
 if args.signal: _, signal_hist_collections = make_hist_collection(*args.signal)
 
+# compute scale factors
+if args.scale_gjets:
+    if not args.data or not args.gjets: raise SystemExit("Must use --data and --gjets with --scale_gjets !")
+    data_count = data_hist_collection[0].GetEntries()
+    gjets_count = gjets_hist_collection[0].GetEntries()
+    mc_count = 0
+    if args.qcd: mc_count += qcd_hist_collection[0].GetEntries()
+    if args.mc:
+        for k, hist_collection in enumerate(mc_hist_collections):
+            mc_count+= hist_collection[0].GetEntries()
+    gjets_k_factor = (data_count - mc_count) / gjets_count
+
+if args.scale:
+    mc_integral = 0
+    if args.gjets: mc_integral += gjets_hist_collection[0].GetEntries()
+    if args.qcd: mc_integral += qcd_hist_collection[0].GetEntries()
+    if args.mc:
+        for k, hist_collection in enumerate(mc_hist_collections):
+            mc_integral += hist_collection[0].GetEntries()
+
 # plot
 c = ROOT.TCanvas()
-c.Print(main_pdf+'[')
 
+# cutflow
+c.Print(cutflow_pdf+'[')
+c.SetLogy(1)
+for i in range(len(data_hist_collection)):
+    if not (data_hist_collection[i].GetName()).startswith('cutflow'): continue
+    data_hist = data_hist_collection[i]
+    data_hist.SetLineColor(data_color)
+    data_hist.SetTitle(data_legend)
+    data_hist.Draw()
+    c.Print(cutflow_pdf)
+c.Print(cutflow_pdf+']')
+
+# main
+c.Print(main_pdf+'[')
 if args.gjets:
     for hists in zip(*(gjets_hist_collections)):
       if not (hists[0].GetName()).startswith("GJETS_"): continue
@@ -118,87 +166,79 @@ if args.qcd:
       c.SetLogy()
       c.Print(main_pdf)
 
-if args.scale_gjets:
-    if not args.data or not args.gjets: raise SystemExit("Must use --data and --gjets with --scale_gjets !")
-    data_count = data_hist_collection[0].GetEntries()
-    gjets_count = gjets_hist_collection[0].GetEntries()
-    mc_count = 0
-    if args.qcd: mc_count += qcd_hist_collection[0].GetEntries()
-    if args.mc:
-        for k, hist_collection in enumerate(mc_hist_collections):
-            mc_count+= hist_collection[0].GetEntries()
-    gjets_k_factor = (data_count - mc_count) / gjets_count
-
-if args.scale:
-    mc_integral = 0
-    if args.gjets: mc_integral += gjets_hist_collection[0].GetEntries()
-    if args.qcd: mc_integral += qcd_hist_collection[0].GetEntries()
-    if args.mc:
-        for k, hist_collection in enumerate(mc_hist_collections):
-            mc_integral += hist_collection[0].GetEntries()
-
 for i in range(len(data_hist_collection)):
-    if (data_hist_collection[i].GetName()).startswith('cutflow'): continue
+    try:
+        if (data_hist_collection[i].GetName()).startswith('cutflow'): continue
+        if (data_hist_collection[i].GetName()).startswith('GJETS'): continue
+        if (data_hist_collection[i].GetName()).startswith('QCD'): continue
+        if (data_hist_collection[i].GetName()).startswith('SIGNAL'): continue
 
-    leg = ROOT.TLegend(leg_x1, leg_y1, leg_x2, leg_y2)
-    data_hist = data_hist_collection[i]
-    data_hist.SetLineColor(data_color)
-    data_hist.Sumw2()
-    if args.scale: data_hist.Scale(100.0 / data_hist.Integral())
-    leg.AddEntry(data_hist, data_legend+' ({:,.0f})'.format(data_hist.Integral()), 'l')
+        leg = ROOT.TLegend(leg_x1, leg_y1, leg_x2, leg_y2)
+        
+        data_hist = data_hist_collection[i]
+        #print(data_hist.GetName(), data_hist.GetTitle())
+        data_hist.SetLineColor(data_color)
+        data_hist.GetXaxis().SetTitle(data_hist.GetTitle())
+        data_hist.GetYaxis().SetTitle("Events" if not args.scale else "Scaled to Integral = 100")
+        data_hist.SetTitle(title)
+        data_hist.Sumw2()
+        if args.scale: data_hist.Scale(100.0 / data_hist.Integral())
+        leg.AddEntry(data_hist, data_legend+' ({:,.0f})'.format(data_hist.Integral()), 'l')
 
-    mc_stack = ROOT.THStack('hs', 'hs')
-    if args.gjets:
-        mc_hist = gjets_hist_collection[i]
-        mc_hist.SetLineColor(gjets_color)
-        mc_hist.SetFillColor(gjets_color)
-        if args.scale_gjets: mc_hist.Scale(gjets_k_factor)
-        if args.scale: mc_hist.Scale(100.0 / mc_integral)
-        mc_stack.Add(mc_hist)
-        if args.scale_gjets: leg.AddEntry(mc_hist, gjets_legend+' (k={:.3f}) ({:,.0f})'.format(gjets_k_factor, mc_hist.Integral()), 'f')
-        else: leg.AddEntry(mc_hist, gjets_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
-    if args.qcd:
-        mc_hist = qcd_hist_collection[i]
-        mc_hist.SetLineColor(qcd_color)
-        mc_hist.SetFillColor(qcd_color)
-        if args.scale: mc_hist.Scale(100.0 / mc_integral)
-        mc_stack.Add(mc_hist)
-        leg.AddEntry(mc_hist, qcd_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
-    if args.mc:
-        for k, hist_collection in enumerate(mc_hist_collections):
-            mc_hist = hist_collection[i]
-            mc_hist.SetLineColor(mc_color[k])
-            mc_hist.SetFillColor(mc_color[k])
+        mc_stack = ROOT.THStack('hs', 'hs')
+        if args.gjets:
+            mc_hist = gjets_hist_collection[i]
+            mc_hist.SetLineColor(gjets_color)
+            mc_hist.SetFillColor(gjets_color)
+            if args.scale_gjets: mc_hist.Scale(gjets_k_factor)
             if args.scale: mc_hist.Scale(100.0 / mc_integral)
             mc_stack.Add(mc_hist)
-            leg.AddEntry(mc_hist, mc_legend[k]+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
+            if args.scale_gjets: leg.AddEntry(mc_hist, gjets_legend+' (k={:.3f}) ({:,.0f})'.format(gjets_k_factor, mc_hist.Integral()), 'f')
+            else: leg.AddEntry(mc_hist, gjets_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
+        if args.qcd:
+            mc_hist = qcd_hist_collection[i]
+            mc_hist.SetLineColor(qcd_color)
+            mc_hist.SetFillColor(qcd_color)
+            if args.scale: mc_hist.Scale(100.0 / mc_integral)
+            mc_stack.Add(mc_hist)
+            leg.AddEntry(mc_hist, qcd_legend+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
+        if args.mc:
+            for k, hist_collection in enumerate(mc_hist_collections):
+                mc_hist = hist_collection[i]
+                mc_hist.SetLineColor(mc_color[k])
+                mc_hist.SetFillColor(mc_color[k])
+                if args.scale: mc_hist.Scale(100.0 / mc_integral)
+                mc_stack.Add(mc_hist)
+                leg.AddEntry(mc_hist, mc_legend[k]+' ({:,.0f})'.format(mc_hist.Integral()), 'f')
 
-    signal_hists = []
-    if args.signal:
-        for k, coll in enumerate(signal_hist_collections):
-            signal_hist = signal_hist_collections[k][i]
-            signal_hist.SetLineColor(signal_color[k])
-            signal_hists.append(signal_hist)
-            if args.scale: signal_hist.Scale(100.0 / signal_hist.Integral())
-            leg.AddEntry(signal_hist, signal_legend[k]+' ({:,.0f})'.format(signal_hist.Integral()), 'f')
+        signal_hists = []
+        if args.signal:
+            for k, coll in enumerate(signal_hist_collections):
+                signal_hist = signal_hist_collections[k][i]
+                signal_hist.SetLineColor(signal_color[k])
+                signal_hists.append(signal_hist)
+                if args.scale: signal_hist.Scale(100.0 / signal_hist.Integral())
+                leg.AddEntry(signal_hist, signal_legend[k]+' ({:,.0f})'.format(signal_hist.Integral()), 'f')
 
-    c.SetLogy(0)
-    data_hist.SetMinimum(0)
-    data_hist.Draw()
-    mc_stack.Draw('hist same')
-    for hist in signal_hists: hist.Draw("same")
-    data_hist.Draw("same")
-    leg.Draw('same')
-    c.Print(main_pdf)
+        c.SetLogy(0)
+        data_hist.SetMinimum(0)
+        data_hist.Draw()
+        mc_stack.Draw('hist same')
+        for hist in signal_hists: hist.Draw("same")
+        data_hist.Draw("same")
+        leg.Draw('same')
+        c.Print(main_pdf)
 
-    c.SetLogy(1)
-    data_hist.SetMinimum(1e-1)
-    data_hist.Draw()
-    mc_stack.Draw('hist same')
-    for hist in signal_hists: hist.Draw("same")
-    data_hist.Draw("same")
-    leg.Draw('same')
-    c.Print(main_pdf)
+        c.SetLogy(1)
+        data_hist.SetMinimum(1e-1)
+        data_hist.Draw()
+        mc_stack.Draw('hist same')
+        for hist in signal_hists: hist.Draw("same")
+        data_hist.Draw("same")
+        leg.Draw('same')
+        c.Print(main_pdf)
+    except IndexError:
+        print("!! Skipping plotting of histo", data_hist.GetName())
 
     if args.test: break
 

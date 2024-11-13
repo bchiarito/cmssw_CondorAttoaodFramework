@@ -1,8 +1,6 @@
 ---
 
-name: atto_egamma17
-
-mode: atto
+name: egamma17
 
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL17/egamma/egamma_17b/
@@ -21,20 +19,18 @@ dests:
   - egamma_17f/
 
 options:
-  - [--datasetname=egamma17b]
-  - [--datasetname=egamma17c]
-  - [--datasetname=egamma17d]
-  - [--datasetname=egamma17e]
-  - [--datasetname=egamma17f]
+  - [--datasetname=egamma17b, --filesPerJob=10]
+  - [--datasetname=egamma17c, --filesPerJob=10]
+  - [--datasetname=egamma17d, --filesPerJob=10]
+  - [--datasetname=egamma17e, --filesPerJob=10]
+  - [--datasetname=egamma17f, --filesPerJob=10]
 
-common_options: [--data, --year=UL17, --filesPerJob=10, --scheddLimit=15, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+common_options: [--data, --year=UL17, --scheddLimit=15, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
 
 ...
 ---
 
-name: atto_gjets17
-
-mode: atto
+name: gjets17
 
 inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets40to100/
@@ -42,6 +38,32 @@ inputs:
   - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets200to400/
   - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets400to600/
   - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets600toInf/
+
+dest: /cms/chiarito/eos/twoprong/datasets/atto/UL17/
+
+dests:
+  - gjets40to100/
+  - gjets100to200/
+  - gjets200to400/
+  - gjets400to600/
+  - gjets600toInf/
+
+options:
+  - [--datasetname=gjets40to100, --xs=18650]
+  - [--datasetname=gjets100to200, --xs=8639]
+  - [--datasetname=gjets200to400, --xs=2173]
+  - [--datasetname=gjets400to600, --xs=260.7]
+  - [--datasetname=gjets600toInf, --xs=86.55]
+
+common_options: [--mc, --year=UL17, --filesPerJob=10, --scheddLimit=30, --filter=one_either_photon, --branches=branch_selection_atto.txt, --analyzer=main]
+
+...
+---
+
+name:   qcd17
+
+inputs:
+  - /cms/twoprong/chiarito/datamc/nano/UL17/gjets/gjets40to100/
 
 dest: /cms/chiarito/eos/twoprong/datasets/atto/UL17/
 

@@ -10,10 +10,11 @@ import yaml
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
 parser.add_argument('mode', choices=['atto', 'histo', 'status'], help='operation mode')
-parser.add_argument('input', nargs='+', help='any number of YAML files or MultiJob_ directories')
+parser.add_argument('input', nargs='+', help='any number of YAML files or MultiJob_ directories or rootfile directories')
 parser.add_argument('--askall', default=False, action='store_true', help="confirm all command execution")
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--quick', default=False, action='store_true', help='only one file per job')
 parser.add_argument('--runname', default="GenericMultirun-"+date.today().strftime("%b-%d-%Y"), help="not used in 'histo' mode if input is atto MultiJob dir")
 atto_args = parser.add_argument_group("atto mode")
 atto_args.add_argument('-c', '--config', help='file for options when input is directory of nano rootfiles')
@@ -108,7 +109,7 @@ if args.mode == 'histo':
       lumi = "--lumi=" + lumi_str
       year = "--year=UL" + args.year
       datamc = "--" + datamc_str
-      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=4", year])
+      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=3", year])
       if not args.askall: options += " --auto"
       if args.force: options += " --force"
       options += " -x"
@@ -161,6 +162,7 @@ if args.mode == 'atto':
                     options += " " + " ".join(config["options"][i])
                   if not args.askall: options += " --auto"
                   if args.force: options += " --force"
+                  if args.quick: options += " --files=1"
                   options += " -x"
                   job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
                   command = " ".join([script, mode, job_input, job_output, options, job_dir])
