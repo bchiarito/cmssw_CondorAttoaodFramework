@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 from __future__ import print_function
 import argparse
 import sys
@@ -119,7 +119,7 @@ help="cross section for metadata tree")
 atto_args.add_argument("--branches", default="", metavar='FILE',
 help="filename for branch selection")
 atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt', 'trigger'], metavar='CHOICE',
-help="choice for analyzer code: main, ztt, trigger")
+help="choice for analyzer code")
 
 # histo execution specification
 histo_args = parser.add_argument_group('histo mode execution')
@@ -133,8 +133,8 @@ histo_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
 help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
 #histo_args.add_argument("--phislice", default=0,
 #help="parameter for slicing in Phi mass")
-histo_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'None'], metavar='CHOICE',
-help="choice for plotter code: sanity, bkg, sigeff, trig")
+histo_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'zttplot', 'None'], metavar='CHOICE',
+help="choice for plotter code")
 histo_args.add_argument("--year", "-y", default="UL18", choices=['UL16', 'UL17', 'UL18'], metavar='CHOICE',
 help="specify which year the input data/mc is")
 
