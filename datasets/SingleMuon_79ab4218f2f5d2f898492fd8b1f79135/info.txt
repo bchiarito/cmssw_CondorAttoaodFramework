@@ -1,0 +1,6 @@
+Dataset: /SingleMuon/Run2017E-UL2017_MiniAODv2_NanoAODv9-v1/NANOAOD
+Size: 0.1 TB
+Files: 78
+Events: 154,618,774
+1,982,291 events/file
+1.7 GB/file

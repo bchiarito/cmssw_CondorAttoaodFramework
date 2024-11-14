@@ -1,0 +1,6 @@
+Dataset: /SingleMuon/Run2016F-HIPM_UL2016_MiniAODv2_NanoAODv9-v2/NANOAOD
+Size: 0.0 TB
+Files: 43
+Events: 57,465,359
+1,336,403 events/file
+1.1 GB/file

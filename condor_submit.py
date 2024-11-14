@@ -120,6 +120,8 @@ atto_args.add_argument("--branches", default="", metavar='FILE',
 help="filename for branch selection")
 atto_args.add_argument("-a", "--analyzer", default='None', choices=['None', 'main', 'ztt', 'trigger'], metavar='CHOICE',
 help="choice for analyzer code: main, ztt, trigger")
+atto_args.add_argument("--lumimask", default='None', metavar='JSON',
+help="json file to use as lumimask")
 
 # histo execution specification
 histo_args = parser.add_argument_group('histo mode execution')
@@ -482,7 +484,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option+' '+str(args.phislice)
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option+' '+str(args.phislice)+' '+str(args.lumimask)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -497,6 +499,8 @@ for i in range(len(infile_tranches)):
     job_dir+'/infiles/'+input_file_filename_base+'_$(GLOBAL_PROC).dat' + ", " + \
     args.branches + ", " + \
     "helper/" + plotting_util_filename
+  if args.lumimask != "None":
+    sub["transfer_input_files"] += ", "+args.lumimask
   sub['transfer_output_files'] = '""'
   sub['initialdir'] = ''
   sub['JobBatchName'] = job_dir.replace('/','-') if args.batch is None else args.batch
