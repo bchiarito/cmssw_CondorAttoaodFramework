@@ -251,27 +251,12 @@ elif args.input_local:
   if os.path.isfile(args.input):
     input_files.append(os.path.abspath(args.input))
   if os.path.isdir(args.input):
+
     d = os.path.normpath(args.input)
-    done = False
-    while not done:
-      contents = os.listdir(d)
-      if len(contents) == 1 and os.path.isdir(os.path.join(d, contents[0])):
-        d = os.path.join(d, contents[0])
-        done = False
-      elif len(contents) >= 1:
-        done = True
-      else:
-        raise SystemExit("ERROR: Traversing input directory yields nothing usable!")
-    cmd = 'ls -1d -- {}/*'.format(d)
-    output = subprocess.check_output(cmd, shell=True).decode('utf-8')
-    output = output.split('\n')
-    if output[0].find('/') == -1: raise SystemExit("ERROR: check input directory, might be too many levels above rootfiles.")
-    for line in output:
-      if not line.find(".root") == -1:
-        input_files.append(os.path.abspath(line))
-        if len(input_files) == maxfiles: break
-    if len(input_files) == 0: raise SystemExit("ERROR: check input directory, might be too many levels above rootfiles.")
-    args.input = d
+    for dirpath, dirnames, filenames in os.walk(d):
+        for filename in filenames:
+            if filename.endswith(".root"):
+                input_files.append(dirpath+'/'+filename)
 
 # input is eos area on cmslc
 elif args.input_cmslpc:
