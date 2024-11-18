@@ -22,3 +22,8 @@ keep GPileup*
 keep GTP*
 keep GenPart*
 keep GSF*
+keep GPZ*
+keep G*
+keep nJet
+keep Ch*
+keep nJet
