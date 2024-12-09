@@ -1,0 +1,73 @@
+drop *
+keep nHighPtIdPhoton*
+keep HighPtIdPhoton*
+keep nTwoProng
+keep TwoProng*
+keep RecoPhi*
+keep CutBased*
+keep CBL*
+keep HPID*
+keep Region
+keep GenPart*
+keep nGenPart*
+keep GenPhi*
+keep nGenOmega
+keep GenOmega*
+keep GenJet*
+keep nGenJet
+keep MET*
+keep GenMET*
+keep Pileup*
+keep PV*
+keep LHE*
+keep fixedGridRho*
+keep genWeight
+keep event
+keep luminosityBlock
+keep run
+keep dataset_id
+keep flag
+keep nPhoton
+keep Photon*
+keep HT
+keep NJets
+keep PV_npvs
+keep htHat*
+keep HLT_Photon175
+keep HLT_Photon200
+keep HLT_Photon35_TwoProngs35
+keep HLT_Muon35_TwoProngs35
+keep weight_*
+
+keep HLT_IsoMu24
+keep nTau
+keep Tau*
+keep nMuon
+keep Muon*
+keep GnMuon
+keep GMuon*
+keep GnTau
+keep GTau*
+keep GnTwoProng
+keep GTwoProng*
+keep GMET*
+keep GNPV*
+keep GPileup*
+keep GTP*
+keep G*
+keep Z*
+keep GPZ*
+keep nJet
+keep GSF*
+keep TPTauDeltaR
+
+keep Ana*
+keep dyDecayType
+
+#notably dropping:
+#jet
+#electron
+#trigobj
+#hlt
+#l1
+#fatjets
