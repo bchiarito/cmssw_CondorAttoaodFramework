@@ -14,6 +14,9 @@ fi
 if [ ${16} == "trigger" ]; then
   python CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_atto/metadata_create.py report_$3.txt $2 ${9} $3 --xs=${10}
 fi
+if [ ${16} == "ztt" ]; then
+  python CMSSW_10_6_20/src/PhysicsTools/NanoAODTools/python/fmk_atto/metadata_create.py report_$3.txt $2 ${9} $3 --xs=${10}
+fi
 
 echo "&&& Done: payload_atto.sh &&&"
 

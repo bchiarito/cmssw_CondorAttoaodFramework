@@ -238,6 +238,8 @@ if input_not_set and site == "cmslpc": args.input_cmslpc = True
 if args.input_local and site == "cmslpc": raise SystemExit("Configuration Error: cannot use --input_local on cmslpc.")
 input_files = [] # each entry a file location
 s = args.input
+if mode == 'atto': START = 'NANOAOD'
+elif mode == 'histo': START = 'ATTOAOD'
 
 # input is .txt file
 if s[len(s)-4:len(s)] == ".txt":
@@ -253,12 +255,13 @@ elif args.input_local:
   if os.path.isfile(args.input):
     input_files.append(os.path.abspath(args.input))
   if os.path.isdir(args.input):
-
     d = os.path.normpath(args.input)
     for dirpath, dirnames, filenames in os.walk(d):
         for filename in filenames:
-            if filename.endswith(".root"):
+            if filename.endswith(".root") and filename.startswith(START):
                 input_files.append(dirpath+'/'+filename)
+    if percentmax: maxfiles = int(args.files * len(input_files))
+    if maxfiles > 0 and len(input_files) > maxfiles: input_files = input_files[:int(maxfiles)]
 
 # input is eos area on cmslc
 elif args.input_cmslpc:

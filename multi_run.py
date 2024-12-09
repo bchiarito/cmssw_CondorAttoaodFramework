@@ -7,6 +7,7 @@ import socket
 import argparse
 from datetime import datetime, timedelta, date
 import yaml
+from functools import reduce
 
 parser = argparse.ArgumentParser(description='Executes multiple condor_[submit/status].py commands')
 parser.add_argument('mode', choices=['atto', 'histo', 'status'], help='operation mode')
@@ -21,6 +22,7 @@ atto_args.add_argument('-c', '--config', help='file for options when input is di
 histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
 histo_args.add_argument('--lumi', default=None, help='if using non-official lumi')
+histo_args.add_argument('--outdir', help='instead of default "-"')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 datamc_args = parser.add_mutually_exclusive_group()
@@ -68,8 +70,12 @@ if args.mode == 'status':
 if args.mode == 'histo':
 
   for in_dir in args.input:
-    if not in_dir.startswith("MultiJob"): is_atto_multi = False
-    else: is_atto_multi = True
+    if not in_dir.startswith("MultiJob"):
+        is_atto_multi = False
+        job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
+    else:
+        is_atto_multi = True
+        job_dir_parent = in_dir.replace('/','')+"_HistoMode"
     for subdir in os.listdir(in_dir):
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
       if subdir == hadd_dir_name: continue
@@ -83,33 +89,32 @@ if args.mode == 'histo':
           sys.path.pop()
           sys.modules.pop("job_info")
           job_input = output_area
-          job_dir_parent = in_dir.replace('/','')+"_HistoMode"
       else:
           job_input = os.path.normpath(os.path.join(in_dir, subdir))
           if 'GenericMultirun-' in args.runname:
             args.runname = (in_dir.replace('/',''))+"-"+date.today().strftime("%b-%d-%Y")
-          job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
+
       # prepare command
       script = "./condor_submit.py"
       mode = "plotting"
-      job_output = "-"
+      job_output = args.outdir if args.outdir else "-"
       if args.year=="18":
         photon_str = "CBL220"
-        lumi_str = "59830" # https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2
+        #lumi_str = "59830" # https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2
       elif args.year=="17":
         photon_str = "CBL220"
-        lumi_str = "41480"
+        #lumi_str = "41480"
       elif args.year=="16":
         photon_str = "CBL185"
-        lumi_str = "36310"
+        #lumi_str = "36310"
       else:
         photon_str = "CBL"
-        lumi_str = "1"
-      if args.lumi: lumi_str = str(args.lumi)
-      lumi = "--lumi=" + lumi_str
+        #lumi_str = "1"
+      #if args.lumi: lumi_str = str(args.lumi)
+      #lumi = "--lumi=" + lumi_str
       year = "--year=UL" + args.year
       datamc = "--" + datamc_str
-      options = " ".join([datamc, lumi, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=3", year])
+      options = " ".join([datamc, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=1", "--scheddLimit=30", year])
       if not args.askall: options += " --auto"
       if args.force: options += " --force"
       options += " -x"
@@ -118,6 +123,10 @@ if args.mode == 'histo':
       print(command)
       if not args.test: os.system(command)
       print('')
+
+    if not args.test:
+      with open(os.path.join(job_dir_parent, "blank.txt"), 'w') as logfile:
+        logfile.write(reduce(lambda t1, t2 : t1+" "+t2, sys.argv, ""))
 
 if args.mode == 'atto':
 
