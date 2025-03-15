@@ -16,7 +16,7 @@ parser.add_argument('--askall', default=False, action='store_true', help="confir
 parser.add_argument('-f', '--force', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('-t', '--test', default=False, action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--quick', default=False, action='store_true', help='only one file per job')
-parser.add_argument('--runname', default="GenericMultirun-"+date.today().strftime("%b-%d-%Y"), help="not used in 'histo' mode if input is atto MultiJob dir")
+parser.add_argument('--runname', default="Run-"+date.today().strftime("%b-%d-%Y"), help="not used in 'histo' mode if input is atto MultiJob dir")
 atto_args = parser.add_argument_group("atto mode")
 atto_args.add_argument('-c', '--config', help='file for options when input is directory of nano rootfiles')
 histo_args = parser.add_argument_group("histo mode")
@@ -50,6 +50,10 @@ elif 'fnal.gov' in hostname: site = 'cmslpc'
 elif 'cern.ch' in hostname: site = 'lxplus'
 else: raise SystemExit('ERROR: Unrecognized site: not hexcms, cmslpc, or lxplus')
 
+def gettag(path):
+    i = path.rindex('/')
+    return path[i+1:]
+
 # main
 if args.mode == 'status':
 
@@ -70,16 +74,25 @@ if args.mode == 'status':
 if args.mode == 'histo':
 
   for in_dir in args.input:
-    if not in_dir.startswith("MultiJob"):
-        is_atto_multi = False
-        job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
-    else:
-        is_atto_multi = True
-        job_dir_parent = in_dir.replace('/','')+"_HistoMode"
-    for subdir in os.listdir(in_dir):
+    if in_dir.startswith("Job_"): subdirs = [in_dir]
+    else: subdirs = os.listdir(in_dir)
+
+    for subdir in subdirs:
       if not os.path.isdir(os.path.join(in_dir, subdir)): continue
       if subdir == hadd_dir_name: continue
-      if is_atto_multi:
+      if in_dir.startswith("MultiJob_"):
+          job_dir_parent = in_dir.replace('/','')+"_HistoMode"
+          # get output area of atto input from jobdir
+          sys.path.append(os.path.join(in_dir, subdir))
+          import job_info as job
+          output_area = job.output
+          output_eos = True if output_area[0:7] == '/store/' else False
+          if output_eos: pass
+          sys.path.pop()
+          sys.modules.pop("job_info")
+          job_input = output_area
+      elif in_dir.startswith("Job_"): 
+          job_dir_parent = in_dir.replace('/','')+"_HistoMode"
           # get output area of atto input from jobdir
           sys.path.append(os.path.join(in_dir, subdir))
           import job_info as job
@@ -90,6 +103,7 @@ if args.mode == 'histo':
           sys.modules.pop("job_info")
           job_input = output_area
       else:
+          job_dir_parent = "_".join(["MultiJob", "-".join([args.runname, "HistoMode"])])
           job_input = os.path.normpath(os.path.join(in_dir, subdir))
           if 'GenericMultirun-' in args.runname:
             args.runname = (in_dir.replace('/',''))+"-"+date.today().strftime("%b-%d-%Y")
@@ -114,7 +128,7 @@ if args.mode == 'histo':
       #lumi = "--lumi=" + lumi_str
       year = "--year=UL" + args.year
       datamc = "--" + datamc_str
-      options = " ".join([datamc, "--plotter=sanity", "--photon="+photon_str, "--filesPerJob=1", "--scheddLimit=30", year])
+      options = " ".join([datamc, "--plotter=zttplot", "--photon="+photon_str, "--filesPerJob=10", "--scheddLimit=30", year])
       if not args.askall: options += " --auto"
       if args.force: options += " --force"
       options += " -x"
@@ -152,28 +166,30 @@ if args.mode == 'atto':
               print("Section", config["name"], "of YAML fie has", N_subjobs, "job(s):\n")
               choice = ""
               while (choice != "y" and choice != "n" and choice != "q"):
-                choice = input("Procede? [y/n/q] ")
+                choice = input("Proceed? [y/n/q] ")
               if choice == "q": exit()
               if choice == "n": continue
-              if os.path.exists(parent_dir):
-                raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
-              else:
-                # submit
-                for i in range(N_subjobs):
+              #if os.path.exists(parent_dir):
+              #  raise SystemExit("ERROR: directory {} already exists!".format(parent_dir))
+              #else:
+              # submit
+              for i in range(N_subjobs):
                   script = "./condor_submit.py"
                   if "" in config: mode = config["mode"]
                   else: mode = "atto"
                   job_input = inputs[i]
-                  job_output = "/".join([config["dest"], "-".join([args.runname, config["name"]]), config["dests"][i]])
+                  #job_output = "/".join([config["dest"], "-".join([args.runname, config["name"]]), config["dests"][i]])
+                  job_output = "/".join([config["dests"][i], "-".join([args.runname, config["name"]])])
                   job_output = os.path.normpath(job_output)
-                  options = " ".join((config["common_options"]))
-                  if "options" in config:
-                    options += " " + " ".join(config["options"][i])
+                  options = " ".join((config["options"]))
+                  if "extra_options" in config:
+                    options += " " + " ".join(config["extra_options"][i])
                   if not args.askall: options += " --auto"
                   if args.force: options += " --force"
                   if args.quick: options += " --files=1"
                   options += " -x"
-                  job_dir = "--dir " + "/".join([parent_dir, os.path.normpath(config["dests"][i]).replace("/","-")])
+                  tag = gettag(config["dests"][i])
+                  job_dir = "--dir " + "/".join([parent_dir, tag])
                   command = " ".join([script, mode, job_input, job_output, options, job_dir])
                   print(command)
                   if not args.test: os.system(command)

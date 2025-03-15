@@ -78,6 +78,6 @@ for multijob_dir in multijob_dirs:
     command = " ".join(["hadd -f", summed_file, " ".join(rootfiles)])
     if not os.path.isfile(summed_file):
         os.system(command)
-    final_sum_filename = args.out if args.out else summed_multijob
+    final_sum_filename = args.out if args.out else "out.root"
     if not args.nomove: os.system("mv -f "+summed_file+" ./"+final_sum_filename)
     if not args.retain: shutil.rmtree(hadd_dir)
