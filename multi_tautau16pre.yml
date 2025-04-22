@@ -1,0 +1,96 @@
+---
+
+name: muon
+
+options:
+  - --data
+  - --year=UL16
+  - --scheddLimit=10
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016Bv2
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016C
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016D
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016E
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016Fpre
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/muon/16bv2
+  - /cms/chiarito/eos/twoprong/ztt/muon/16c
+  - /cms/chiarito/eos/twoprong/ztt/muon/16d
+  - /cms/chiarito/eos/twoprong/ztt/muon/16e
+  - /cms/chiarito/eos/twoprong/ztt/muon/16fpre
+
+extra_options:
+  - [--filesPerJob=15]
+  - [--filesPerJob=15]
+  - [--filesPerJob=15]
+  - [--filesPerJob=15]
+  - [--filesPerJob=15]
+
+...
+---
+
+name: wjets
+
+options:
+  - --mc
+  - --year=UL16
+  - --scheddLimit=15
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2016PreVFP
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/wjets/16pre
+
+...
+---
+
+name: ttbar
+
+options:
+  - --mc
+  - --year=UL16
+  - --scheddLimit=15
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2016PreVFP
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/ttjets/16pre
+
+...
+---
+
+name: dy
+
+options:
+  - --sigRes
+  - --year=UL16
+  - --scheddLimit=15
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2016PreVFP/
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt//dy/16pre

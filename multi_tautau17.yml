@@ -1,0 +1,96 @@
+---
+
+name: muon
+
+options:
+  - --data
+  - --year=UL17
+  - --scheddLimit=20
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2017B/
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2017C/
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2017D/
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2017E/
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2017F/
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/muon/17b
+  - /cms/chiarito/eos/twoprong/ztt/muon/17c
+  - /cms/chiarito/eos/twoprong/ztt/muon/17d
+  - /cms/chiarito/eos/twoprong/ztt/muon/17e
+  - /cms/chiarito/eos/twoprong/ztt/muon/17f
+
+extra_options:
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+
+...
+---
+
+name: wjets
+
+options:
+  - --mc
+  - --year=UL17
+  - --scheddLimit=20
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2017/241126_224515/0000
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/wjets/17
+
+...
+---
+
+name: ttbar
+
+options:
+  - --mc
+  - --year=UL17
+  - --scheddLimit=10
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2017/241126_010700/0000
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/ttjets/17
+
+...
+---
+
+name: dy
+
+options:
+  - --sigRes
+  - --year=UL17
+  - --scheddLimit=10
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2017/241127_210125/0000
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt//dy/17

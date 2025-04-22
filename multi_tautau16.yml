@@ -1,0 +1,111 @@
+---
+
+name: muon
+
+options:
+  - --data
+  - --year=UL16
+  - --scheddLimit=20
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016Bv2
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016C
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016D
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016E
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016Fpre
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016F
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016G
+  - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2016H
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/muon/16bv2
+  - /cms/chiarito/eos/twoprong/ztt/muon/16c
+  - /cms/chiarito/eos/twoprong/ztt/muon/16d
+  - /cms/chiarito/eos/twoprong/ztt/muon/16e
+  - /cms/chiarito/eos/twoprong/ztt/muon/16fpre
+  - /cms/chiarito/eos/twoprong/ztt/muon/16f
+  - /cms/chiarito/eos/twoprong/ztt/muon/16g
+  - /cms/chiarito/eos/twoprong/ztt/muon/16h
+
+extra_options:
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+  - [--filesPerJob=10]
+
+...
+---
+
+name: wjets
+
+options:
+  - --mc
+  - --year=UL16
+  - --scheddLimit=20
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2016PreVFP
+  - /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2016PostVFP
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/wjets/16pre
+  - /cms/chiarito/eos/twoprong/ztt/wjets/16post
+
+...
+---
+
+name: ttbar
+
+options:
+  - --mc
+  - --year=UL16
+  - --scheddLimit=10
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2016PreVFP
+  - /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2016PostVFP
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/ttjets/16pre
+  - /cms/chiarito/eos/twoprong/ztt/ttjets/16post
+
+...
+---
+
+name: dy
+
+options:
+  - --sigRes
+  - --year=UL16
+  - --scheddLimit=10
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=5
+  - --files=-1
+
+inputs:
+  - /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2016PreVFP/
+  - /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2016PostVFP/
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt//dy/16pre
+  - /cms/chiarito/eos/twoprong/ztt//dy/16post
