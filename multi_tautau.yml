@@ -9,7 +9,7 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --files=500
+  - --files=0.1
 
 inputs:
   - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2018A/
@@ -18,16 +18,16 @@ inputs:
   - /cms/twoprong/thayil/pseudoaxions/nano/SingleMuon/2018_singlemuonD/
 
 dests:
-  - /cms/chiarito/eos/twoprong/ztt/test/18a
-  - /cms/chiarito/eos/twoprong/ztt/test/18b
-  - /cms/chiarito/eos/twoprong/ztt/test/18c
-  - /cms/chiarito/eos/twoprong/ztt/test/18d
+  - /cms/chiarito/eos/twoprong/ztt/muon/18a
+  - /cms/chiarito/eos/twoprong/ztt/muon/18b
+  - /cms/chiarito/eos/twoprong/ztt/muon/18c
+  - /cms/chiarito/eos/twoprong/ztt/muon/18d
 
 extra_options:
-  - [--filesPerJob=100]
-  - [--filesPerJob=100]
-  - [--filesPerJob=100]
-  - [--filesPerJob=50]
+  - [--filesPerJob=120]
+  - [--filesPerJob=120]
+  - [--filesPerJob=120]
+  - [--filesPerJob=70]
 
 ...
 ---
@@ -37,22 +37,22 @@ name: wjets
 options:
   - --mc
   - --year=UL18
-  - --scheddLimit=30
+  - --scheddLimit=20
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
   - --filesPerJob=30
-  - --files=1000
+  - --files=0.1
 
 inputs:
   - /cms/twoprong/thayil/pseudoaxions/nano/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/2018_wjetstolnu
   - /cms/twoprong/thayil/pseudoaxions/nano/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/2018_wjetstolnu_nonext
-  - /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2018/
+  #- /cms/twoprong/johnpaul/crab_Nov8/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/WJets2018/
 
 dests:
   - /cms/chiarito/eos/twoprong/ztt/test/wjets
   - /cms/chiarito/eos/twoprong/ztt/test/wjets_ext
-  - /cms/chiarito/eos/twoprong/ztt/test/wjets_jp
+  #- /cms/chiarito/eos/twoprong/ztt/test/wjets_jp
 
 ...
 ---
@@ -62,20 +62,20 @@ name: ttbar
 options:
   - --mc
   - --year=UL18
-  - --scheddLimit=30
+  - --scheddLimit=20
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
   - --filesPerJob=30
-  - --files=1000
+  - --files=0.1
 
 inputs:
   - /cms/twoprong/chiarito/crab/crab/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/ttjets_full/241108_004234
-  - /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2018
+  #- /cms/twoprong/johnpaul/crab_Nov8/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/TTJets2018
 
 dests:
   - /cms/chiarito/eos/twoprong/ztt/test/ttjets
-  - /cms/chiarito/eos/twoprong/ztt/test/ttjets_jp
+  #- /cms/chiarito/eos/twoprong/ztt/test/ttjets_jp
 
 ...
 ---
@@ -83,22 +83,73 @@ dests:
 name: dy
 
 options:
-  - --mc
+  - --sigRes
   - --year=UL18
-  - --scheddLimit=30
+  - --scheddLimit=80
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --filesPerJob=30
-  - --files=500
+  - --filesPerJob=60
+  - --files=0.1
 
 inputs:
   - /cms/twoprong/chiarito/crab/crab/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/dy_full
   - /cms/twoprong/chiarito/crab/crab/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/dy_ext1
-  - /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2018
+  #- /cms/twoprong/johnpaul/crab_Nov8/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/DYJets2018
 
 dests:
   - /cms/chiarito/eos/twoprong/ztt/test/dy
   - /cms/chiarito/eos/twoprong/ztt/test/dy_ext
-  - /cms/chiarito/eos/twoprong/ztt/test/dy_jp
+  #- /cms/chiarito/eos/twoprong/ztt/test/dy_jp
 
+...
+---
+
+name: minor_electroweak
+
+options:
+  - --sigRes
+  - --year=UL18
+  - --scheddLimit=80
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=60
+  - --files=0.1
+
+inputs:
+  - /cms/twoprong-2/johnpaul/crab_Nov8/WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/WZTo2Q2L2018/241206_170449/0000
+  - /cms/twoprong-2/johnpaul/crab_Nov8/WZTo3LNu_5f_TuneCP5_13TeV-madgraphMLM-pythia8/WZTo3LNu2018/241206_165841/0000
+  - /cms/twoprong-2/johnpaul/crab_Nov8/ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/ZZTo2L2Nu2018/241206_183807/0000
+  - /cms/twoprong-2/johnpaul/crab_Nov8/ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/ZZTo2Q2L2018/241206_171303/0000
+  - /cms/twoprong-2/johnpaul/crab_Nov8/ZZTo4L_5f_TuneCP5_13TeV-madgraphMLM-pythia8/ZZTo4L2018/241206_184505/0000
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/2018/wz_2q2l
+  - /cms/chiarito/eos/twoprong/ztt/2018/wz_3l
+  - /cms/chiarito/eos/twoprong/ztt/2018/zz_2l2nu
+  - /cms/chiarito/eos/twoprong/ztt/2018/zz_2q2l
+  - /cms/chiarito/eos/twoprong/ztt/2018/zz_4l
+
+...
+---
+
+name: st
+
+options:
+  - --sigRes
+  - --year=UL18
+  - --scheddLimit=80
+  - --filter=one_either_photon
+  - --branches=branch_selection_attoztt.txt 
+  - --analyzer=ztt
+  - --filesPerJob=60
+  - --files=0.1
+
+inputs:
+  - /cms/twoprong-2/johnpaul/crab_Nov8/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/STtWtop2018/241206_184847/0000
+  - /cms/twoprong-2/johnpaul/crab_Nov8/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/STtWantitop2018/241207_004447/0000
+
+dests:
+  - /cms/chiarito/eos/twoprong/ztt/2018/st_tW_top
+  - /cms/chiarito/eos/twoprong/ztt/2018/st_tW_antitop

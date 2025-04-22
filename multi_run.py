@@ -23,6 +23,7 @@ histo_args = parser.add_argument_group("histo mode")
 histo_args.add_argument('-y', '--year', default='18', choices=['18', '17', '16'], help='')
 histo_args.add_argument('--lumi', default=None, help='if using non-official lumi')
 histo_args.add_argument('--outdir', help='instead of default "-"')
+histo_args.add_argument('--subtag', default=None, help='optional extra ending for jobdir and outdir')
 status_args = parser.add_argument_group("status mode")
 status_args.add_argument('--full', default=False, action='store_true', help="don't use --summary")
 datamc_args = parser.add_mutually_exclusive_group()
@@ -82,6 +83,7 @@ if args.mode == 'histo':
       if subdir == hadd_dir_name: continue
       if in_dir.startswith("MultiJob_"):
           job_dir_parent = in_dir.replace('/','')+"_HistoMode"
+          if args.subtag: job_dir_parent+="_"+args.subtag
           # get output area of atto input from jobdir
           sys.path.append(os.path.join(in_dir, subdir))
           import job_info as job
@@ -93,6 +95,7 @@ if args.mode == 'histo':
           job_input = output_area
       elif in_dir.startswith("Job_"): 
           job_dir_parent = in_dir.replace('/','')+"_HistoMode"
+          if args.subtag: job_dir_parent+="_subtag"
           # get output area of atto input from jobdir
           sys.path.append(os.path.join(in_dir, subdir))
           import job_info as job
