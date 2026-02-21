@@ -133,6 +133,8 @@ histo_args.add_argument("--phislice", default=False, action="store_true",
 help="turn on phi binned histograms for bkg analysis")
 histo_args.add_argument("--photon", default="CBL220", metavar='CHOICE',
 help="choice for photon: HPID, CBL (default), followed by pT cut (e.g. CBL220)")
+histo_args.add_argument("--m2pgen", default=None, metavar='MASS',
+help="gen omega mass in GeV, only needed for sigRes")
 #histo_args.add_argument("--phislice", default=0,
 #help="parameter for slicing in Phi mass")
 histo_args.add_argument("-p", "--plotter", default='None', choices=['sanity', 'bkg', 'sigeff', 'trig', 'zttplot', 'None'], metavar='CHOICE',
@@ -263,7 +265,7 @@ elif args.input_local:
     if percentmax: maxfiles = int(args.files * len(input_files))
     if maxfiles > 0 and len(input_files) > maxfiles: input_files = input_files[:int(maxfiles)]
 
-# input is eos area on cmslc
+# input is eos area on cmslpc
 elif args.input_cmslpc:
   if s[len(s)-5:len(s)] == ".root":
     input_files.append(args.input)
@@ -472,7 +474,7 @@ for i in range(len(infile_tranches)):
   job_dir = job_dir + suffix
   sub = htcondor.Submit()
   sub['executable'] = helper_dir+'/'+executable if not args.noPayload else helper_dir+'/'+executable_fast
-  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option+' '+str(args.phislice)+' '+str(args.lumimask)
+  sub['arguments'] = mode+' '+finalfile_filename+' $(GLOBAL_PROC) '+griduser_id+' '+datamc+' '+args.year+' '+str(args.lumi)+' '+args.filter+' '+args.datasetname+' '+str(args.xs)+' '+args.branches+' '+args.input+' '+str(args.cut)+' '+args.photon+' '+site+' '+backend_option+' '+str(args.phislice)+' '+str(args.lumimask)+' '+str(args.m2pgen)
   sub['should_transfer_files'] = 'YES'
   sub['+JobFlavor'] = 'longlunch'
   sub['Notification'] = 'Never'
@@ -499,6 +501,7 @@ for i in range(len(infile_tranches)):
     sub['error'] = job_dir+'/stdout/$(Cluster)_$(Process)_out.txt'
   sub['log'] = job_dir+'/log_$(Cluster).txt'
   if site == 'hexcms': sub['+SingularityImage'] = '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmssw/el7:x86_64"'
+  if site == 'cmslpc': sub['+DesiredOS'] = '"SL7"'
   if not args.scheddLimit==-1: sub['max_materialize'] = str(args.scheddLimit)
   subs.append(sub)
 
