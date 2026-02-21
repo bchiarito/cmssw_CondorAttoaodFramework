@@ -388,7 +388,7 @@ if 'atto_job_dir' in globals():
     job_dir = atto_job_dir+'/histo_jobs/'
     job_dir = os.path.normpath(job_dir)
   else:
-    job_dir = args.dir
+    job_dir = 'Job_' + args.dir
 else:
   if args.test: job_dir = 'TestJob_' + args.dir
   elif (args.dir).startswith("MultiJob"): job_dir = args.dir
