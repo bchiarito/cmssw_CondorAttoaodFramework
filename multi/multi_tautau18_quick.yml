@@ -9,7 +9,7 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --files=0.1
+  - --files=0.02
 
 inputs:
   - /cms/twoprong/johnpaul/crab_Nov8/SingleMuon/SingleMuon2018A/
@@ -24,10 +24,10 @@ dests:
   - /cms/chiarito/eos/twoprong/ztt/muon/18d
 
 extra_options:
-  - [--filesPerJob=120]
-  - [--filesPerJob=120]
-  - [--filesPerJob=120]
-  - [--filesPerJob=70]
+  - [--filesPerJob=12]
+  - [--filesPerJob=12]
+  - [--filesPerJob=12]
+  - [--filesPerJob=7]
 
 ...
 ---
@@ -41,8 +41,8 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --filesPerJob=30
-  - --files=0.1
+  - --filesPerJob=3
+  - --files=0.02
 
 inputs:
   - /cms/twoprong/thayil/pseudoaxions/nano/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/2018_wjetstolnu
@@ -66,8 +66,8 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --filesPerJob=30
-  - --files=0.1
+  - --filesPerJob=3
+  - --files=0.02
 
 inputs:
   - /cms/twoprong/chiarito/crab/crab/TTJets_TuneCP5_13TeV-madgraphMLM-pythia8/ttjets_full/241108_004234
@@ -89,8 +89,8 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --filesPerJob=60
-  - --files=0.1
+  - --filesPerJob=6
+  - --files=0.02
 
 inputs:
   - /cms/twoprong/chiarito/crab/crab/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/dy_full
@@ -115,7 +115,7 @@ options:
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
   - --filesPerJob=60
-  - --files=0.1
+  - --files=0.02
 
 inputs:
   - /cms/twoprong-2/johnpaul/crab_Nov8/WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/WZTo2Q2L2018/241206_170449/0000
@@ -131,6 +131,13 @@ dests:
   - /cms/chiarito/eos/twoprong/ztt/2018/zz_2q2l
   - /cms/chiarito/eos/twoprong/ztt/2018/zz_4l
 
+extra_options:
+  - [--filesPerJob=50]
+  - [--filesPerJob=6]
+  - [--filesPerJob=6]
+  - [--filesPerJob=50]
+  - [--filesPerJob=6]
+
 ...
 ---
 
@@ -143,8 +150,8 @@ options:
   - --filter=one_either_photon
   - --branches=branch_selection_attoztt.txt 
   - --analyzer=ztt
-  - --filesPerJob=60
-  - --files=0.1
+  - --filesPerJob=1
+  - --files=0.02
 
 inputs:
   - /cms/twoprong-2/johnpaul/crab_Nov8/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/STtWtop2018/241206_184847/0000

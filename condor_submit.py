@@ -193,12 +193,12 @@ if mode=='atto' and args.analyzer=='None': raise SystemExit("Configuration Error
 
 if mode=='atto':
   backend_option = args.analyzer
-  if args.branches == "" and args.analyzer == "ztt": args.branches = "branch_selection_ztt.txt"
-  if args.branches == "" and args.analyzer == "main": args.branches = "branch_selection_atto.txt"
-  if args.branches == "" and args.analyzer == "trigger": args.branches = "branch_selection_trigger.txt"
+  if args.branches == "" and args.analyzer == "ztt": args.branches = "helper/branch_selection_ztt.txt"
+  if args.branches == "" and args.analyzer == "main": args.branches = "helper/branch_selection_atto.txt"
+  if args.branches == "" and args.analyzer == "trigger": args.branches = "helper/branch_selection_trigger.txt"
 if mode=='histo':
   backend_option = args.plotter
-  if args.branches == "": args.branches = "branch_selection_atto.txt" # placeholder
+  if args.branches == "": args.branches = "helper/branch_selection_atto.txt" # placeholder
 
 # get grid id / username
 if site == 'hexcms':
@@ -227,7 +227,7 @@ if args.scheddLimit == -1:
 input_not_set = False
 if re.match("(?:" + "/.*/.*/NANOAOD" + r")\Z", args.input) or \
    re.match("(?:" + "/.*/.*/NANOAODSIM" + r")\Z", args.input): args.input_dataset = True
-if (args.input).startswith('Job_'):
+if (args.input).startswith('Job_') or (args.input).startswith('Jobs_'):
   if not args.input[-1] == '/': args.input += '/'
   job = imp.load_source("job", args.input+"job_info.py")
   output_path = job.output
@@ -392,9 +392,13 @@ if 'atto_job_dir' in globals():
   else:
     job_dir = 'Job_' + args.dir
 else:
-  if args.test: job_dir = 'TestJob_' + args.dir
+  if args.test:
+    if '/' in args.dir: job_dir = 'TestJobs_' + args.dir
+    else: job_dir = 'TestJob_' + args.dir
   elif (args.dir).startswith("MultiJob"): job_dir = args.dir
-  else: job_dir = 'Job_' + args.dir
+  else:
+    if '/' in args.dir: job_dir = 'Jobs_' + args.dir
+    else: job_dir = 'Job_' + args.dir
 
 # splitting
 num_total_files = len(input_files)

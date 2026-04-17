@@ -20,7 +20,7 @@ def getname(prefix='obj'):
 def check_and_hadd(paths):
     for path in paths:
         if not os.path.isdir(os.path.join(path, HADD_DIR_NAME)):
-            subprocess.call("./hadd_histo_dirs.py --retain --rehadd " + path, shell=True)
+            subprocess.call("./include/hadd_histo_dirs.py --retain --rehadd " + path, shell=True)
 
 def scale_collections(hist_collections, ngens, xses, lumi, o1, o2):
     for coll, ngen, o1e, o2e in zip(hist_collections, ngens, o1, o2):
@@ -38,7 +38,7 @@ def make_hist_collections(jobdirs, ngen=None):
     check_and_hadd(jobdirs)
     rootfiles = [os.path.join(jobdir, HADD_DIR_NAME, filename) for filename in os.listdir(os.path.join(jobdir, HADD_DIR_NAME))]
     if jobdir.startswith('MultiJob_'): filenames = [filename for filename in rootfiles if not os.path.basename(filename).startswith(FULLSUM_PREFIX)]
-    #elif jobdir.startswith('Job_'):    filenames = [filename for filename in rootfiles if     os.path.basename(filename).startswith(FULLSUM_PREFIX)]
+    elif jobdir.startswith('Job_'):    filenames = [filename for filename in rootfiles]
     else: raise SystemExit("directory "+jobdir+" does not start with MultiJob_ nor Job_!")
     if len(filenames) == 0: return [[]], []
     tfiles = [ROOT.TFile(filename) for filename in filenames]
@@ -114,8 +114,8 @@ else:
 if args.lumi: lumi = args.lumi
 
 # build histogram collections
-#data_hist_collections, _ = make_hist_collections(args.data)
-data_hist_collections, _ = make_hist_collections_from_file("data.root")
+data_hist_collections, _ = make_hist_collections(args.data)
+#data_hist_collections, _ = make_hist_collections_from_file("data.root")
 
 print(type(data_hist_collections))
 print(len(data_hist_collections))
@@ -309,7 +309,8 @@ for i in range(total_num_hist):
     except RuntimeWarning:
         print('RuntimeWarning on ', gjets_hist_collection[i].GetName())
     except IndexError:
-        print("!! Skipping plotting of histo", data_hist.GetName())
+        #print("!! Skipping plotting of histo", data_hist.GetName())
+        print("!! Skipping plotting of histo")
     if args.test and i>=1: break
 
 c.Print(main_pdf+']')

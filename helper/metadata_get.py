@@ -20,7 +20,7 @@ for fi in os.listdir(path):
     if fi.endswith('.root') and fi.startswith('ATTOAOD'): metadata.Add(path+'/'+fi)
 
 
-#metadata.Scan("*")
+metadata.Scan("*")
 
 cutflow = {}
 for col, entry in enumerate(metadata):
